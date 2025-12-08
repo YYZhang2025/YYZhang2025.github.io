@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Yuyang Zhang">
+<meta name="description" content="Vision Transformer (ViT) 通过将图像切分为 patch 并直接应用标准 Transformer，实现了在大规模数据下超越 CNN 的图像分类性能。">
+
+<title>02 An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale(ViT)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<link href="../../.././style/icon.avif" rel="icon">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-0348920b7671f696dc9078d39bff215e.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-6e97c76ec7d7e44d6e697e3c9997636d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-84bb4237d43bdfa05598834a807c2e5a.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../../site_libs/bootstrap/bootstrap-6e97c76ec7d7e44d6e697e3c9997636d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link href="https://fonts.cdnfonts.com/css/cmu-sans-serif" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../../style/styles.css">
+<link rel="stylesheet" href="../../../style/callout.css">
+<meta property="og:title" content="02 An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale(ViT)">
+<meta property="og:description" content="Vision Transformer (ViT) 通过将图像切分为 patch 并直接应用标准 Transformer，实现了在大规模数据下超越 CNN 的图像分类性能。">
+<meta property="og:image" content="assets/cover.gif">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../index.html"> 
+<span class="menu-text">About Me</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/YYZhang2025"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/zhang-yuyang/"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/Blogs/blogs_index.html"> 
+<span class="menu-text">Blogs</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-learning-notes" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Learning Notes</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-learning-notes">    
+        <li>
+    <a class="dropdown-item" href="../../../posts/LearningNotes/DLFaC_index.html">
+ <span class="dropdown-text">Deep Learning Foundations and Concepts</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../../posts/LearningNotes/CS336_index.html">
+ <span class="dropdown-text">Stanford CS336: LLM from Scratch</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/Projects/projects_index.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/PapersWithCode/100_Papers_index.html"> 
+<span class="menu-text">100 Papers with Code</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+          <h1 class="quarto-secondary-nav-title">02 An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale(<strong>ViT</strong>)</h1>
+        </a>     
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#vision-transformer-model" id="toc-vision-transformer-model" class="nav-link active" data-scroll-target="#vision-transformer-model"><span class="header-section-number">1</span> Vision Transformer Model</a>
+  <ul class="collapse">
+  <li><a href="#patch-embedding" id="toc-patch-embedding" class="nav-link" data-scroll-target="#patch-embedding"><span class="header-section-number">1.1</span> Patch Embedding</a></li>
+  <li><a href="#position-encoding" id="toc-position-encoding" class="nav-link" data-scroll-target="#position-encoding"><span class="header-section-number">1.2</span> Position Encoding</a>
+  <ul class="collapse">
+  <li><a href="#extending-position-encoding" id="toc-extending-position-encoding" class="nav-link" data-scroll-target="#extending-position-encoding"><span class="header-section-number">1.2.1</span> Extending Position Encoding</a></li>
+  </ul></li>
+  <li><a href="#cls-tokens-mlp-head" id="toc-cls-tokens-mlp-head" class="nav-link" data-scroll-target="#cls-tokens-mlp-head"><span class="header-section-number">1.3</span> <code>[CLS]</code> Tokens &amp; MLP Head</a></li>
+  <li><a href="#transformer-encoder-block" id="toc-transformer-encoder-block" class="nav-link" data-scroll-target="#transformer-encoder-block"><span class="header-section-number">1.4</span> Transformer Encoder Block</a></li>
+  <li><a href="#cnn-vs.-vit-inductive-bias" id="toc-cnn-vs.-vit-inductive-bias" class="nav-link" data-scroll-target="#cnn-vs.-vit-inductive-bias"><span class="header-section-number">1.5</span> CNN vs.&nbsp;ViT： Inductive bias</a></li>
+  <li><a href="#vit-model-variants" id="toc-vit-model-variants" class="nav-link" data-scroll-target="#vit-model-variants"><span class="header-section-number">1.6</span> ViT Model Variants</a></li>
+  </ul></li>
+  <li><a href="#qa" id="toc-qa" class="nav-link" data-scroll-target="#qa"><span class="header-section-number">2</span> Q&amp;A</a></li>
+  <li><a href="#扩展" id="toc-扩展" class="nav-link" data-scroll-target="#扩展"><span class="header-section-number">3</span> 扩展</a>
+  <ul class="collapse">
+  <li><a href="#减少tokens" id="toc-减少tokens" class="nav-link" data-scroll-target="#减少tokens"><span class="header-section-number">3.1</span> 减少Tokens</a></li>
+  <li><a href="#vision-language-model" id="toc-vision-language-model" class="nav-link" data-scroll-target="#vision-language-model"><span class="header-section-number">3.2</span> Vision Language Model</a></li>
+  </ul></li>
+  <li><a href="#appendix" id="toc-appendix" class="nav-link" data-scroll-target="#appendix"><span class="header-section-number">4</span> Appendix</a>
+  <ul class="collapse">
+  <li><a href="#axial-attention轴向注意力" id="toc-axial-attention轴向注意力" class="nav-link" data-scroll-target="#axial-attention轴向注意力"><span class="header-section-number">4.1</span> Axial Attention（轴向注意力）</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">02 An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale(<strong>ViT</strong>)</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">MustReadPaper</div>
+    <div class="quarto-category">Computer-Vision</div>
+    <div class="quarto-category">Transformer</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Vision Transformer (ViT) 通过将图像切分为 patch 并直接应用标准 Transformer，实现了在大规模数据下超越 CNN 的图像分类性能。
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Yuyang Zhang </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+<nav id="TOC-body" role="doc-toc">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#vision-transformer-model" id="toc-vision-transformer-model"><span class="header-section-number">1</span> Vision Transformer Model</a>
+  <ul>
+  <li><a href="#patch-embedding" id="toc-patch-embedding"><span class="header-section-number">1.1</span> Patch Embedding</a></li>
+  <li><a href="#position-encoding" id="toc-position-encoding"><span class="header-section-number">1.2</span> Position Encoding</a>
+  <ul>
+  <li><a href="#extending-position-encoding" id="toc-extending-position-encoding"><span class="header-section-number">1.2.1</span> Extending Position Encoding</a></li>
+  </ul></li>
+  <li><a href="#cls-tokens-mlp-head" id="toc-cls-tokens-mlp-head"><span class="header-section-number">1.3</span> <code>[CLS]</code> Tokens &amp; MLP Head</a></li>
+  <li><a href="#transformer-encoder-block" id="toc-transformer-encoder-block"><span class="header-section-number">1.4</span> Transformer Encoder Block</a></li>
+  <li><a href="#cnn-vs.-vit-inductive-bias" id="toc-cnn-vs.-vit-inductive-bias"><span class="header-section-number">1.5</span> CNN vs.&nbsp;ViT： Inductive bias</a></li>
+  <li><a href="#vit-model-variants" id="toc-vit-model-variants"><span class="header-section-number">1.6</span> ViT Model Variants</a></li>
+  </ul></li>
+  <li><a href="#qa" id="toc-qa"><span class="header-section-number">2</span> Q&amp;A</a></li>
+  <li><a href="#扩展" id="toc-扩展"><span class="header-section-number">3</span> 扩展</a>
+  <ul>
+  <li><a href="#减少tokens" id="toc-减少tokens"><span class="header-section-number">3.1</span> 减少Tokens</a></li>
+  <li><a href="#vision-language-model" id="toc-vision-language-model"><span class="header-section-number">3.2</span> Vision Language Model</a></li>
+  </ul></li>
+  <li><a href="#appendix" id="toc-appendix"><span class="header-section-number">4</span> Appendix</a>
+  <ul>
+  <li><a href="#axial-attention轴向注意力" id="toc-axial-attention轴向注意力"><span class="header-section-number">4.1</span> Axial Attention（轴向注意力）</a></li>
+  </ul></li>
+  </ul>
+</nav>
+<p>在了解了什么是<a href="../../../posts/PapersWithCode/01-transformer/Transformer.html">Transformer</a>之后，我们来看看如何将Transformer应用于Computer Vision。Vision Transformer（ViT）<span class="citation" data-cites="ImageWorth16x162021dosovitskiy">(<a href="#ref-ImageWorth16x162021dosovitskiy" role="doc-biblioref">Dosovitskiy et al. 2021</a>)</span> 是一个将Transformer架构应用于图像分类的模型。它的核心思想是<u>将图像划分为小块（patches），然后将这些小块视为序列数据，类似于处理文本数据</u>。</p>
+<section id="vision-transformer-model" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Vision Transformer Model</h1>
+<div id="fig-vit-gif" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-vit-gif-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/vit.gif" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vit-gif-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Vision Transformer Architecture (Image Source: lucidrains)
+</figcaption>
+</figure>
+</div>
+<p>Vision Transformer 的工作流程（如上图所示）： 1. 图像切分（Patchify）： 将输入图像划分为若干大小相同的小块（Patch），并展开为一维序列。 2. 线性映射： 使用线性层将每个 Patch 映射为固定维度的隐藏向量（Hidden Embedding）。 3. 加入 <code>[CLS]</code> 标记： 在序列开头添加一个特殊的 <code>[CLS]</code> token，用于表示整张图像的全局语义。 4. 位置编码： 为每个向量添加可学习的位置嵌入（Position Embedding），保留空间位置信息。 5. Transformer 编码器： 将上述序列输入 Transformer Encoder，以捕捉全局依赖关系。 6. 分类头（MLP Head）： 最终通过一个多层感知机（MLP）分类头输出图像所属的类别。</p>
+<p>对于 <a href="../01-Transformer/Transformer.qmd">Transformer</a> ，Vision Transformer (ViT) 的主要区别在于： 1. 增加了一个 Patchify 步骤，将图像划分为若干小块并转化为序列输入； 2. 将原本的 正余弦位置编码（sinusoidal position embedding） 替换为 可学习的位置嵌入（learned position embedding）； 3. 在最后额外添加了一个 分类头（classification head），用于完成图像分类任务。</p>
+<p>我们之前已经学习过了什么是 <a href="../01-Transformer/Transformer.md">Transformer</a> . 建议忘记了的同学再去回顾一下，我们就不多重复了。 我们首先来看如何进行Patch Embedding</p>
+<section id="patch-embedding" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="patch-embedding"><span class="header-section-number">1.1</span> Patch Embedding</h2>
+<blockquote class="blockquote">
+<p>The standard Transformer receives as input a 1D sequence of token embeddings. To handle 2D images, we reshape the image <span class="math inline">\(x \in \mathbb{R}^{H \times W \times C}\)</span> into a sequence of flattened 2D patches<span class="math inline">\(x \in \mathbb{R}^{N \times (P^{2} \times C)}\)</span>, where (<span class="math inline">\(H, W\)</span>) is the resolution of the original image, <span class="math inline">\(C\)</span> is the number of channels, (<span class="math inline">\(P, P\)</span>) is the resolution of each image patch, and <span class="math inline">\(N = HW/P^{2}\)</span> is the resulting number of patches, which also serves as the effective input sequence length for the Transformer. <u>The Transformer uses constant latent vector size <span class="math inline">\(D\)</span> through all of its layers, so we flatten the patches and map to <span class="math inline">\(D\)</span> dimensions with a trainable linear projection</u>. We refer to the output of this projection as the <strong>patch embeddings</strong>. <cite> An Image is Worth 16x16 Words- Transformers for Image Recognition at Scale, p.3 </cite></p>
+</blockquote>
+<p>在<a href="../01-Transformer/Transformer.qmd">Transformer</a> 这一篇，我们了解到，它是作用于Sequence Modeling的，很显然，Image 不是 Sequence的。很直观的第一种想法就是，将图片直接展开，从二维 (<span class="math inline">\(3, H, W\)</span>) 展开成一维的 (<span class="math inline">\(3, H \times W\)</span>). 这样我们就得到的图片的Sequence Model。如下图@fig-flat-image所示</p>
+<div id="fig-flat-image" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-flat-image-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/iGPT.png" id="fig-flat-image" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-flat-image-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2
+</figcaption>
+</figure>
+</div>
+<p>这种方法有一种明显的问题就是：Sequence的长度太长，举个例子，对于 <span class="math inline">\(3\times 256 \times 256\)</span> 的图片，我们有 <span class="math inline">\(256 \times 256 = 65,336\)</span> 个tokens，通过这种方法，所需要的训练时长很长。并且它没有用到图片的一个特性：相邻的pixel 之间，是有很高的correlation的。所以我们很自然的想到：如果把相邻的pixels和在一组，组成一个patch，这样不就既减少了tokens的数量，又用到了pixel之间的correlation。这就是Vision Transformer 的Patch Embedding。 这样我们就得到了。 接下来我们只需要用，一个MLP，将我们展开的patch，映射到 <span class="math inline">\(D\)</span>- dimension的空间，这样我们就可以传入Transformer 模型了。</p>
+<p>接下来我们来看看代码怎么实现：</p>
+<div class="sourceCode" id="cb1" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># Load Image and resize it to certain size</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a>image_path <span class="op">=</span> IMAGE_PATN</span>
+<span id="cb1-3"><a href="#cb1-3"></a>img_bgr <span class="op">=</span> cv2.imread(image_path)</span>
+<span id="cb1-4"><a href="#cb1-4"></a>img_resized <span class="op">=</span> cv2.resize(img_bgr, (IMAGE_SIZE, IMAGE_SIZE), interpolation<span class="op">=</span>cv2.INTER_AREA)</span>
+<span id="cb1-5"><a href="#cb1-5"></a>img <span class="op">=</span> cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB) </span>
+<span id="cb1-6"><a href="#cb1-6"></a></span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="co"># Patchify </span></span>
+<span id="cb1-8"><a href="#cb1-8"></a>patches <span class="op">=</span> einops.rearrange(</span>
+<span id="cb1-9"><a href="#cb1-9"></a>     img, <span class="st">"(h ph) (w pw) c -&gt; (h w) ph pw c"</span>, ph<span class="op">=</span>PATCH_SIZE, pw<span class="op">=</span>PATCH_SIZE</span>
+<span id="cb1-10"><a href="#cb1-10"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>通过这个Patchify只有，我们得到将图片Patch到了</p>
+<p><img src="assets/before-patch.png" class="img-fluid"></p>
+<p><img src="assets/after-patch.png" class="img-fluid"></p>
+<p>分成了不同的小Patch。</p>
+<p>接下来我们要做的就是，将这些Patch 展开，然后传入一个MLP，</p>
+<div class="sourceCode" id="cb2" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1"></a>flat_patch <span class="op">=</span> einops.rearrange(</span>
+<span id="cb2-2"><a href="#cb2-2"></a>     patches, <span class="st">"n ph pw c -&gt; n (ph pw c)"</span></span>
+<span id="cb2-3"><a href="#cb2-3"></a>)</span>
+<span id="cb2-4"><a href="#cb2-4"></a></span>
+<span id="cb2-5"><a href="#cb2-5"></a></span>
+<span id="cb2-6"><a href="#cb2-6"></a>mlp <span class="op">=</span> nn.Linear(PATCH_SIZE <span class="op">*</span> PATCH_SIZE <span class="op">*</span> <span class="dv">3</span>, d_model)</span>
+<span id="cb2-7"><a href="#cb2-7"></a>patch_embedding <span class="op">=</span> mlp(flat_patch)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>同这种方式，我们就可以见图片转化为Transformer可以接受的vector。不过在实际操作中，我们并不会用以上的方式，因为上面的方式实现起来比较慢，我们可以将Patch 和 Linear Project和在一起。</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>将几个tensor 的operation操作合成一个的方法，叫做kernel fusion，这是一种提高训练和推理素的方法</p>
+</div>
+</div>
+<p>在实际的代码中，我们用Convolution Layer 代替 Patch + Flatten+ Linear 的方法. 如果我们用一个 卷积层，参数设置为： • kernel_size = PATCH_SIZE （卷积核覆盖一个 patch） • stride = PATCH_SIZE （不重叠地移动，相当于切 patch） • in_channels = 3（RGB） • out_channels = d_model</p>
+<p>那么卷积会： 1. 把输入图片分成 PATCH_SIZE x PATCH_SIZE 的不重叠块（因为 stride = kernel_size）。 2. 对每个 patch 做一次线性映射（因为卷积本质上就是对局部区域做加权求和，相当于 Linear）。 3. 输出的 shape 自动就是 (batch, num_patches, d_model)。</p>
+<p>这正好等价于 切 patch + flatten + Linear 的组合。</p>
+<p>代码如下：</p>
+<div class="sourceCode" id="cb3" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">class</span> PatchEmbedding(nn.Module):</span>
+<span id="cb3-2"><a href="#cb3-2"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, config: ModelConfig):</span>
+<span id="cb3-3"><a href="#cb3-3"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb3-4"><a href="#cb3-4"></a></span>
+<span id="cb3-5"><a href="#cb3-5"></a>        <span class="va">self</span>.conv <span class="op">=</span> nn.Conv2d(</span>
+<span id="cb3-6"><a href="#cb3-6"></a>            in_channels<span class="op">=</span>config.num_channels,</span>
+<span id="cb3-7"><a href="#cb3-7"></a>            out_channels<span class="op">=</span>config.hidden_dim,</span>
+<span id="cb3-8"><a href="#cb3-8"></a>            kernel_size<span class="op">=</span>config.patch_size,</span>
+<span id="cb3-9"><a href="#cb3-9"></a>            stride<span class="op">=</span>config.patch_size,</span>
+<span id="cb3-10"><a href="#cb3-10"></a>            padding<span class="op">=</span><span class="st">"valid"</span> <span class="cf">if</span> config.patch_size <span class="op">==</span> <span class="dv">16</span> <span class="cf">else</span> <span class="st">"same"</span>,</span>
+<span id="cb3-11"><a href="#cb3-11"></a>        )</span>
+<span id="cb3-12"><a href="#cb3-12"></a></span>
+<span id="cb3-13"><a href="#cb3-13"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, imgs: torch.Tensor) <span class="op">-&gt;</span> torch.Tensor:</span>
+<span id="cb3-14"><a href="#cb3-14"></a>        <span class="co">"""</span></span>
+<span id="cb3-15"><a href="#cb3-15"></a><span class="co">        imgs: (batch_size, num_channels, height, width)</span></span>
+<span id="cb3-16"><a href="#cb3-16"></a><span class="co">        Returns: (batch_size,  num_patches_height, num_patches_width, hidden_dim)</span></span>
+<span id="cb3-17"><a href="#cb3-17"></a><span class="co">        """</span></span>
+<span id="cb3-18"><a href="#cb3-18"></a>        <span class="co"># (B, C, H, W) -&gt; (B, hidden_dim, H', W')</span></span>
+<span id="cb3-19"><a href="#cb3-19"></a>        x <span class="op">=</span> <span class="va">self</span>.conv(imgs)</span>
+<span id="cb3-20"><a href="#cb3-20"></a></span>
+<span id="cb3-21"><a href="#cb3-21"></a>        <span class="co"># (B, hidden_dim, H', W') -&gt; (B, hidden_dim, H' * W')</span></span>
+<span id="cb3-22"><a href="#cb3-22"></a>        x <span class="op">=</span> x.flatten(<span class="dv">2</span>)</span>
+<span id="cb3-23"><a href="#cb3-23"></a></span>
+<span id="cb3-24"><a href="#cb3-24"></a>        <span class="co"># (B, hidden_dim, H' * W') -&gt; (B, H' * W', hidden_dim)</span></span>
+<span id="cb3-25"><a href="#cb3-25"></a>        x <span class="op">=</span> x.transpose(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb3-26"><a href="#cb3-26"></a>        <span class="cf">return</span> x</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>用卷积的好处，除了可以更高效的实现Patch Embedding，代码更加简洁之外，我们还可以通过改变 <code>stride</code> 来使一些Patch overlapping，获得一个多尺度的结构，</p>
+<p>The image is convert along this process: <span id="eq-patchify"><span class="math display">\[
+\boxed{
+\mathbf{x} \in \mathbb{R}^{C \times H \times W}
+\quad \xrightarrow{\text{Patchify}} \quad
+\{ x_i \in \mathbb{R}^{C \times P \times P} \}{i=1}^N
+\quad \xrightarrow{\text{Flatten}} \quad
+\{ x_i \in \mathbb{R}^{(C \cdot P \cdot P)} \}_{i=1}^N
+\quad \xrightarrow{\text{Linear } W \in \mathbb{R}^{(C \cdot P \cdot P) \times D}} \quad
+\{ z_i \in \mathbb{R}^{D} \}_{i=1}^N
+}
+\tag{1}\]</span></span></p>
+</section>
+<section id="position-encoding" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="position-encoding"><span class="header-section-number">1.2</span> Position Encoding</h2>
+<p>将图片转化为 Transformer 的输入之后，接下来Transformer中的另一个组件就是传入 Position Information。我们知道在<a href="../01-Transformer/Transformer.qmd">Transformer</a> 中，他们用的是 sine-cosine position embedding，在那篇文章中，我们也提到了，还存在其他不同的Position Encoding的办法，ViT 用的就是另一种办法，Learned Position Embedding。Learned Position Embedding的方法很简单，也很好理解，对于每一个位置，我们给他一个index，将这个index传入一个 Embedding Matrix， 我们就得到一个Position Embedding。不过与Token Embedding不同的是，我们会用到所有的Position，也整个matrix， 所以我们不用定index，直接定义整个Embedding，然后将它传入Transformer中。</p>
+<div class="sourceCode" id="cb4" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw">class</span> PositionalEncoding(nn.Module):</span>
+<span id="cb4-2"><a href="#cb4-2"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, config: ModelConfig):</span>
+<span id="cb4-3"><a href="#cb4-3"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb4-4"><a href="#cb4-4"></a></span>
+<span id="cb4-5"><a href="#cb4-5"></a>        <span class="va">self</span>.positional_embedding <span class="op">=</span> nn.Parameter(</span>
+<span id="cb4-6"><a href="#cb4-6"></a>            torch.randn(</span>
+<span id="cb4-7"><a href="#cb4-7"></a>                <span class="dv">1</span>,</span>
+<span id="cb4-8"><a href="#cb4-8"></a>                (config.image_size <span class="op">//</span> config.patch_size) <span class="op">**</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">1</span>,</span>
+<span id="cb4-9"><a href="#cb4-9"></a>                config.hidden_dim,</span>
+<span id="cb4-10"><a href="#cb4-10"></a>            )</span>
+<span id="cb4-11"><a href="#cb4-11"></a>        )</span>
+<span id="cb4-12"><a href="#cb4-12"></a></span>
+<span id="cb4-13"><a href="#cb4-13"></a>        <span class="va">self</span>.cls_token <span class="op">=</span> nn.Parameter(torch.randn(<span class="dv">1</span>, <span class="dv">1</span>, config.hidden_dim))</span>
+<span id="cb4-14"><a href="#cb4-14"></a></span>
+<span id="cb4-15"><a href="#cb4-15"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x: torch.Tensor):</span>
+<span id="cb4-16"><a href="#cb4-16"></a>        <span class="co">"""</span></span>
+<span id="cb4-17"><a href="#cb4-17"></a><span class="co">        x: (batch_size, num_patches, hidden_dim)</span></span>
+<span id="cb4-18"><a href="#cb4-18"></a><span class="co">        Returns: (batch_size, num_patches, hidden_dim)</span></span>
+<span id="cb4-19"><a href="#cb4-19"></a><span class="co">        """</span></span>
+<span id="cb4-20"><a href="#cb4-20"></a>        <span class="co"># Add positional encoding to the input tensor</span></span>
+<span id="cb4-21"><a href="#cb4-21"></a>        batch_size <span class="op">=</span> x.size(<span class="dv">0</span>)</span>
+<span id="cb4-22"><a href="#cb4-22"></a></span>
+<span id="cb4-23"><a href="#cb4-23"></a>        pos_embedding <span class="op">=</span> <span class="va">self</span>.positional_embedding.expand(batch_size, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb4-24"><a href="#cb4-24"></a>        cls_token <span class="op">=</span> <span class="va">self</span>.cls_token.expand(batch_size, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb4-25"><a href="#cb4-25"></a></span>
+<span id="cb4-26"><a href="#cb4-26"></a>        x <span class="op">=</span> torch.cat((cls_token, x), dim<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb4-27"><a href="#cb4-27"></a>        <span class="cf">return</span> x <span class="op">+</span> pos_embedding</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>为什么ViT要用Learned Position Embedding呢？在ViT这篇文章中，他们尝试过不同的Position Embedding，比如：</p>
+<ul>
+<li>No Positional Information</li>
+<li>1-dimensional Positional Embedding</li>
+<li>2-dimensional Positional Embedding</li>
+<li>Relative Positional Embedding</li>
+</ul>
+<p>发现，除了No Positional Information之外，其余3种在Image Classification中的表现，都是差不多的。</p>
+<div id="fig-positional-encoding" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-positional-encoding-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/position-encoding-exp.png" id="fig-positional-encoding" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-positional-encoding-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3
+</figcaption>
+</figure>
+</div>
+<p>论文中表示，可能是因为所需要的 Position的信息较小，对于不同种类的Position Embedding的方法，学习这个Position Information的能力，都是差不多的。</p>
+<blockquote class="blockquote">
+<p>We speculate that since our Transformer encoder operates on patch-level inputs, as opposed to pixel-level, the differences in how to encode spatial information is less important. More precisely, <em>in patch-level inputs, the spatial dimensions are much smaller</em> than the original pixel-level inputs, e.g., <span class="math inline">\(14 \times 14\)</span> as opposed to <span class="math inline">\(224 \times 224\)</span>, and <em>learning to represent the spatial relations in this resolution is equally easy for these different positional encoding strategies.</em> <cite> An Image is Worth 16x16 Words- Transformers for Image Recognition at Scale, p.18 </cite></p>
+</blockquote>
+<p>不过，尽管Position的方法不重要，但是不同的训练参数，还是会影响到学习到的Position Information, 下图所示：</p>
+<div id="fig-position-diff-hyper" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-position-diff-hyper-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/pos-info-hyper.png" id="fig-position-diff-hyper" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-position-diff-hyper-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4
+</figcaption>
+</figure>
+</div>
+<section id="extending-position-encoding" class="level3" data-number="1.2.1">
+<h3 data-number="1.2.1" class="anchored" data-anchor-id="extending-position-encoding"><span class="header-section-number">1.2.1</span> Extending Position Encoding</h3>
+<p>当我们有了一个Pre-Training的模型，我们想用它Fine-Tuning到一个不同图片大小的数据库，我们改怎么做呢，第一个方法当然是，Resize 我们的图片，到ViT Pre-training的图片大小，但是，这个能导致较大的图片，失去很多细节。如果我们想保持图片的大小不变，同时让模型训练，我们就需要Extend Position Encoding，因为当Patch Size不变，图片大小变了的话，产生的Number of Patches 也是会改变的，这样，就是损失一些信息。我们需要做的是，找到一种方法，增大或者减小Position的数量。 这就是所谓的Position Interpolation。</p>
+<p>2D interpolation of the pre-trained position embeddings • ViT 在预训练时，通常用固定输入分辨率（比如 224×224） → 生成固定数量的 patch（比如 16×16 patch → 196 个 patch）。 • 但在 fine-tuning 时，输入图片可能大小不一样，比如 384×384，这时 patch 数量就变了。 • 这会导致原本的 位置编码 (position embeddings) 和新的 patch 数量对不上。 • 解决办法：对预训练好的位置编码做 二维插值 (2D interpolation)，根据 patch 在原图中的空间位置，把位置编码拉伸/缩放到新的分辨率。</p>
+<blockquote class="blockquote">
+<p>The Vision Transformer can handle arbitrary sequence lengths (up to memory constraints), however, the pre-trained position embeddings may no longer be meaningful. We therefore perform <strong>2D interpolation</strong> of the pre-trained position embeddings, according to their location in the original image <cite> An Image is Worth 16x16 Words- Transformers for Image Recognition at Scale, p.4 </cite></p>
+</blockquote>
+<div class="sourceCode" id="cb5" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">def</span> interpolate_pos_encoding(<span class="va">self</span>, x, w, h):</span>
+<span id="cb5-2"><a href="#cb5-2"></a>    npatch <span class="op">=</span> x.shape[<span class="dv">1</span>] <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb5-3"><a href="#cb5-3"></a>    N <span class="op">=</span> <span class="va">self</span>.pos_embed.shape[<span class="dv">1</span>] <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb5-4"><a href="#cb5-4"></a>    <span class="cf">if</span> npatch <span class="op">==</span> N <span class="kw">and</span> w <span class="op">==</span> h:</span>
+<span id="cb5-5"><a href="#cb5-5"></a>        <span class="cf">return</span> <span class="va">self</span>.pos_embed</span>
+<span id="cb5-6"><a href="#cb5-6"></a>    class_pos_embed <span class="op">=</span> <span class="va">self</span>.pos_embed[:, <span class="dv">0</span>]</span>
+<span id="cb5-7"><a href="#cb5-7"></a>    patch_pos_embed <span class="op">=</span> <span class="va">self</span>.pos_embed[:, <span class="dv">1</span>:]</span>
+<span id="cb5-8"><a href="#cb5-8"></a>    dim <span class="op">=</span> x.shape[<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb5-9"><a href="#cb5-9"></a>    w0 <span class="op">=</span> w <span class="op">//</span> <span class="va">self</span>.patch_embed.patch_size</span>
+<span id="cb5-10"><a href="#cb5-10"></a>    h0 <span class="op">=</span> h <span class="op">//</span> <span class="va">self</span>.patch_embed.patch_size</span>
+<span id="cb5-11"><a href="#cb5-11"></a>    </span>
+<span id="cb5-12"><a href="#cb5-12"></a>    patch_pos_embed <span class="op">=</span> F.interpolate(</span>
+<span id="cb5-13"><a href="#cb5-13"></a>        patch_pos_embed.reshape(</span>
+<span id="cb5-14"><a href="#cb5-14"></a>            <span class="dv">1</span>, </span>
+<span id="cb5-15"><a href="#cb5-15"></a>            <span class="bu">int</span>(math.sqrt(N)), </span>
+<span id="cb5-16"><a href="#cb5-16"></a>            <span class="bu">int</span>(math.sqrt(N)), </span>
+<span id="cb5-17"><a href="#cb5-17"></a>            dim</span>
+<span id="cb5-18"><a href="#cb5-18"></a>        ).permute(<span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">2</span>),</span>
+<span id="cb5-19"><a href="#cb5-19"></a>        scale_factor<span class="op">=</span>(w0 <span class="op">/</span> math.sqrt(N), h0 <span class="op">/</span> math.sqrt(N)),</span>
+<span id="cb5-20"><a href="#cb5-20"></a>        mode<span class="op">=</span><span class="st">'bicubic'</span>,</span>
+<span id="cb5-21"><a href="#cb5-21"></a>    )</span>
+<span id="cb5-22"><a href="#cb5-22"></a>    patch_pos_embed <span class="op">=</span> patch_pos_embed.permute(<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">1</span>).view(<span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, dim)</span>
+<span id="cb5-23"><a href="#cb5-23"></a>    <span class="cf">return</span> torch.cat((class_pos_embed.unsqueeze(<span class="dv">0</span>), patch_pos_embed), dim<span class="op">=</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="cls-tokens-mlp-head" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="cls-tokens-mlp-head"><span class="header-section-number">1.3</span> <code>[CLS]</code> Tokens &amp; MLP Head</h2>
+<p>在 <a href="../01-Transformer/Transformer.qmd">Transformer</a> 这一节，我们了解到：每输入一个token，Transformer会输出对应的token。这就是说，对于每个patch，Transformer会输出对应的Tokens，那么，我们应该选择哪一个token作为我们图片的表示呢。 BERT <span class="citation" data-cites="BERTPretrainingDeep2019devlin">(<a href="#ref-BERTPretrainingDeep2019devlin" role="doc-biblioref">Devlin et al. 2019</a>)</span>， 用了一个 <code>[CLS]</code>, 来表示一个句子。同理，我们也可以添加一个 <code>[CLS]</code> token, 来表示一张图片。同时，对于 <code>[CLS]</code> token, 我们也要在给他一个表示位置的信息。这就是为什么在Position Encoding上，我们有 <code>(config.image_size // config.patch_size) ** 2 + 1,</code> 位置信息，其中 <code>+1</code> 就是 <code>[CLS]</code> 的位置信息。 总结一下 <code>[CLS]</code> token 的作用就是用来聚合所有的Patch的消息，然后用来Image 的Representation。</p>
+<p>我们想一下，除了加一个 <code>[CLS]</code> token，之外，我们还有其他办法来表示图片吗。有一种很自然的方法就是，将所有的patch的消息收集起来，然后去一个平均值来表示这个图片。类似于传统的ConvNet(e.g.&nbsp;ResNet) 我们可以通过 <code>AvgPooling</code> 来实现。 不过论文中提到， 对于两种不同的Image Representation，需要有不同的Learning Rate 来训练这个网络。</p>
+<p>Other content <img src="assets/gap-vs-cls-learning-rate.png" id="fig-gap-vs-cls-lr" class="img-fluid"></p>
+<p>有了Image Represent之后，我们只需要将这个传入一个简单的MLP，我们就可以得到一个Classifier。MLP的输入是hidden dim，输入则是我们Number of Classes。不同的Index 表示不同的Classses。</p>
+<blockquote class="blockquote">
+<p>An initial attempt at using only image-patch embeddings, <strong>globally average-pooling (GAP)</strong> them, followed by a linear classifier—just like ResNet’s final feature map—performed very poorly. However, we found that this is neither due to the extra token, nor to the GAP operation. Instead, the difference in performance is fully explained by the requirement for a different learning-rate, <cite> An Image is Worth 16x16 Words- Transformers for Image Recognition at Scale, p.17 </cite></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Both during pre-training and fine-tuning, a classification head is attached to <span class="math inline">\(\mathrm{z}_{L}^{0}\)</span>. The classification head is implemented by a MLP with <u>one hidden layer at pre-training time and by a single linear layer at fine-tuning time</u>. <cite> An Image is Worth 16x16 Words- Transformers for Image Recognition at Scale, p.3 </cite></p>
+</blockquote>
+<div class="sourceCode" id="cb6" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">class</span> ClassifierHead(nn.Module):</span>
+<span id="cb6-2"><a href="#cb6-2"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, config: ModelConfig):</span>
+<span id="cb6-3"><a href="#cb6-3"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb6-4"><a href="#cb6-4"></a>        </span>
+<span id="cb6-5"><a href="#cb6-5"></a>        <span class="va">self</span>.fc1 <span class="op">=</span> nn.Linear(config.hidden_dim, config.mlp_dim)</span>
+<span id="cb6-6"><a href="#cb6-6"></a>        <span class="va">self</span>.fc2 <span class="op">=</span> nn.Linear(config.mlp_dim, config.num_classes)</span>
+<span id="cb6-7"><a href="#cb6-7"></a>        <span class="va">self</span>.dropout <span class="op">=</span> nn.Dropout(config.dropout_rate)</span>
+<span id="cb6-8"><a href="#cb6-8"></a></span>
+<span id="cb6-9"><a href="#cb6-9"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x: torch.Tensor):</span>
+<span id="cb6-10"><a href="#cb6-10"></a>        <span class="co">"""</span></span>
+<span id="cb6-11"><a href="#cb6-11"></a><span class="co">        x: (batch_size, num_patches, hidden_dim)</span></span>
+<span id="cb6-12"><a href="#cb6-12"></a><span class="co">        Returns: (batch_size, num_classes)</span></span>
+<span id="cb6-13"><a href="#cb6-13"></a><span class="co">        """</span></span>
+<span id="cb6-14"><a href="#cb6-14"></a>        <span class="co"># Use the CLS token for classification</span></span>
+<span id="cb6-15"><a href="#cb6-15"></a>        cls_token <span class="op">=</span> x[:, <span class="dv">0</span>, :]</span>
+<span id="cb6-16"><a href="#cb6-16"></a>        x <span class="op">=</span> F.relu(<span class="va">self</span>.fc1(cls_token))</span>
+<span id="cb6-17"><a href="#cb6-17"></a>        </span>
+<span id="cb6-18"><a href="#cb6-18"></a>        x <span class="op">=</span> <span class="va">self</span>.dropout(x)</span>
+<span id="cb6-19"><a href="#cb6-19"></a>        x <span class="op">=</span> <span class="va">self</span>.fc2(x)</span>
+<span id="cb6-20"><a href="#cb6-20"></a></span>
+<span id="cb6-21"><a href="#cb6-21"></a>        <span class="cf">return</span> x</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="transformer-encoder-block" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="transformer-encoder-block"><span class="header-section-number">1.4</span> Transformer Encoder Block</h2>
+<p>至此，我们已经讲完了ViT与<a href="../01-Transformer/Transformer.qmd">Transformer</a>的主要不同之处。接下来，就是Transformer的Encoder。 <img src="assets/ViT-Encoder.png" id="fig-vit-encoder" class="img-fluid"></p>
+<p>这部分，和Transformer原本的Encoder很类似，只不过有几处不同：</p>
+<ul>
+<li>Pre-Norm: 在ViT同，输入先进行一个LayerNorm，然后在传入MHA或者MLP中，反观在Transformer原本的Encoder中，我们是先将MHA或者MLP的输出与输入加在一起，之后再进行一个Normalization。这叫做Post-Norm</li>
+<li>MLP的实现：在Transformer Encoder中，用的是 <code>ReLU</code>, 而在ViT中，用的是 <code>GELU</code></li>
+</ul>
+<p>除此之外，其他部分都是一样的。一下是ViT Encoder的实现：</p>
+<div class="sourceCode" id="cb7" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">class</span> EncoderBlock(nn.Module):</span>
+<span id="cb7-2"><a href="#cb7-2"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, config: ModelConfig):</span>
+<span id="cb7-3"><a href="#cb7-3"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb7-4"><a href="#cb7-4"></a>        </span>
+<span id="cb7-5"><a href="#cb7-5"></a>        <span class="va">self</span>.norm1 <span class="op">=</span> LayerNorm(config.hidden_dim)</span>
+<span id="cb7-6"><a href="#cb7-6"></a>        <span class="va">self</span>.mha <span class="op">=</span> MHA(config)</span>
+<span id="cb7-7"><a href="#cb7-7"></a>        </span>
+<span id="cb7-8"><a href="#cb7-8"></a>        <span class="va">self</span>.norm2 <span class="op">=</span> LayerNorm(config.hidden_dim)</span>
+<span id="cb7-9"><a href="#cb7-9"></a>        <span class="va">self</span>.ffn <span class="op">=</span> FFN(config)</span>
+<span id="cb7-10"><a href="#cb7-10"></a></span>
+<span id="cb7-11"><a href="#cb7-11"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x: torch.Tensor):</span>
+<span id="cb7-12"><a href="#cb7-12"></a>        <span class="co">"""</span></span>
+<span id="cb7-13"><a href="#cb7-13"></a><span class="co">        x: (batch_size, num_patches, hidden_dim)</span></span>
+<span id="cb7-14"><a href="#cb7-14"></a><span class="co">        Returns: (batch_size, num_patches, hidden_dim)</span></span>
+<span id="cb7-15"><a href="#cb7-15"></a><span class="co">        """</span></span>
+<span id="cb7-16"><a href="#cb7-16"></a>        <span class="co"># Multi-head attention</span></span>
+<span id="cb7-17"><a href="#cb7-17"></a>        redisual <span class="op">=</span> x</span>
+<span id="cb7-18"><a href="#cb7-18"></a>        x <span class="op">=</span> <span class="va">self</span>.norm1(x)</span>
+<span id="cb7-19"><a href="#cb7-19"></a>        x <span class="op">=</span> redisual <span class="op">+</span> <span class="va">self</span>.mha(x)</span>
+<span id="cb7-20"><a href="#cb7-20"></a></span>
+<span id="cb7-21"><a href="#cb7-21"></a>        <span class="co"># Feed-forward network</span></span>
+<span id="cb7-22"><a href="#cb7-22"></a>        redisual <span class="op">=</span> x</span>
+<span id="cb7-23"><a href="#cb7-23"></a>        x <span class="op">=</span> <span class="va">self</span>.norm2(x)</span>
+<span id="cb7-24"><a href="#cb7-24"></a>        x <span class="op">=</span> x <span class="op">+</span> <span class="va">self</span>.ffn(x)</span>
+<span id="cb7-25"><a href="#cb7-25"></a></span>
+<span id="cb7-26"><a href="#cb7-26"></a>        <span class="cf">return</span> x</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="cnn-vs.-vit-inductive-bias" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="cnn-vs.-vit-inductive-bias"><span class="header-section-number">1.5</span> CNN vs.&nbsp;ViT： Inductive bias</h2>
+<p>至此，我们已经介绍完了Vision Transformer，我们来从Inductive Bias 的方面，看看 CNN 和 ViT 有什么不同</p>
+<div class="callout callout-style-default callout-note callout-titled" title="什么是Inductive Bias">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+什么是Inductive Bias
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>在深度学习里，Inductive Bias（归纳偏置）是指模型在学习之前，因<strong>结构或设计而自带的假设或先验</strong>。</p>
+</div>
+</div>
+<p>对于图像来说，常见的先验就是：</p>
+<ul>
+<li>局部像素是相关的（locality）</li>
+<li>相邻区域的模式有规律（2D neighborhood）</li>
+<li>物体无论出现在图像哪里，识别方式应该一样（translation equivariance）</li>
+</ul>
+<p>🔹 2. CNN 的结构怎么体现这些偏置？ 1. 局部性 (Locality) • 卷积核（例如 3×3）只和局部像素打交道，而不是全图。 • 这意味着模型“相信”图像的重要特征来自局部邻域，而不是遥远区域。 2. 二维邻域结构 (2D structure) • 卷积操作是沿着 图像的二维网格进行的，天然利用了图像的行列结构。 • 这和文本（序列 1D）不一样，CNN 明确知道输入是 2D 排列的。 3. 平移等变性 (Translation equivariance) • 卷积核的参数在整张图共享。 • 所以猫在左上角还是右下角，卷积核都能检测到“猫耳朵”。 • 这让 CNN 自动具有“识别位置无关”的能力。</p>
+<p>这些性质不是模型通过训练学出来的，而是因为 卷积操作本身的数学结构就带来的： • kernel 的局部连接 → 局部性 • kernel 滑动覆盖全图 → 平移等变性 • 操作在二维空间定义 → 邻域结构 • 所以，哪怕你不给 CNN 喂太多数据，它也会利用这些偏置去学习特征。</p>
+<p>而对于 ViT 来说： ViT 的归纳偏置非常弱，几乎完全依赖数据和训练来学习。 1. Patch 切分 (Patchification) • ViT 唯一的“图像先验”之一就是把输入图片切成 patch。 • 这一操作隐含了：图像是一个二维结构，可以被分块处理。 2. 位置编码 (Positional Embeddings) • Transformer 本身只处理序列，没有空间结构的概念。 • ViT 通过加位置编码告诉模型 patch 在图像中的相对位置。 • 在输入分辨率变化时，会做 二维插值 (2D interpolation) 来适配，这也是一种人工引入的 2D 先验。 3. 其他部分 • 除了以上两点，ViT 的注意力机制是 全局的 (global)，没有局部性约束。 • 没有像 CNN 那样内置的平移等变性或局部邻域结构。</p>
+<p>这样就是为什么ViT需要更多数据和计算才能学到同样的空间归纳规律。</p>
+</section>
+<section id="vit-model-variants" class="level2" data-number="1.6">
+<h2 data-number="1.6" class="anchored" data-anchor-id="vit-model-variants"><span class="header-section-number">1.6</span> ViT Model Variants</h2>
+<p>ViT 有3种不同的基本变形， 如下图所示 <img src="assets/vit-variances.png" class="img-fluid"></p>
+<p>ViT的名字通常表示为: ViT-L/16: 意思是，ViT-Large，然后用的16 Patch Size。 需要注意的是，Patch Size越大，我们得到的tokens就越少，也就是需要更少的训练时实现。</p>
+</section>
+</section>
+<section id="qa" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Q&amp;A</h1>
+</section>
+<section id="扩展" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> 扩展</h1>
+<section id="减少tokens" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="减少tokens"><span class="header-section-number">3.1</span> 减少Tokens</h2>
+<ul>
+<li>Patch Merge</li>
+<li>Patch Shuffle</li>
+</ul>
+</section>
+<section id="vision-language-model" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="vision-language-model"><span class="header-section-number">3.2</span> Vision Language Model</h2>
+<p>我们以及学习了ViT for computer Vision， <a href="../01-Transformer/Transformer.qmd">Transformer</a> for NLP， 接下来有什么办法让这两种模型结合起来呢？ CLIP (2021): 将 ViT 融合到 vision-language 预训练中。</p>
+</section>
+</section>
+<section id="appendix" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Appendix</h1>
+<section id="axial-attention轴向注意力" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="axial-attention轴向注意力"><span class="header-section-number">4.1</span> Axial Attention（轴向注意力）</h2>
+<p>在处理 图像或视频 这类高维输入时，如果直接对所有像素做 全局 self-attention，复杂度是 <span class="math inline">\(\mathcal{O}(H^2 W^2)\)</span> （<span class="math inline">\(H, W\)</span> 是高和宽）。当图像很大时，这个代价太高。 核心想法：把二维 attention 拆成两次一维 attention（沿着图像的两个“轴”分别做）。 1. Row-wise Attention（行注意力） • 沿着水平方向（宽度轴 W）做注意力，每一行的像素互相关注。 • 复杂度：<span class="math inline">\(\mathcal{O}(H \cdot W^2)\)</span>。 2. Column-wise Attention（列注意力） • 沿着垂直方向（高度轴 H）做注意力，每一列的像素互相关注。 • 复杂度： <span class="math inline">\(\mathcal{O}(W \cdot H^2)\)</span>。</p>
+<p>组合起来，相当于在 H 和 W 两个轴上都做了全局依赖建模。</p>
+<div id="fig-axial-attention" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-axial-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/axial-attention.png" id="fig-axial-attention" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-axial-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5
+</figcaption>
+</figure>
+</div>
+
+
+
+</section>
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-BERTPretrainingDeep2019devlin" class="csl-entry" role="listitem">
+Devlin, Jacob, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2019. <span>“<span>BERT</span>: <span class="nocase">Pre-training</span> of <span>Deep Bidirectional Transformers</span> for <span>Language Understanding</span>.”</span> May 24, 2019. <a href="https://doi.org/10.48550/arXiv.1810.04805">https://doi.org/10.48550/arXiv.1810.04805</a>.
+</div>
+<div id="ref-ImageWorth16x162021dosovitskiy" class="csl-entry" role="listitem">
+Dosovitskiy, Alexey, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, et al. 2021. <span>“An <span>Image</span> Is <span>Worth</span> 16x16 <span>Words</span>: <span>Transformers</span> for <span>Image Recognition</span> at <span>Scale</span>.”</span> June 3, 2021. <a href="https://doi.org/10.48550/arXiv.2010.11929">https://doi.org/10.48550/arXiv.2010.11929</a>.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© CC-By Yuyang, 2025</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>This page is built with ❤️ and <a href="https://quarto.org/">Quarto</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.js" defer="true"></script>
+</body></html>

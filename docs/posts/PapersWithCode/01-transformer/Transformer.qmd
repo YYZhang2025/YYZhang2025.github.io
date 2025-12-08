@@ -1,0 +1,35 @@
+---
+title: Attention is All You Need(**Transformer**)
+description: Transformer 是一种基于**自注意力机制**的深度学习架构，能够并行处理序列，在语言、视觉和多模态任务中表现出色，并且作为 GPT、BERT 等大型语言模型（LLM）的核心基础，推动了当今生成式人工智能的快速发展。
+categories: [Transformer, LLM, NLP, Attention]
+---
+
+
+
+- Original Paper: [Attention is All You Need](https://arxiv.org/abs/1706.03762)
+- My Implementation: [GitHub Repository](https://github.com/YYZhang2025/100-AI-Code)
+
+---
+我们开始第一篇论文的学习： 《Attention is All You Need》 [@AttentionAllYou2023vaswani]，也就是Transformer模型。Transformer 模型的提出，彻底改变了自然语言处理（NLP）以及更广泛的领域。该架构完全基于注意力机制，不再依赖循环（RNN）或卷积（CNN），因此在训练时更易并行化、效率更高。如今，Transformer 已成为众多前沿模型的基础，不仅在 NLP 中表现突出，也扩展到计算机视觉等领域。比如 ChatGPT、DeepSeek 等大语言模型（LLM）都以 Transformer 为核心架构。所以我们自然就把它当作我们第一篇文章的首选。 
+
+
+[Vision-Transformer](../02-vision-transformer/Vision-Transformer.qmd)
+
+
+它的提出，主要是为了解决几个问题：
+
+- 序列建模(Sequence Modeling)的效率问题:
+	- 在 Transformer 出现之前，主流方法是 **RNN**（循环神经网络）和 **CNN**（卷积神经网络）。
+	- RNN 需要<u>按顺序逐步处理序列，无法并行化</u>，训练和推理效率低下。
+	- CNN 虽然有一定的并行性，但<u>捕捉长距离依赖需要堆叠很多层，计算开销大</u>。
+- 长距离依赖建模问题:
+	- RNN 在捕捉长距离依赖时容易出现梯度消失(Gradient Vanish) 或梯度爆炸(Gradient Explosion)，导致模型难以学习远距离的信息。
+
+
+
+> This <u>inherently sequential nature precludes parallelization</u> within training examples, which becomes critical at longer sequence lengths, as memory constraints limit batching across examples. ... In these models, <u>the number of operations required to relate signals from two arbitrary input or output positions grows in the distance between positions</u>, linearly for ConvS2S and logarithmically for ByteNet. This makes it more difficult to learn dependencies between distant positions
+> <cite> Attention is all you need, p. </cite>
+
+
+
+![](assets/time-complexity-of-self-attention.png)

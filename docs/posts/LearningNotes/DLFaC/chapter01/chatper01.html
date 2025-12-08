@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Yuyang Zhang">
+<meta name="description" content="This chapter provides an overview of the fundamental concepts and motivations behind deep learning. It covers the history of deep learning, key milestones, and the glossary of essential terms that will be used throughout the book.">
+
+<title>Chapter 01: Introduction</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../../">
+<link href="../../../.././style/icon.avif" rel="icon">
+<script src="../../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-0348920b7671f696dc9078d39bff215e.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../../site_libs/bootstrap/bootstrap-6e97c76ec7d7e44d6e697e3c9997636d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../site_libs/bootstrap/bootstrap-dark-84bb4237d43bdfa05598834a807c2e5a.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../../../site_libs/bootstrap/bootstrap-6e97c76ec7d7e44d6e697e3c9997636d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link href="https://fonts.cdnfonts.com/css/cmu-sans-serif" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../../../style/styles.css">
+<link rel="stylesheet" href="../../../../style/callout.css">
+<meta property="og:title" content="Chapter 01: Introduction">
+<meta property="og:description" content="This chapter provides an overview of the fundamental concepts and motivations behind deep learning. It covers the history of deep learning, key milestones, and the glossary of essential terms that will be used throughout the book.">
+<meta property="og:image" content="./assets/cross-validation.png">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../../index.html"> 
+<span class="menu-text">About Me</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/YYZhang2025"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/zhang-yuyang/"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../../posts/Blogs/blogs_index.html"> 
+<span class="menu-text">Blogs</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-learning-notes" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Learning Notes</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-learning-notes">    
+        <li>
+    <a class="dropdown-item" href="../../../../posts/LearningNotes/DLFaC_index.html">
+ <span class="dropdown-text">Deep Learning Foundations and Concepts</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../../../posts/LearningNotes/CS336_index.html">
+ <span class="dropdown-text">Stanford CS336: LLM from Scratch</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../../../../posts/Projects/projects_index.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../../posts/PapersWithCode/100_Papers_index.html"> 
+<span class="menu-text">100 Papers with Code</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+          <h1 class="quarto-secondary-nav-title">Chapter 01: Introduction</h1>
+        </a>     
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#什么是deep-learning" id="toc-什么是deep-learning" class="nav-link active" data-scroll-target="#什么是deep-learning"><span class="header-section-number">1</span> 什么是Deep Learning?</a></li>
+  <li><a href="#polynomial-regression-example" id="toc-polynomial-regression-example" class="nav-link" data-scroll-target="#polynomial-regression-example"><span class="header-section-number">2</span> Polynomial Regression Example</a>
+  <ul class="collapse">
+  <li><a href="#model-complexity" id="toc-model-complexity" class="nav-link" data-scroll-target="#model-complexity"><span class="header-section-number">2.1</span> Model Complexity</a></li>
+  <li><a href="#model-selection" id="toc-model-selection" class="nav-link" data-scroll-target="#model-selection"><span class="header-section-number">2.2</span> Model Selection</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">2.3</span> Summary</a></li>
+  </ul></li>
+  <li><a href="#history-of-deep-learning" id="toc-history-of-deep-learning" class="nav-link" data-scroll-target="#history-of-deep-learning"><span class="header-section-number">3</span> History of Deep Learning</a></li>
+  <li><a href="#总结" id="toc-总结" class="nav-link" data-scroll-target="#总结"><span class="header-section-number">4</span> 总结</a></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">Chapter 01: Introduction</h1>
+</div>
+
+<div>
+  <div class="description">
+    This chapter provides an overview of the fundamental concepts and motivations behind deep learning. It covers the history of deep learning, key milestones, and the glossary of essential terms that will be used throughout the book.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Yuyang Zhang </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Chapter 01 介绍了什么是Deep Learning, 并且包含了几个重要的概念和术语, 这些内容对于理解后续章节的内容非常重要.</p>
+<section id="什么是deep-learning" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> 什么是Deep Learning?</h1>
+<p>Deep Learning (深度学习) 是机器学习的一个子领域, 它使用多层神经网络来建模和解决复杂的问题. 深度学习通过模拟人脑的结构和功能, 能够<u>自动从大量数据中学习特征表示</u>, 并在各种任务中表现出色, 如图像识别、自然语言处理和语音识别等。 随着大语言模型（LLM）的兴起， 深度学习在生成式AI领域的应用也变得越来越广泛。 有些人 <span class="citation" data-cites="SparksArtificialGeneral2023bubeck">(<a href="#ref-SparksArtificialGeneral2023bubeck" role="doc-biblioref">Bubeck et al. 2023</a>)</span> 认为预示着AGI(Artificial General Intelligence, 人工通用智能) 的开始。</p>
+<blockquote class="blockquote">
+<p>The central claim of our work is that GPT-4 attains a form of general intelligence, indeed showing sparks of artificial general intelligence. <cite>Sparks of Artificial General Intelligence: Early experiments with GPT-4</cite></p>
+</blockquote>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>个人推荐在阅读接下来的章节前，阅读一下这篇论文 Deep Learning <span class="citation" data-cites="DeepLearning2015lecun">(<a href="#ref-DeepLearning2015lecun" role="doc-biblioref">LeCun, Bengio, and Hinton 2015</a>)</span>。这篇论文介绍了深度学习的基本概念，以及不同的网络架构和应用场景</p>
+</div>
+</div>
+<p>为了更好的理解什么是Deep Learning以及Neural Networks，书中举了4个例子来说明Deep Learning的应用场景：</p>
+<ol type="1">
+<li>医学影像分类(Medical Diagnosis)</li>
+<li>3D 蛋白质结构预测(Protein Structure Prediction)</li>
+<li>图片生成(Image Synthesis)</li>
+<li>大语言模型(LLM)</li>
+</ol>
+<p>在这里就不赘述了，感兴趣的读者可以参考书中的内容。 通过这几个例子，我们可以简单的了解Deep Learning的强大能力，解决的不同的问题的能力，以及它在各个领域的应用：</p>
+<ul>
+<li>医学影像分类： Supervised Learning。</li>
+</ul>
+</section>
+<section id="polynomial-regression-example" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Polynomial Regression Example</h1>
+<p>书中介绍了一个简单的例子来说明Deep Learning的基本原理： Polynomial Regression (多项式回归)。 通过这个例子，我们可以了解到一个深度学习模型是如何构建的，以及它是如何进行训练和预测的。</p>
+<p>假设我们有一组数据 <span class="math inline">\(\mathcal{D}\{ (x_i, t_i)\}\)</span> , 其中 <span class="math inline">\(x_i\)</span> 是输入变量，<span class="math inline">\(t_i\)</span> 是目标变量。 在这个例子中，我们知道 <span class="math inline">\(t_i\)</span> 是 <span class="math inline">\(x_i\)</span> 的由以下的sinusodial的函数生成的：</p>
+<p><span id="eq-sinusoidal-function"><span class="math display">\[
+t = sin(2\pi x) + \epsilon
+\tag{1}\]</span></span> 其中 <span class="math inline">\(\epsilon\)</span> 是一个<strong>高斯噪声项</strong>。 并且 <span class="math inline">\(x_i \in [0, 1]\)</span>。 我们希望通过一个多项式函数来拟合这个数据集：</p>
+<p><span id="eq-polynomial-regression"><span class="math display">\[
+y(x, \mathbf{w}) = w_0 + w_1 x + w_2 x^2 + ... + w_M x^M = \sum_{j=0}^{M} w_j x^j
+\tag{2}\]</span></span></p>
+<p>在这个例子中，<span class="math inline">\(M\)</span> 是多项式的阶数，<span class="math inline">\(\mathbf{w} = [w_0, w_1, ..., w_M]^T\)</span> 是多项式的系数向量。 我们的目标是找到一组系数 <span class="math inline">\(\mathbf{w}\)</span>，使得多项式函数 <span class="math inline">\(y(x, \mathbf{w})\)</span> 能够很好地拟合数据集 <span class="math inline">\(\mathcal{D}\)</span>。 这个多项式函数 (<a href="#eq-polynomial-regression" class="quarto-xref">Equation&nbsp;2</a>) 叫做 <strong>Linear Model</strong> (线性模型)，因为它是系数<span class="math inline">\(\mathbf{w}\)</span>的线性组合.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>尽管这个<em>数据模拟</em>，<em>模型搭建</em>的很简单，但是从中我们可以看到一些复杂问题中的同性：</p>
+<ul>
+<li>数据集 <span class="math inline">\(\mathcal{D}\)</span>： 真实世界中的数据通常是复杂且存在噪声 <span class="math inline">\(\epsilon\)</span> 的，我们需要通过合适的模型来拟合这些数据。</li>
+<li>模型选择： 选择合适的模型（如多项式回归）对于不同的问题至关重要。</li>
+<li>参数估计： 通过优化算法来估计模型</li>
+</ul>
+</div>
+</div>
+<p>在我们调整这个参数 <span class="math inline">\(\mathbf{w}\)</span> 之前，我们需要定义一个<strong>损失函数</strong> (Loss Function/Error Function) 来告诉我们这个模型表现的好坏，以及如何调整参数 <span class="math inline">\(\mathbf{w}\)</span>。 在这个例子中，我们使用 Sum of Squared Errors (SSE) 作为损失函数：</p>
+<p><span id="eq-sse-loss-function"><span class="math display">\[
+E(\mathbf{w}) = \frac{1}{2} \sum_{i=1}^{N} (y(x_i, \mathbf{w}) - t_i)^2
+\tag{3}\]</span></span> 其中 <span class="math inline">\(N\)</span> 是数据集中的样本数量。 我们的目标是<strong>最小化</strong>损失函数 <span class="math inline">\(E(\mathbf{w})\)</span>，以找到最佳的参数 <span class="math inline">\(\mathbf{w}^*\)</span>。 如何最小化损失函数 <span class="math inline">\(E(\mathbf{w})\)</span> 呢？ 书中介绍了两种方法：</p>
+<ol type="1">
+<li><strong>解析解</strong> (Analytical Solution)： 通过求解损失函数的导数为零来找到最佳参数 <span class="math inline">\(\mathbf{w}^*\)</span>。 这种方法适用于简单的模型和小规模的数据集。</li>
+<li><strong>数值优化</strong> (Numerical Optimization)： 使用梯度下降 (Gradient Descent) 等优化算法来迭代地更新参数 <span class="math inline">\(\mathbf{w}\)</span>，直到损失函数收敛到一个最小值。 这种方法适用于复杂的模型和大规模的数据集。</li>
+</ol>
+<p>在这个简单的例子中，我们用 Analytical 的方法。 我们知道，对于一个函数求极值，我们通常会对其求导并令导数为零。 通过对损失函数 <span class="math inline">\(E(\mathbf{w})\)</span> 求导并令其为零，我们可以得到最佳参数 <span class="math inline">\(\mathbf{w}^*\)</span> 的解析解：</p>
+<p><span id="eq-analytical-solution"><span class="math display">\[
+\mathbf{w}^* = (\Phi^T \Phi)^{-1} \Phi^T \mathbf{t}
+\tag{4}\]</span></span> 其中 <span class="math inline">\(\Phi\)</span> 是设计矩阵 (Design Matrix)，其元素为 <span class="math inline">\(\Phi_{ij} = x_i^j\)</span>，<span class="math inline">\(\mathbf{t}\)</span> 是目标变量的向量。</p>
+<section id="model-complexity" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="model-complexity"><span class="header-section-number">2.1</span> Model Complexity</h2>
+<p>仔细观察 (<a href="#eq-analytical-solution" class="quarto-xref">Equation&nbsp;4</a>) 以及损失函数 (<a href="#eq-sse-loss-function" class="quarto-xref">Equation&nbsp;3</a>) ，我们会发现：最小化损失函数 <span class="math inline">\(E(\mathbf{w})\)</span>， 我们可以得到 “最优” 的参数 <span class="math inline">\(\mathbf{w}^*\)</span>。 但这个参数真的是最优吗？还有一个参数 <span class="math inline">\(M\)</span>, 即多项式的阶数，我们并没有对它进行讨论。 事实上，<span class="math inline">\(M\)</span> 的选择对于模型的表现有着重要的影响。在这之前，我们先来看一下我们训练一个模型的目的是什么：我们希望模型能够<strong>泛化</strong> (Generalize) 到未见过的数据。 也就是说，我们希望模型不仅在训练数据上表现良好，而且在测试数据上也能有良好的表现。</p>
+<blockquote class="blockquote">
+<p>The ability to make accurate predictions on previously unseen inputs is a key goal in machine learning and is known as <strong>generalization</strong>.</p>
+</blockquote>
+<p>为了评估模型的泛化能力，我们通常会将数据集划分为训练集 (Training Set) 和测试集 (Test Set)。 我们使用训练集来训练模型，并使用测试集来评估模型的性能。 通过这种方式，我们可以检测模型是否过拟合 (Overfitting) 或欠拟合 (Underfitting)。接下来我们来看一下当 <span class="math inline">\(M=9\)</span> 时，我们的“最优”模型在测试即上的表现。 在此，我们通过另一个Error Function来评估模型在测试集上的表现： Root Mean Squared Error (RMSE)：</p>
+<p><span id="eq-rmse"><span class="math display">\[
+E_{RMS} = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (y(x_i, \mathbf{w}^*) - t_i)^2}
+\tag{5}\]</span></span></p>
+<p>这个损失函数与之前的 SSE (<a href="#eq-sse-loss-function" class="quarto-xref">Equation&nbsp;3</a>) 类似，但是它有几点不同：</p>
+<ol type="1">
+<li>RMSE 是除以了样本数量 <span class="math inline">\(N\)</span>，使得损失函数与样本数量无关。</li>
+<li>RMSE 取了平方根，使得损失函数的单位与目标变量相同，更容易解释。</li>
+</ol>
+<p>通过计算 RMSE，我们可以评估模型在测试集上的表现。 书中展示了当 <span class="math inline">\(M=9\)</span> 时，模型在训练集上表现良好，但在测试集上表现较差，说明模型过拟合了训练数据。 这表明选择过高的模型复杂度（即高阶多项式）会导致模型过拟合，从而降低其泛化能力。要如何选择 <span class="math inline">\(M\)</span> 呢？这就是深度学习中的另一个问题： <strong>模型选择</strong> (Model Selection / Model Comparison)。 当我们选择不同的<span class="math inline">\(M\)</span>时，我们实际上是在选择不同复杂度的模型。</p>
+<p>还有另一种方法，就是Regularization (正则化)。 通过在损失函数中添加一个正则化项，我们可以控制模型的复杂度，从而提高模型的泛化能力。 书中介绍了L2正则化（Ridge Regression）： <span id="eq-ridge-regression"><span class="math display">\[
+E(\mathbf{w}) = \frac{1}{2} \sum_{i=1}^{N} (y(x_i, \mathbf{w}) - t_i)^2 + \frac{\lambda}{2} \sum_{j=0}^{M} w_j^2
+\tag{6}\]</span></span> 其中 <span class="math inline">\(\lambda\)</span> 是正则化参数，控制正则化项的权重。 通过调整 <span class="math inline">\(\lambda\)</span>，我们可以控制模型的复杂度，从而提高模型的泛化能力。</p>
+</section>
+<section id="model-selection" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="model-selection"><span class="header-section-number">2.2</span> Model Selection</h2>
+<p>在实际应用中，我们通常会保留一个Validation set 来选择最佳的模型复杂度 <span class="math inline">\(M\)</span> 和正则化参数 <span class="math inline">\(\lambda\)</span>。 这些参数也称之为 <strong>超参数</strong> (Hyperparameters)，因为它们不是通过训练数据学习得到的，而是需要通过其他方法来选择的。 通过选择合适的超参数，我们可以提高模型的泛化能力，从而在未见过的数据上表现良好。 其中Cross Validation 是一种常用的超参数选择方法。 通过将数据集划分为多个子集，并在不同的子集上训练和评估模型，我们可以选择出最佳的超参数组合。当子集的数量较多时，这种方法被称为 Leave-One-Out Cross Validation。 不过这种方法存在的问题是，计算开销较大： - 当分类的类别较多时，计算开销会显著增加。 - 当Hyper-Parameters的数量较多时，计算开销也会指数型增加。</p>
+<p>在现在的LLM的训练中，训练一组超参数组合的模型， 可能需要消耗数百万美元的计算资源。 因此，在实际应用中，我们通常会结合经验和启发式方法来选择超参数，以减少计算开销。</p>
+<div id="fig-cross-validation" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cross-validation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/cross-validation.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cross-validation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Illustration of Cross Validation
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="summary" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="summary"><span class="header-section-number">2.3</span> Summary</h2>
+<p>通过这个简单的多项式回归例子，我们可以了解到深度学习模型的基本构建过程，包括：</p>
+<ul>
+<li>数据集的准备：
+<ul>
+<li>数据集存在噪声，需要通过合适的模型来拟合这些数据。</li>
+<li>数据集的划分： 训练集、验证集和测试集的划分对于评估模型的泛化能力至关重要。</li>
+</ul></li>
+<li>损失函数的定义</li>
+<li>模型的选择：
+<ul>
+<li>模型复杂度的选择对于模型的泛化能力有着重要的影响。</li>
+<li>正则化技术可以帮助控制模型的复杂度，从而提高模型的泛化能力。</li>
+</ul></li>
+<li>超参数的选择对于模型的性能有着重要的影响，需要通过合适的方法来选择。</li>
+<li>模型的评估： 通过评估模型在测试集上的表现，我们可以了解模型的泛化能力。</li>
+</ul>
+<p>基本上所有的Deep Learning模型都可以归结为以上几个步骤。 包括那些看似很复杂的大语言模型(LLM)， 也是如此。 通过这个例子，我们可以为后续章节的学习打下坚实的基础。</p>
+</section>
+</section>
+<section id="history-of-deep-learning" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> History of Deep Learning</h1>
+<p>在这一小节中，介绍了深度学习的发展历程， 从早期的神经网络模型到现代的深度学习架构。俗话说： 以史为鉴，可以知兴替。 通过了解深度学习的发展历程，我们可以更好地理解当前的技术和趋势。 书中提到了3个重要的里程碑：</p>
+<p>1。 <strong>感知机</strong> (Perceptron)： 由Frank Rosenblatt在1958年提出，是最早的神经网络模型之一。 感知机是一种线性分类器，能够将输入数据划分为不同的类别。 然而，由于其只能处理线性可分的问题，感知机在1969年被Marvin Minsky和Seymour Papert的著作《Perceptrons》中指出其局限性，导致神经网络研究一度陷入低谷。当多个感知机层叠加时，形成了多层感知机 (Multi-Layer Perceptron, MLP)，这为后来的深度学习奠定了基础。 2。 <strong>反向传播算法</strong> (Backpropagation)： 由David Rumelhart, Geoffrey Hinton和Ronald Williams在1986年提出，是训练多层神经网络的关键算法。 反向传播算法通过计算损失函数相对于网络参数的梯度，能够有效地更新参数，从而提高模型的性能。 反向传播算法的提出使得深度神经网络的训练变得可行，推动了神经网络研究的发展。 3. <strong>深度网络</strong> （Deep Networks）： 随着计算能力的提升和大规模数据集的出现，深度神经网络在2000年代初开始崭露头角。 2006年，Geoffrey Hinton等人提出了深度置信网络 (Deep Belief Networks)，并展示了其在无监督学习中的潜力。 随后，卷积神经网络 (Convolutional Neural Networks, CNNs) 和循环神经网络 (Recurrent Neural Networks, RNNs) ， Transformer 深度学习架构相继被提出，并在图像识别、自然语言处理等领域取得了显著的成果。深度网络的 hidden layers 数量大大增加，使得模型能够学习更复杂的特征表示， 这也叫做Representation Learning。 通过学习到semantically meaningful的特征表示， 深度学习模型能够更好地理解和处理复杂的数据。</p>
+<p>在近年来，深度学习取得了突破性的进展，尤其是在生成式AI领域。 大语言模型 (Large Language Models, LLMs) 如GPT和Qwen展示了强大的自然语言理解和生成能力，推动了生成式AI的发展。 这些模型通过大规模预训练和微调，能够在各种任务中表现出色，进一步拓展了深度学习的应用范围。一些研究者认为，这些进展预示着人工通用智能 (Artificial General Intelligence, AGI) 的到来，尽管这一观点仍存在争议。现代的LLM，也称作为Foundation Model， 通过大规模的预训练，能够适应多种下游任务，展示了深度学习在自然语言处理领域的强大能力。</p>
+</section>
+<section id="总结" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> 总结</h1>
+<p>DLFaC 的第一张章节介绍了深度学习的基本概念、一个简单的多项式回归例子，以及深度学习的发展历程。 通过这些内容，我们可以了解到深度学习的强大能力，以及它在各个领域的广泛应用。 了解这些基础知识对于后续章节的学习非常重要， 希望读者能够通过这一章节对深度学习有一个初步的认识和理解。</p>
+
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-SparksArtificialGeneral2023bubeck" class="csl-entry" role="listitem">
+Bubeck, Sébastien, Varun Chandrasekaran, Ronen Eldan, Johannes Gehrke, Eric Horvitz, Ece Kamar, Peter Lee, et al. 2023. <span>“Sparks of <span>Artificial General Intelligence</span>: <span>Early</span> Experiments with <span>GPT-4</span>.”</span> arXiv. <a href="https://doi.org/10.48550/arXiv.2303.12712">https://doi.org/10.48550/arXiv.2303.12712</a>.
+</div>
+<div id="ref-DeepLearning2015lecun" class="csl-entry" role="listitem">
+LeCun, Yann, Yoshua Bengio, and Geoffrey Hinton. 2015. <span>“Deep Learning.”</span> <em>Nature</em> 521 (7553): 436–44. <a href="https://doi.org/10.1038/nature14539">https://doi.org/10.1038/nature14539</a>.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© CC-By Yuyang, 2025</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>This page is built with ❤️ and <a href="https://quarto.org/">Quarto</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.js" defer="true"></script>
+</body></html>

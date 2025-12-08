@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Yuyang Zhang">
+<meta name="description" content="Swin Transformer 是一种使用层次化结构和滑动窗口自注意力机制的ViT模型，既保留了局部建模的高效性，又通过窗口偏移实现跨区域信息交互，可作为通用视觉骨干网络，适用于图像分类、目标检测和语义分割等多种视觉任务。">
+
+<title>03: Swin Transformer: Hierarchical Vision Transformer using Shifted Windows(Swin Transformer)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<link href="../../.././style/icon.avif" rel="icon">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-0348920b7671f696dc9078d39bff215e.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-6e97c76ec7d7e44d6e697e3c9997636d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-84bb4237d43bdfa05598834a807c2e5a.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../../site_libs/bootstrap/bootstrap-6e97c76ec7d7e44d6e697e3c9997636d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link href="https://fonts.cdnfonts.com/css/cmu-sans-serif" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../../style/styles.css">
+<link rel="stylesheet" href="../../../style/callout.css">
+<meta property="og:title" content="03: Swin Transformer: Hierarchical Vision Transformer using Shifted Windows(Swin Transformer)">
+<meta property="og:description" content="Swin Transformer 是一种使用层次化结构和滑动窗口自注意力机制的ViT模型，既保留了局部建模的高效性，又通过窗口偏移实现跨区域信息交互，可作为通用视觉骨干网络，适用于图像分类、目标检测和语义分割等多种视觉任务。">
+<meta property="og:image" content="assets/swin-transformer-arch.jpg">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../index.html"> 
+<span class="menu-text">About Me</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/YYZhang2025"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/zhang-yuyang/"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/Blogs/blogs_index.html"> 
+<span class="menu-text">Blogs</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-learning-notes" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Learning Notes</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-learning-notes">    
+        <li>
+    <a class="dropdown-item" href="../../../posts/LearningNotes/DLFaC_index.html">
+ <span class="dropdown-text">Deep Learning Foundations and Concepts</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../../posts/LearningNotes/CS336_index.html">
+ <span class="dropdown-text">Stanford CS336: LLM from Scratch</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/Projects/projects_index.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/PapersWithCode/100_Papers_index.html"> 
+<span class="menu-text">100 Papers with Code</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+          <h1 class="quarto-secondary-nav-title">03: Swin Transformer: Hierarchical Vision Transformer using Shifted Windows(<strong>Swin Transformer</strong>)</h1>
+        </a>     
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#swin-transformer" id="toc-swin-transformer" class="nav-link active" data-scroll-target="#swin-transformer"><span class="header-section-number">1</span> Swin-Transformer</a>
+  <ul class="collapse">
+  <li><a href="#window-multi-head-attention-w-mha" id="toc-window-multi-head-attention-w-mha" class="nav-link" data-scroll-target="#window-multi-head-attention-w-mha"><span class="header-section-number">1.1</span> Window Multi-Head-Attention (W-MHA)</a></li>
+  <li><a href="#shifted-window-multi-head-attention-sw-mha" id="toc-shifted-window-multi-head-attention-sw-mha" class="nav-link" data-scroll-target="#shifted-window-multi-head-attention-sw-mha"><span class="header-section-number">1.2</span> Shifted Window Multi-Head-Attention (SW-MHA)</a></li>
+  <li><a href="#consecutive-swin-transformer-block" id="toc-consecutive-swin-transformer-block" class="nav-link" data-scroll-target="#consecutive-swin-transformer-block"><span class="header-section-number">1.3</span> Consecutive Swin Transformer Block</a></li>
+  <li><a href="#patch-merge" id="toc-patch-merge" class="nav-link" data-scroll-target="#patch-merge"><span class="header-section-number">1.4</span> Patch Merge</a></li>
+  <li><a href="#relative-position-encoding" id="toc-relative-position-encoding" class="nav-link" data-scroll-target="#relative-position-encoding"><span class="header-section-number">1.5</span> Relative Position Encoding</a>
+  <ul class="collapse">
+  <li><a href="#fine-tuning-in-different-image-size" id="toc-fine-tuning-in-different-image-size" class="nav-link" data-scroll-target="#fine-tuning-in-different-image-size"><span class="header-section-number">1.5.1</span> Fine-Tuning in different image size</a></li>
+  </ul></li>
+  <li><a href="#others" id="toc-others" class="nav-link" data-scroll-target="#others"><span class="header-section-number">1.6</span> Others</a></li>
+  <li><a href="#downstream-tasks" id="toc-downstream-tasks" class="nav-link" data-scroll-target="#downstream-tasks"><span class="header-section-number">1.7</span> Downstream Tasks</a>
+  <ul class="collapse">
+  <li><a href="#image-classification" id="toc-image-classification" class="nav-link" data-scroll-target="#image-classification"><span class="header-section-number">1.7.1</span> Image Classification</a></li>
+  </ul></li>
+  <li><a href="#object-detection-semantic-segmentation" id="toc-object-detection-semantic-segmentation" class="nav-link" data-scroll-target="#object-detection-semantic-segmentation"><span class="header-section-number">1.8</span> Object Detection &amp; Semantic segmentation</a></li>
+  <li><a href="#training-details" id="toc-training-details" class="nav-link" data-scroll-target="#training-details"><span class="header-section-number">1.9</span> Training Details</a>
+  <ul class="collapse">
+  <li><a href="#droppath" id="toc-droppath" class="nav-link" data-scroll-target="#droppath"><span class="header-section-number">1.9.1</span> DropPath</a></li>
+  <li><a href="#gradient-checkpoint" id="toc-gradient-checkpoint" class="nav-link" data-scroll-target="#gradient-checkpoint"><span class="header-section-number">1.9.2</span> Gradient Checkpoint</a></li>
+  </ul></li>
+  <li><a href="#swin-v2" id="toc-swin-v2" class="nav-link" data-scroll-target="#swin-v2"><span class="header-section-number">1.10</span> Swin V2</a>
+  <ul class="collapse">
+  <li><a href="#post-normalization" id="toc-post-normalization" class="nav-link" data-scroll-target="#post-normalization"><span class="header-section-number">1.10.1</span> Post normalization</a></li>
+  <li><a href="#scaled-cosine-attention" id="toc-scaled-cosine-attention" class="nav-link" data-scroll-target="#scaled-cosine-attention"><span class="header-section-number">1.10.2</span> Scaled cosine attention</a></li>
+  <li><a href="#log-spaced-continuous-position-biaslog-cpb" id="toc-log-spaced-continuous-position-biaslog-cpb" class="nav-link" data-scroll-target="#log-spaced-continuous-position-biaslog-cpb"><span class="header-section-number">1.10.3</span> Log-spaced Continuous Position Bias(Log-CPB)</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">2</span> Summary</a></li>
+  <li><a href="#key-concept-check-table" id="toc-key-concept-check-table" class="nav-link" data-scroll-target="#key-concept-check-table"><span class="header-section-number">3</span> Key Concept Check Table</a></li>
+  <li><a href="#q-a" id="toc-q-a" class="nav-link" data-scroll-target="#q-a"><span class="header-section-number">4</span> Q &amp; A</a></li>
+  <li><a href="#related-resource-further-reading" id="toc-related-resource-further-reading" class="nav-link" data-scroll-target="#related-resource-further-reading"><span class="header-section-number">5</span> Related resource &amp; Further Reading</a></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">03: Swin Transformer: Hierarchical Vision Transformer using Shifted Windows(<strong>Swin Transformer</strong>)</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Computer-Vision</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Swin Transformer 是一种使用层次化结构和滑动窗口自注意力机制的ViT模型，既保留了局部建模的高效性，又通过窗口偏移实现跨区域信息交互，可作为通用视觉骨干网络，适用于图像分类、目标检测和语义分割等多种视觉任务。
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Yuyang Zhang </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+<nav id="TOC-body" role="doc-toc">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#swin-transformer" id="toc-swin-transformer"><span class="header-section-number">1</span> Swin-Transformer</a>
+  <ul>
+  <li><a href="#window-multi-head-attention-w-mha" id="toc-window-multi-head-attention-w-mha"><span class="header-section-number">1.1</span> Window Multi-Head-Attention (W-MHA)</a></li>
+  <li><a href="#shifted-window-multi-head-attention-sw-mha" id="toc-shifted-window-multi-head-attention-sw-mha"><span class="header-section-number">1.2</span> Shifted Window Multi-Head-Attention (SW-MHA)</a></li>
+  <li><a href="#consecutive-swin-transformer-block" id="toc-consecutive-swin-transformer-block"><span class="header-section-number">1.3</span> Consecutive Swin Transformer Block</a></li>
+  <li><a href="#patch-merge" id="toc-patch-merge"><span class="header-section-number">1.4</span> Patch Merge</a></li>
+  <li><a href="#relative-position-encoding" id="toc-relative-position-encoding"><span class="header-section-number">1.5</span> Relative Position Encoding</a>
+  <ul>
+  <li><a href="#fine-tuning-in-different-image-size" id="toc-fine-tuning-in-different-image-size"><span class="header-section-number">1.5.1</span> Fine-Tuning in different image size</a></li>
+  </ul></li>
+  <li><a href="#others" id="toc-others"><span class="header-section-number">1.6</span> Others</a></li>
+  <li><a href="#downstream-tasks" id="toc-downstream-tasks"><span class="header-section-number">1.7</span> Downstream Tasks</a>
+  <ul>
+  <li><a href="#image-classification" id="toc-image-classification"><span class="header-section-number">1.7.1</span> Image Classification</a></li>
+  </ul></li>
+  <li><a href="#object-detection-semantic-segmentation" id="toc-object-detection-semantic-segmentation"><span class="header-section-number">1.8</span> Object Detection &amp; Semantic segmentation</a></li>
+  <li><a href="#training-details" id="toc-training-details"><span class="header-section-number">1.9</span> Training Details</a>
+  <ul>
+  <li><a href="#droppath" id="toc-droppath"><span class="header-section-number">1.9.1</span> DropPath</a></li>
+  <li><a href="#gradient-checkpoint" id="toc-gradient-checkpoint"><span class="header-section-number">1.9.2</span> Gradient Checkpoint</a></li>
+  </ul></li>
+  <li><a href="#swin-v2" id="toc-swin-v2"><span class="header-section-number">1.10</span> Swin V2</a>
+  <ul>
+  <li><a href="#post-normalization" id="toc-post-normalization"><span class="header-section-number">1.10.1</span> Post normalization</a></li>
+  <li><a href="#scaled-cosine-attention" id="toc-scaled-cosine-attention"><span class="header-section-number">1.10.2</span> Scaled cosine attention</a></li>
+  <li><a href="#log-spaced-continuous-position-biaslog-cpb" id="toc-log-spaced-continuous-position-biaslog-cpb"><span class="header-section-number">1.10.3</span> Log-spaced Continuous Position Bias(Log-CPB)</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary"><span class="header-section-number">2</span> Summary</a></li>
+  <li><a href="#key-concept-check-table" id="toc-key-concept-check-table"><span class="header-section-number">3</span> Key Concept Check Table</a></li>
+  <li><a href="#q-a" id="toc-q-a"><span class="header-section-number">4</span> Q &amp; A</a></li>
+  <li><a href="#related-resource-further-reading" id="toc-related-resource-further-reading"><span class="header-section-number">5</span> Related resource &amp; Further Reading</a></li>
+  </ul>
+</nav>
+<section id="swin-transformer" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Swin-Transformer</h1>
+<p>在阅读Swin Transformer 这篇文章之前，让我们回顾一下 <a href="../../../posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html">Vision-Transformer</a> 讲的是什么： <u>ViT 在处理图像时，会将整张图像分割成固定大小的patch，并进行global self-attention的计算，从而捕捉图像中的全局信息</u>。 然而， 这种方法存在两个核心的问题：</p>
+<ol type="1">
+<li><span style="color:rgb(255, 0, 0)">计算复杂度高</span>: ViT的计算复杂度为 <span class="math inline">\(\mathcal{O}(( \frac{HW}{P^2})^2)\)</span>，其中<span class="math inline">\(H\)</span>和<span class="math inline">\(W\)</span>分别是图像的高度和宽度，而<span class="math inline">\(P\)</span>是patch的大小。对高分辨率图像（High Resolution)（如检测或分割任务）来说，token 数量巨大，计算和显存开销难以承受</li>
+<li><span style="color:rgb(255, 0, 0)">缺乏局部特征建模</span>: ViT在进行<strong>全局自注意力</strong>计算时，可能会忽略图像中的局部特征</li>
+<li><span style="color:rgb(255, 0, 0)">没有金字塔式层级结构</span>: CNN 的层级结构（从低层局部特征到高层语义特征）非常适合处理多尺度目标, ViT 直接用固定大小 patch flatten 成序列，缺乏层次表示，难以适应密集预测任务（如目标检测、语义分割）。</li>
+</ol>
+<blockquote class="blockquote">
+<p>We observe that significant challenges in transferring its high performance in the language domain to the visual domain can be explained by differences between the two modalities. <u>One of these differences involves scale</u> … <u>visual elements can vary substantially in scale</u> … Another difference is the <u>much higher resolution of pixels in images</u> compared to words in passages of text … as the <u>computational complexity of its self-attention is quadratic to image size</u>. <cite> Swin Transformer Hierarchical Vision Transformer using Shifted Windows, p.&nbsp;</cite></p>
+</blockquote>
+<p>为了解决这些问题， Swin Transformer <span class="citation" data-cites="SwinTransformerHierarchical2021liu">(<a href="#ref-SwinTransformerHierarchical2021liu" role="doc-biblioref">Liu, Lin, et al. 2021</a>)</span> 提出一种新的基于 Vision Transformer的架构它通过引入<strong>层次化的特征表示(Hierarchical Architecture)</strong> 和 <strong>移动窗口机制(Shifted Window MSA, SW-MSA)</strong>，来有效地捕捉图像中的局部和全局信息， 并且通过<strong>局部窗口(Window-based Multi-head Self Attention, W-MSA)</strong> 注意力，来降低训练的时间复杂度。</p>
+<p><img src="assets/swin-transformer-arch.jpg" class="img-fluid"></p>
+<p>接下来，我们来详细介绍 Swin Transformer 的架构和关键技术。我们首先来看Swin Transformer 的Attention的实现。</p>
+<section id="window-multi-head-attention-w-mha" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="window-multi-head-attention-w-mha"><span class="header-section-number">1.1</span> Window Multi-Head-Attention (W-MHA)</h2>
+<p>W-MHA 的核心思想是：</p>
+<ul>
+<li>把图像划分成固定大小的窗口（window），比如 7×7 patch 的窗口。</li>
+<li>在窗口内的 token 之间做局部自注意力，而不是在整张图像的所有 token 之间做全局注意力。</li>
+<li>每个窗口独立计算 Multi-Head Attention → 降低计算量，并且我们可以并行的计算</li>
+</ul>
+<p>这样一来：</p>
+<ul>
+<li>单个窗口 token 数量固定 = <span class="math inline">\(M^{2}\)</span>（如 7×7=49）。</li>
+<li>注意力计算复杂度从 <span class="math inline">\(\mathcal{O}((hw)^{2}C)\)</span> 降低为 <span class="math inline">\(\mathcal{O}(M^{2}hwC)\)</span>，其中 <span class="math inline">\(M \ll \sqrt{ N }\)</span>。</li>
+</ul>
+<p>除了降低计算复杂度之外，W-MHA，还有保留CNN 在图像处理中强大的一点是 局部感受野 和 平移不变性。</p>
+<ul>
+<li>W-MHA 通过窗口限制，使得注意力机制也具备类似的局部归纳偏置（inductive bias），适合图像建模。</li>
+</ul>
+<blockquote class="blockquote">
+<p>For efficient modeling, we propose to compute self-attention within local windows. The windows are arranged to evenly partition the image in a non-overlapping manner. <cite> Swin Transformer Hierarchical Vision Transformer using Shifted Windows, p.4 </cite></p>
+</blockquote>
+</section>
+<section id="shifted-window-multi-head-attention-sw-mha" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="shifted-window-multi-head-attention-sw-mha"><span class="header-section-number">1.2</span> Shifted Window Multi-Head-Attention (SW-MHA)</h2>
+<p>W-MHA 很好，但是它存在的一个问题就是：</p>
+<ul>
+<li>窗口之间是相互独立的，缺少跨窗口的信息交流。这会导致，模型只能看见局部，不能获得全局的信息。</li>
+</ul>
+<blockquote class="blockquote">
+<p>The window-based self-attention module lacks connections across windows, which limits its modeling power. To introduce cross-window connections while maintaining the efficient computation of non-overlapping windows, we propose a shifted window partitioning approach which alternates between two partitioning configurations in consecutive Swin Transformer blocks. <cite> Swin Transformer Hierarchical Vision Transformer using Shifted Windows, p.4 </cite></p>
+</blockquote>
+<p>为了解决这个问题，Swin- Transformer提出来 Shifted Window Mulit-Head-Attention (SW-MHA) 窗口位置相对前一层平移，比如 7×7 窗口 → 平移 3 个 patch。 这样，新的窗口会跨越原来的边界，token 会和相邻窗口的 token 一起计算注意力。 相当于强制跨窗口交互，让信息可以在不同区域之间流动。</p>
+<p><img src="assets/Swin-Transformer-shift-window-padding.png" class="img-fluid"> 如上如所示，我们将Window通过向左上角移动，通过给图片增加Padding来，但是这种办法显然会增加计算的复杂度。Swin Transformer用了一种很聪明的办法，叫做 Cycling Shift，这种方法就是将将一个张量或图像在某个维度上做 平移，但不是把移出去的部分丢掉，而是 重新从另一边补回来。就像“环形队列”或“钟表走一圈又回到起点”。 如下图所示 <img src="assets/Swin-Transformer-After-cyclic-shift.png" class="img-fluid"></p>
+<p>可以看到，通过Cycling Shift，我们得到的每个window的内容，和之前是一样的，但是所需要的Window的数量，小了很多，这也就意味着，所需要的时间复杂度，也小了很多。</p>
+<p><img src="assets/swin-transformer-cyclic.png" class="img-fluid"></p>
+<p>不过Cycling Shift也有一个问题，就是同一个窗口里面，可能有来自不同图片的信息，这些信息在原图片上不是相邻的，自然不应该相互交流信息。我们可以将图片，抽象成下图的形式。组织Attention交流，很自然的一种方法是利用Mask，就像<a href="../../../posts/PapersWithCode/01-transformer/Transformer.html">Transformer</a>里的Causal Mask一样。但是，这个Mask长什么样子呢</p>
+<p><img src="assets/Swin-Transformer-shift-window-label.png" class="img-fluid"></p>
+<p>我们可以看一下Mask，如下图所示，有颜色的区域表示Mask == 1， 在此为了更好的</p>
+<p><img src="assets/Swin-Transformer-shift-window-mask.png" class="img-fluid"></p>
+</section>
+<section id="consecutive-swin-transformer-block" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="consecutive-swin-transformer-block"><span class="header-section-number">1.3</span> Consecutive Swin Transformer Block</h2>
+<blockquote class="blockquote">
+<p>Swin Transformer is built by replacing the standard multi-head self attention (MSA) module in a Transformer block by a module based on shifted windows (described in Section 3.2), with other layers kept the same. As illustrated in Figure 3(b), a Swin Transformer block consists of a shifted window based MSA module, followed by a 2-layer MLP with GELU nonlinearity in between. A LayerNorm (LN) layer is applied before each MSA module and each MLP, and a residual connection is applied after each module <cite> Swin Transformer Hierarchical Vision Transformer using Shifted Windows, p.4 </cite></p>
+</blockquote>
+<p><img src="assets/Swin-Transformer-Layers.png" class="img-fluid"></p>
+<p><span class="math display">\[
+\begin{split}
+\hat{z}^l &amp;= \text{W-MSA} \left( \text{LN} \left( z^{l-1} \right) \right) + z^{l-1} \\
+z^l &amp;= \text{MLP} \left( \text{LN} \left( \hat{z}^l \right) \right) + \hat{z}^l \\
+\hat{z}^{l+1} &amp;= \text{SW-MSA} \left( \text{LN} \left( z^l \right) \right) + z^l \\
+z^{l+1} &amp;= \text{MLP} \left( \text{LN} \left( \hat{z}^{l+1} \right) \right) + \hat{z}^{l+1}
+\end{split}
+\]</span></p>
+<p>将W-MSA 和 SW-MSA叠在一起，就得到了Transformer Block，当然，还有一个MLP，Layer Normalization，在此就不赘述了。</p>
+</section>
+<section id="patch-merge" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="patch-merge"><span class="header-section-number">1.4</span> Patch Merge</h2>
+<p>讲完了W-MHA，和SW-MHA，我们就理解了Swin- Transformer中最难理解，也是最终的部分，接下来我们看看其他简单的部分。 Patch Merge , 图中绿色的部分，逐步降低 token 数量（降采样），同时增加特征维度的操作。这类似于CNN中的操作，随着层数的增加，分辨率逐步降低、通道数逐步增加，这样既减少了计算量，又能提取层级特征。具体的实现：</p>
+<ol type="1">
+<li>分组：将相邻的 2×2 patch 合并成一个新的 patch。
+<ul>
+<li>假设输入特征大小为 (H, W, C)。</li>
+<li>每 2×2 的 patch → 合并为 1 个新 token。</li>
+<li>新特征图大小变为 (H/2, W/2, 4C)。</li>
+</ul></li>
+<li>线性变换:
+<ul>
+<li>将合并后的 4C 维特征通过一个 线性层 (Linear Projection)，降到 2C 维。</li>
+<li>输出维度翻倍（2C），以补偿分辨率减半带来的信息损失。 🔹 为什么提出 Patch Merging</li>
+</ul>
+<ol type="1">
+<li>分层表示 (Hierarchical Representation) • 模仿 CNN 的金字塔结构，从局部细节逐步聚合到全局语义。 • 有利于下游任务（检测、分割）中不同尺度的目标建模。</li>
+<li>计算效率 • token 数量逐层减少 → Attention 的复杂度大幅下降。 • 保证模型可扩展到大分辨率图像。</li>
+<li>语义信息聚合 • 通过合并相邻 patch，模型能把更大感受野的信息整合到新的 token 中。</li>
+</ol></li>
+</ol>
+<div class="sourceCode" id="cb1" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a>x <span class="op">=</span> x.view(B, H, W, C)</span>
+<span id="cb1-2"><a href="#cb1-2"></a></span>
+<span id="cb1-3"><a href="#cb1-3"></a>x0 <span class="op">=</span> x[:, <span class="dv">0</span>::<span class="dv">2</span>, <span class="dv">0</span>::<span class="dv">2</span>, :]  <span class="co"># (B, H/2, W/2, C)</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a>x1 <span class="op">=</span> x[:, <span class="dv">1</span>::<span class="dv">2</span>, <span class="dv">0</span>::<span class="dv">2</span>, :]  <span class="co"># (B, H/2, W/2, C)</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a>x2 <span class="op">=</span> x[:, <span class="dv">0</span>::<span class="dv">2</span>, <span class="dv">1</span>::<span class="dv">2</span>, :]  <span class="co"># (B, H/2, W/2, C)</span></span>
+<span id="cb1-6"><a href="#cb1-6"></a>x3 <span class="op">=</span> x[:, <span class="dv">1</span>::<span class="dv">2</span>, <span class="dv">1</span>::<span class="dv">2</span>, :]  <span class="co"># (B, H/2, W/2, C)</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a></span>
+<span id="cb1-8"><a href="#cb1-8"></a>x <span class="op">=</span> torch.cat([x0, x1, x2, x3], <span class="op">-</span><span class="dv">1</span>)  <span class="co"># (B, H/2, W/2, 4*C)</span></span>
+<span id="cb1-9"><a href="#cb1-9"></a>x <span class="op">=</span> x.view(B, <span class="op">-</span><span class="dv">1</span>, <span class="dv">4</span> <span class="op">*</span> C)  <span class="co"># (B, H/2*W/2, 4*C)</span></span>
+<span id="cb1-10"><a href="#cb1-10"></a></span>
+<span id="cb1-11"><a href="#cb1-11"></a>x <span class="op">=</span> <span class="va">self</span>.reduction(x)  <span class="co"># (B, H/2*W/2, 2*C)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="relative-position-encoding" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="relative-position-encoding"><span class="header-section-number">1.5</span> Relative Position Encoding</h2>
+<p>与<a href="../../../posts/PapersWithCode/01-transformer/Transformer.html">Transformer</a> 和 <a href="../../../posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html">Vision-Transformer</a> 中不同的是，Swin Transformer利用的是Relative Position Encoding。</p>
+<p><span class="math display">\[
+\text{Attention}(Q, K, V) = \text{Softmax}\left( \frac{QK^{T}}{\sqrt{ d }} +B\right) V
+\]</span></p>
+<pre data-code-line-numbers=""><code>1.  定义偏置表 (relative_position_bias_table)
+•   大小是 (2*Wh-1) * (2*Ww-1, num_heads)
+•   意味着窗口内的任意两个 token 的相对位置 (dx, dy)，都有一个可学习的偏置值（每个 head 一份）。
+•   例如窗口是 7×7 → 相对位置范围是 [-6,6]，所以表大小是 13×13=169，每个位置存一组偏置
+
+
+2.  计算相对位置索引 (relative_position_index)
+•   首先生成窗口内每个 token 的坐标。
+•   然后做差，得到任意两个 token 的相对坐标 (dx, dy)。
+•   再映射成表的索引（通过移位和哈希成一个整数 index）。
+•   结果是一个 (Wh*Ww, Wh*Ww) 的矩阵，每个元素存两个 token 之间在 bias 表里的索引。
+
+
+•   在图像里，相对位置比绝对位置更重要：
+•   比如一个像素的左邻和右邻很相似，无论这个像素在图像的哪个地方。</code></pre>
+<p><span class="math display">\[
+\begin{tabular}
+\Xhline{1.0pt}
+&amp; \multicolumn{2}{c|}{ImageNet} &amp; \multicolumn{2}{c|}{COCO} &amp; \multicolumn{1}{c}{ADE20k} \\
+&amp; top-1 &amp; top-5  &amp; AP$^\text{box}$ &amp; AP$^\text{mask}$ &amp; mIoU \\
+\hline
+no pos. &amp; 80.1 &amp; 94.9 &amp; 49.2 &amp; 42.6  &amp; 43.8 \\
+abs. pos. &amp; 80.5 &amp; 95.2 &amp; 49.0 &amp; 42.4  &amp; 43.2 \\
+abs.+rel. pos. &amp; 81.3 &amp; 95.6 &amp; 50.2 &amp; 43.4 &amp; 44.0\\
+rel. pos. w/o app. &amp; 79.3 &amp; 94.7 &amp; 48.2 &amp; 41.9 &amp; 44.1 \\
+rel. pos. &amp; \textbf{81.3} &amp; \textbf{95.6} &amp; \textbf{50.5} &amp; \textbf{43.7} &amp; \textbf{46.1} \\
+\Xhline{1.0pt}
+\end{tabular}
+\]</span></p>
+<section id="fine-tuning-in-different-image-size" class="level3" data-number="1.5.1">
+<h3 data-number="1.5.1" class="anchored" data-anchor-id="fine-tuning-in-different-image-size"><span class="header-section-number">1.5.1</span> Fine-Tuning in different image size</h3>
+<p>和 <a href="../../../posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html">Vision-Transformer</a> 一样，当输入的图片和训练时不一样，我们可以通过 <strong>bi-cubic interpolation</strong> 来增大Relative Position</p>
+<blockquote class="blockquote">
+<p>The learnt relative position bias in pre-training can be also used to initialize a model for fine-tuning with a different window size through bi-cubic interpolation <cite> Swin Transformer Hierarchical Vision Transformer using Shifted Windows, p.5 </cite></p>
+</blockquote>
+<p><span class="math display">\[
+\begin{table}
+    \centering
+\small
+\addtolength{\tabcolsep}{-4.0pt}
+\begin{tabular}
+\Xhline{1.0pt}
+\multirow{2}{*}{method} &amp; \multicolumn{4}{c|}{MSA in a stage (ms)} &amp; \multicolumn{3}{c}{Arch. (FPS)} \\
+&amp; S1 &amp; S2 &amp; S3 &amp; S4 &amp; T &amp; S &amp; B \\
+\hline
+sliding window (naive) &amp; 122.5 &amp; 38.3 &amp; 12.1 &amp; 7.6 &amp; 183 &amp; 109 &amp; 77 \\
+sliding window (kernel)  &amp; 7.6 &amp; 4.7 &amp; 2.7 &amp; 1.8 &amp; 488 &amp; 283 &amp; 187 \\
+\hline
+Performer~\cite{choromanski2020performer} &amp; 4.8 &amp; 2.8 &amp; 1.8 &amp; 1.5 &amp; 638 &amp; 370 &amp; 241 \\
+\hline
+window (w/o shifting) &amp; 2.8 &amp; 1.7 &amp; 1.2 &amp; 0.9 &amp; 770 &amp; 444 &amp; 280 \\
+\hline
+shifted window (padding) &amp; 3.3 &amp; 2.3 &amp; 1.9 &amp; 2.2 &amp; 670 &amp; 371 &amp; 236 \\
+shifted window (cyclic)  &amp; 3.0 &amp; 1.9 &amp; 1.3 &amp; 1.0 &amp; 755 &amp; 437 &amp; 278 \\
+\Xhline{1.0pt}
+\end{tabular}
+    \caption{Real speed of different self-attention computation methods and implementations on a V100 GPU. }
+    \label{tab:ablation-selfatt-efficient}
+\normalsize
+\end{table}
+\]</span></p>
+</section>
+</section>
+<section id="others" class="level2" data-number="1.6">
+<h2 data-number="1.6" class="anchored" data-anchor-id="others"><span class="header-section-number">1.6</span> Others</h2>
+<p>除了以上几个，Swin Transformer 中还有其他Component，比如 ：</p>
+<ul>
+<li>Patch Embedding</li>
+<li>Linear Projection</li>
+<li>FeedForward</li>
+<li>Layer Normalization 在此，就不赘述了，有需要的同学，请参考前一篇 <a href="../../../posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html">Vision-Transformer</a>， 或者 <a href="../../../posts/PapersWithCode/01-transformer/Transformer.html">Transformer</a></li>
+</ul>
+</section>
+<section id="downstream-tasks" class="level2" data-number="1.7">
+<h2 data-number="1.7" class="anchored" data-anchor-id="downstream-tasks"><span class="header-section-number">1.7</span> Downstream Tasks</h2>
+<p>当一场图片传入Swin Transformer， 它可以提取出图片的特征。 <span class="math display">\[
+\mathrm{z} = f_{\theta}(\mathrm{x}), \quad \text{where}\ \mathrm{x} \in \mathbb{R}^{3\times H \times W}, \mathrm{z} \in \mathbb{R}^{H'W' \times C}
+\]</span></p>
+<p>一张图片转化成了 <span class="math inline">\(H'W'\)</span> 个特征，每个特征的大小为 $C。</p>
+<p>Swin Transformer 可以有当作基本的backbone，在此基础上，我们可以对下游进行不同的任务，比如：</p>
+<ul>
+<li>Image Classification</li>
+<li>Object Detection</li>
+<li>Semantic segmentation</li>
+</ul>
+<p>接下来，我们将如何用Swin Transformer在不同的任务中</p>
+<p><img src="assets/swin-transformer-hier-representation.png" class="img-fluid"></p>
+<section id="image-classification" class="level3" data-number="1.7.1">
+<h3 data-number="1.7.1" class="anchored" data-anchor-id="image-classification"><span class="header-section-number">1.7.1</span> Image Classification</h3>
+<p>对于 <span class="math inline">\(\mathrm{z}\)</span> 的 hidden states，我们可以进行一个Average Pooling，对于每一个特征求均值，然后再将这个传入一个分类头，就可以得到我们Classification了。与 <a href="../../../posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html">Vision-Transformer</a> 不同的是，Swin Transformer 没有 <code>[CLS]</code> token 来当收集全部的信息。</p>
+</section>
+</section>
+<section id="object-detection-semantic-segmentation" class="level2" data-number="1.8">
+<h2 data-number="1.8" class="anchored" data-anchor-id="object-detection-semantic-segmentation"><span class="header-section-number">1.8</span> Object Detection &amp; Semantic segmentation</h2>
+<p>Backbone (Swin Transformer)：</p>
+<ul>
+<li>Stage 1: [N, C1, H/4, W/4]</li>
+<li>Stage 2: [N, C2, H/8, W/8]</li>
+<li>Stage 3: [N, C3, H/16, W/16]</li>
+<li>Stage 4: [N, C4, H/32, W/32]</li>
+</ul>
+<p>可以得到 FPN<span class="citation" data-cites="FeaturePyramidNetworks2017lin">(<a href="#ref-FeaturePyramidNetworks2017lin" role="doc-biblioref">Lin et al. 2017</a>)</span> to create a pyramid of feature maps suitable for detection.</p>
+<div class="sourceCode" id="cb3" data-code-line-numbers=""><pre class="sourceCode numberSource text number-lines code-with-copy"><code class="sourceCode"><span id="cb3-1"><a href="#cb3-1"></a>{P2: [N, C, H/4, W/4], </span>
+<span id="cb3-2"><a href="#cb3-2"></a> P3: [N, C, H/8, W/8], </span>
+<span id="cb3-3"><a href="#cb3-3"></a> P4: [N, C, H/16, W/16], </span>
+<span id="cb3-4"><a href="#cb3-4"></a> P5: [N, C, H/32, W/32]}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>有了这些FPN 之后，我们可以结合不同的算法，来进行不同的任务，比如</p>
+<p>例子 1：目标检测 (Object Detection)</p>
+<p>以 Swin Transformer + Faster R-CNN <span class="citation" data-cites="FasterRCNNRealTime2016ren">(<a href="#ref-FasterRCNNRealTime2016ren" role="doc-biblioref">Ren et al. 2016</a>)</span> 为例： 1. 输入图像：一张 800×1333 的 COCO 数据集图片。</p>
+<pre data-code-line-numbers=""><code>3.  FPN (特征金字塔网络)：将多尺度特征融合，形成统一的金字塔特征。
+4.  RPN (Region Proposal Network)：在特征图上生成候选区域。
+5.  RoI Head：对候选区域进行分类 (车、人、狗…) 和边框回归。
+6.  输出：预测结果，例如：
+•   “一辆车” → 边框 (x1,y1,x2,y2) + 类别 “car”
+•   “一个人” → 边框 + 类别 “person”</code></pre>
+<p><img src="assets/swin-object.png" class="img-fluid"> 👉 在 COCO 数据集上，Swin-T + Faster R-CNN比 ResNet-50 + Faster R-CNN 的 mAP 提高约 5~6 个点。</p>
+<p>语义分割 (Semantic Segmentation) <img src="assets/swin-UPerNet.png" class="img-fluid"> 以 Swin Transformer + UPerNet<span class="citation" data-cites="UnifiedPerceptualParsing2018xiao">(<a href="#ref-UnifiedPerceptualParsing2018xiao" role="doc-biblioref">Xiao et al. 2018</a>)</span>为例： 1. 输入图像：一张 512×512 的 ADE20K 数据集图片。 2. Backbone (Swin Transformer)：同样输出 1/4, 1/8, 1/16, 1/32 四个尺度特征。 3. FPN/UPerNet Head： • 将多层特征融合，对应不同语义层级。 • 利用融合后的特征生成像素级预测。 4. 预测图 (segmentation map)：大小 512×512，每个像素属于一个类别。 • [0,0] 像素 → “sky” • [100,150] 像素 → “building” • [200,300] 像素 → “road” 5. 输出：完整的语义分割图，每个像素都有类别标签。</p>
+<p>👉 在 ADE20K 上，Swin-L + UPerNet 的 mIoU 达到 53.5+，比传统 CNN backbone 提升显著。 具体的实现细节，等到以后我们阅读到关于Segmentation的内容在，再来实现</p>
+</section>
+<section id="training-details" class="level2" data-number="1.9">
+<h2 data-number="1.9" class="anchored" data-anchor-id="training-details"><span class="header-section-number">1.9</span> Training Details</h2>
+<blockquote class="blockquote">
+<p>We employ an <strong>AdamW optimizer</strong> for 300 epochs using a <strong>cosine decay learning rate scheduler</strong> and 20 epochs of <strong>linear warm-up</strong>. A batch size of 1024, an initial learning rate of 0.001, and a <strong>weight decay</strong> of 0.05 are used. We include most of the augmentation and regularization strategies of in training, except for repeated augmentation and EMA, which do not enhance performance. <cite> Swin Transformer Hierarchical Vision Transformer using Shifted Windows, p.5 </cite></p>
+</blockquote>
+<section id="droppath" class="level3" data-number="1.9.1">
+<h3 data-number="1.9.1" class="anchored" data-anchor-id="droppath"><span class="header-section-number">1.9.1</span> DropPath</h3>
+<p>论文中还用到了 DropPath 来当作一种 Regularization。 DropPath 也称之为 Stochastic Depth <span class="citation" data-cites="DeepNetworksStochastic2016huang">(<a href="#ref-DeepNetworksStochastic2016huang" role="doc-biblioref">Huang et al. 2016</a>)</span> , 它是一种应用在Residual Network， 在训练过程中，随机丢弃整个 残差分支 (residual branch) 或 整个路径 (path)。减少过拟合，同时让模型学会依赖不同深度的路径，提升训练稳定性。 <img src="assets/Swin-Transformer-Drop-Path.png" class="img-fluid"></p>
+<p>与Dropout 不同的是， Dropout 丢弃的是单个神经元的输出， 而DropPath 丢弃的是整个残差分支 / 整层 Block</p>
+<table class="table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 34%">
+<col style="width: 44%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>特性</th>
+<th>Dropout (经典)</th>
+<th>DropPath (Stochastic Depth)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>丢弃对象</td>
+<td>单个神经元的输出</td>
+<td>整个残差分支 / 整层 Block</td>
+</tr>
+<tr class="even">
+<td>应用粒度</td>
+<td>逐元素 (element-wise)</td>
+<td>层级 (layer-wise)</td>
+</tr>
+<tr class="odd">
+<td>使用场景</td>
+<td>全连接层、CNN、RNN 等</td>
+<td>残差网络、Transformer 等</td>
+</tr>
+<tr class="even">
+<td>推理阶段效果</td>
+<td>不丢弃，使用缩放补偿</td>
+<td>不丢弃，保留完整路径</td>
+</tr>
+<tr class="odd">
+<td>作用</td>
+<td>减少神经元过拟合</td>
+<td>防止深层网络过拟合、提升稳定性</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb5" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">def</span> drop_path(x, drop_prob: <span class="bu">float</span> <span class="op">=</span> <span class="fl">0.0</span>, training: <span class="bu">bool</span> <span class="op">=</span> <span class="va">False</span>):</span>
+<span id="cb5-2"><a href="#cb5-2"></a>    <span class="cf">if</span> drop_prob <span class="op">==</span> <span class="fl">0.0</span> <span class="kw">or</span> <span class="kw">not</span> training:</span>
+<span id="cb5-3"><a href="#cb5-3"></a>        <span class="cf">return</span> x</span>
+<span id="cb5-4"><a href="#cb5-4"></a>    keep_prob <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> drop_prob</span>
+<span id="cb5-5"><a href="#cb5-5"></a>    shape <span class="op">=</span> (x.shape[<span class="dv">0</span>],) <span class="op">+</span> (<span class="dv">1</span>,) <span class="op">*</span> (x.ndim <span class="op">-</span> <span class="dv">1</span>)  <span class="co"># work with diff dim tensors, not just 2D ConvNets</span></span>
+<span id="cb5-6"><a href="#cb5-6"></a>    random_tensor <span class="op">=</span> keep_prob <span class="op">+</span> torch.rand(shape, dtype<span class="op">=</span>x.dtype, device<span class="op">=</span>x.device)</span>
+<span id="cb5-7"><a href="#cb5-7"></a>    random_tensor.floor_()  <span class="co"># binarize</span></span>
+<span id="cb5-8"><a href="#cb5-8"></a>    output <span class="op">=</span> x.div(keep_prob) <span class="op">*</span> random_tensor</span>
+<span id="cb5-9"><a href="#cb5-9"></a>    <span class="cf">return</span> output</span>
+<span id="cb5-10"><a href="#cb5-10"></a></span>
+<span id="cb5-11"><a href="#cb5-11"></a></span>
+<span id="cb5-12"><a href="#cb5-12"></a><span class="kw">class</span> DropPath(nn.Module):</span>
+<span id="cb5-13"><a href="#cb5-13"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, drop_prob<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb5-14"><a href="#cb5-14"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb5-15"><a href="#cb5-15"></a>        <span class="va">self</span>.drop_prob <span class="op">=</span> drop_prob</span>
+<span id="cb5-16"><a href="#cb5-16"></a></span>
+<span id="cb5-17"><a href="#cb5-17"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x):</span>
+<span id="cb5-18"><a href="#cb5-18"></a>        <span class="cf">return</span> drop_path(x, <span class="va">self</span>.drop_prob, <span class="va">self</span>.training)</span>
+<span id="cb5-19"><a href="#cb5-19"></a>        </span>
+<span id="cb5-20"><a href="#cb5-20"></a></span>
+<span id="cb5-21"><a href="#cb5-21"></a><span class="kw">class</span> SwinTransformerBlock(nn.Module):</span>
+<span id="cb5-22"><a href="#cb5-22"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
+<span id="cb5-23"><a href="#cb5-23"></a>        ...</span>
+<span id="cb5-24"><a href="#cb5-24"></a>        <span class="va">self</span>.drop_path <span class="op">=</span> DropPath(drop_path) <span class="cf">if</span> drop_path <span class="op">&gt;</span> <span class="fl">0.0</span> <span class="cf">else</span> nn.Identity()</span>
+<span id="cb5-25"><a href="#cb5-25"></a>        </span>
+<span id="cb5-26"><a href="#cb5-26"></a>    </span>
+<span id="cb5-27"><a href="#cb5-27"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x):</span>
+<span id="cb5-28"><a href="#cb5-28"></a>        shortcut <span class="op">=</span> x </span>
+<span id="cb5-29"><a href="#cb5-29"></a>        ... <span class="co"># Attention </span></span>
+<span id="cb5-30"><a href="#cb5-30"></a>        x <span class="op">=</span> shortcut <span class="op">+</span> <span class="va">self</span>.drop_path(x)</span>
+<span id="cb5-31"><a href="#cb5-31"></a>        </span>
+<span id="cb5-32"><a href="#cb5-32"></a>        shortcut <span class="op">=</span> x </span>
+<span id="cb5-33"><a href="#cb5-33"></a>        ... <span class="co"># FFN</span></span>
+<span id="cb5-34"><a href="#cb5-34"></a>        x <span class="op">=</span> shortcut <span class="op">+</span> <span class="va">self</span>.drop_path(x)</span>
+<span id="cb5-35"><a href="#cb5-35"></a>        </span>
+<span id="cb5-36"><a href="#cb5-36"></a>        ...</span>
+<span id="cb5-37"><a href="#cb5-37"></a>        </span>
+<span id="cb5-38"><a href="#cb5-38"></a>        <span class="cf">return</span> x </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="callout-tldr">
+<p>📝 <span style="color:rgb(146, 208, 80)">TAKEAWAY</span> DropPath（也叫 Stochastic Depth）是一种正则化方法，它在训练时随机跳过（丢弃）整个网络层或分支的计算，以减少过拟合并提高模型的泛化能力。</p>
+</div>
+</section>
+<section id="gradient-checkpoint" class="level3" data-number="1.9.2">
+<h3 data-number="1.9.2" class="anchored" data-anchor-id="gradient-checkpoint"><span class="header-section-number">1.9.2</span> Gradient Checkpoint</h3>
+<p>在此，我们在介绍一个训练方法，用于加速训练，叫做Gradient Checkpoint又叫做Activation Checkpoint， 用PyTorh实现，是很容易的 的，我们只需要call <a href="https://docs.pytorch.org/docs/stable/checkpoint.html"><code>utils.checkpoint</code></a></p>
+<p>正常训练流程： 在前向传播（forward）时，每一层的中间激活值（activation）都会保存下来，以便反向传播（backward）时用来计算梯度。 问题是：保存所有中间激活值会消耗大量显存（GPU memory）。 • Gradient Checkpoint 的思路： 并不是保存所有激活值，而是只在部分关键节点（checkpoint）保存激活。 对于未保存的激活值，在反向传播时重新再跑一次前向计算来得到它们，从而节省显存。</p>
+<p>换句话说：用计算换显存。</p>
+<p>🔹 工作机制 1. 在前向传播时： • 模型被切分成若干块（segments）。 • 只保存每一块的输入，丢弃中间的激活。 2. 在反向传播时： • 需要用到梯度时，重新对那一块做一次 forward 来恢复激活。 • 然后正常计算梯度。</p>
+<pre data-code-line-numbers=""><code>•   增加计算开销：因为要在 backward 时重新做一次 forward。
+•   一般会带来 20%～30% 额外的训练时间。</code></pre>
+<div class="sourceCode" id="cb7" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1"></a><span class="im">import</span> torch</span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="im">from</span> torch <span class="im">import</span> nn</span>
+<span id="cb7-3"><a href="#cb7-3"></a><span class="im">from</span> torch.utils.checkpoint <span class="im">import</span> checkpoint</span>
+<span id="cb7-4"><a href="#cb7-4"></a></span>
+<span id="cb7-5"><a href="#cb7-5"></a><span class="kw">class</span> MyModule(nn.Module):</span>
+<span id="cb7-6"><a href="#cb7-6"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
+<span id="cb7-7"><a href="#cb7-7"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb7-8"><a href="#cb7-8"></a>        <span class="va">self</span>.layer1 <span class="op">=</span> nn.Linear(<span class="dv">1024</span>, <span class="dv">1024</span>)</span>
+<span id="cb7-9"><a href="#cb7-9"></a>        <span class="va">self</span>.layer2 <span class="op">=</span> nn.Linear(<span class="dv">1024</span>, <span class="dv">1024</span>)</span>
+<span id="cb7-10"><a href="#cb7-10"></a></span>
+<span id="cb7-11"><a href="#cb7-11"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x):</span>
+<span id="cb7-12"><a href="#cb7-12"></a>        <span class="kw">def</span> custom_forward(<span class="op">*</span>inputs):</span>
+<span id="cb7-13"><a href="#cb7-13"></a>            <span class="cf">return</span> <span class="va">self</span>.layer2(<span class="va">self</span>.layer1(<span class="op">*</span>inputs))</span>
+<span id="cb7-14"><a href="#cb7-14"></a>        </span>
+<span id="cb7-15"><a href="#cb7-15"></a>        <span class="co"># 对这部分使用 checkpoint</span></span>
+<span id="cb7-16"><a href="#cb7-16"></a>        x <span class="op">=</span> checkpoint(custom_forward, x)</span>
+<span id="cb7-17"><a href="#cb7-17"></a>        <span class="cf">return</span> x</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="callout-tldr">
+<p>📝 <span style="color:rgb(146, 208, 80)">TAKEAWAY</span> Gradient Checkpointing 是一种 用额外计算换显存 的方法，通过在前向传播时少存激活，反向传播时重算，能让大模型在有限显存下完成训练。</p>
+</div>
+</section>
+</section>
+<section id="swin-v2" class="level2" data-number="1.10">
+<h2 data-number="1.10" class="anchored" data-anchor-id="swin-v2"><span class="header-section-number">1.10</span> Swin V2</h2>
+<p>“Swin V2” <span class="citation" data-cites="SwinTransformerV22022liu">(<a href="#ref-SwinTransformerV22022liu" role="doc-biblioref">Liu et al. 2022</a>)</span> 是在原始 Swin Transformer 的基础上，为了更好地 <strong>扩展模型容量（更多参数）</strong>、<strong>处理高分辨率输入</strong> 以及 <strong>提高训练稳定性</strong> 所做的一系列改进。 在视觉任务中，Transformer 模型若要变得更强（更多参数、更高分辨率输入、更多层数）就会遇到几个挑战： 1. 训练不稳定：随着模型变深、通道变宽，内部激活的幅度可能急剧增长，导致梯度、数值不稳定。 2. 分辨率迁移问题：模型在低分辨率下预训练（例如 224×224）后，用在高分辨率（例如 1,536×1,536）或不同窗口尺寸时表现会下降。 3. 对标注数据的过度依赖：大模型需要大量标注数据才能训练得好。</p>
+<p>Swin V2 就是为了克服这些障碍，支持训练超大模型（如 30 亿参数级别），同时能处理大尺寸输入 <img src="assets/Swin-Transformer-SwinV2.png" class="img-fluid"></p>
+<section id="post-normalization" class="level3" data-number="1.10.1">
+<h3 data-number="1.10.1" class="anchored" data-anchor-id="post-normalization"><span class="header-section-number">1.10.1</span> Post normalization</h3>
+<div class="sourceCode" id="cb8" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw">class</span> SwinTransformerBlock(nn.Module):</span>
+<span id="cb8-2"><a href="#cb8-2"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
+<span id="cb8-3"><a href="#cb8-3"></a>        ...</span>
+<span id="cb8-4"><a href="#cb8-4"></a>        <span class="va">self</span>.drop_path <span class="op">=</span> DropPath(drop_path) <span class="cf">if</span> drop_path <span class="op">&gt;</span> <span class="fl">0.0</span> <span class="cf">else</span> nn.Identity()</span>
+<span id="cb8-5"><a href="#cb8-5"></a>        </span>
+<span id="cb8-6"><a href="#cb8-6"></a>    </span>
+<span id="cb8-7"><a href="#cb8-7"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x):</span>
+<span id="cb8-8"><a href="#cb8-8"></a>        shortcut <span class="op">=</span> x </span>
+<span id="cb8-9"><a href="#cb8-9"></a>        ... <span class="co"># Attention </span></span>
+<span id="cb8-10"><a href="#cb8-10"></a>        x <span class="op">=</span> shortcut <span class="op">+</span> <span class="va">self</span>.drop_path(<span class="va">self</span>.norm1(x))</span>
+<span id="cb8-11"><a href="#cb8-11"></a>        </span>
+<span id="cb8-12"><a href="#cb8-12"></a>        shortcut <span class="op">=</span> x </span>
+<span id="cb8-13"><a href="#cb8-13"></a>        ... <span class="co"># FFN</span></span>
+<span id="cb8-14"><a href="#cb8-14"></a>        x <span class="op">=</span> x <span class="op">+</span> <span class="va">self</span>.drop_path(<span class="va">self</span>.norm2(<span class="va">self</span>.mlp(x)))</span>
+<span id="cb8-15"><a href="#cb8-15"></a>        </span>
+<span id="cb8-16"><a href="#cb8-16"></a>        ...</span>
+<span id="cb8-17"><a href="#cb8-17"></a>        </span>
+<span id="cb8-18"><a href="#cb8-18"></a>        <span class="cf">return</span> x </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="scaled-cosine-attention" class="level3" data-number="1.10.2">
+<h3 data-number="1.10.2" class="anchored" data-anchor-id="scaled-cosine-attention"><span class="header-section-number">1.10.2</span> Scaled cosine attention</h3>
+<div class="sourceCode" id="cb9" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1"></a><span class="kw">class</span> WindowAttention:</span>
+<span id="cb9-2"><a href="#cb9-2"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>,):</span>
+<span id="cb9-3"><a href="#cb9-3"></a>    </span>
+<span id="cb9-4"><a href="#cb9-4"></a>        ...</span>
+<span id="cb9-5"><a href="#cb9-5"></a>        <span class="va">self</span>.logit_scale <span class="op">=</span> nn.Parameter(torch.log(<span class="dv">10</span> <span class="op">*</span> torch.ones((num_heads, <span class="dv">1</span>, <span class="dv">1</span>))), requires_grad<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb9-6"><a href="#cb9-6"></a>        ...</span>
+<span id="cb9-7"><a href="#cb9-7"></a>    </span>
+<span id="cb9-8"><a href="#cb9-8"></a>    </span>
+<span id="cb9-9"><a href="#cb9-9"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x):</span>
+<span id="cb9-10"><a href="#cb9-10"></a>        attn <span class="op">=</span> (F.normalize(q, dim<span class="op">=-</span><span class="dv">1</span>) <span class="op">@</span> F.normalize(k, dim<span class="op">=-</span><span class="dv">1</span>).transpose(<span class="op">-</span><span class="dv">2</span>, <span class="op">-</span><span class="dv">1</span>))</span>
+<span id="cb9-11"><a href="#cb9-11"></a>        logit_scale <span class="op">=</span> torch.clamp(<span class="va">self</span>.logit_scale, <span class="bu">max</span><span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.</span> <span class="op">/</span> <span class="fl">0.01</span>))).exp()</span>
+<span id="cb9-12"><a href="#cb9-12"></a>        attn <span class="op">=</span> attn <span class="op">*</span> logit_scale</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="log-spaced-continuous-position-biaslog-cpb" class="level3" data-number="1.10.3">
+<h3 data-number="1.10.3" class="anchored" data-anchor-id="log-spaced-continuous-position-biaslog-cpb"><span class="header-section-number">1.10.3</span> Log-spaced Continuous Position Bias(Log-CPB)</h3>
+<p>log-spaced continuous position bias approach to address the issue in transferring across window resolutions</p>
+<p><span class="math display">\[
+\begin{split}
+\widehat{\Delta x} &amp;= \operatorname{sign}(x) \cdot \log(1 + |\Delta x|) \\
+\widehat{\Delta y} &amp;= \operatorname{sign}(y) \cdot \log(1 + |\Delta y|)
+\end{split}
+\]</span></p>
+<div class="sourceCode" id="cb10" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1"></a><span class="va">self</span>.cpb_mlp <span class="op">=</span> nn.Sequential(nn.Linear(<span class="dv">2</span>, <span class="dv">512</span>, bias<span class="op">=</span><span class="va">True</span>),</span>
+<span id="cb10-2"><a href="#cb10-2"></a>                             nn.ReLU(inplace<span class="op">=</span><span class="va">True</span>),</span>
+<span id="cb10-3"><a href="#cb10-3"></a>                             nn.Linear(<span class="dv">512</span>, num_heads, bias<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb10-4"><a href="#cb10-4"></a>                             </span>
+<span id="cb10-5"><a href="#cb10-5"></a><span class="kw">def</span> forward(<span class="va">self</span>, x):</span>
+<span id="cb10-6"><a href="#cb10-6"></a>    relative_position_bias_table <span class="op">=</span> <span class="va">self</span>.cpb_mlp(<span class="va">self</span>.relative_coords_table).view(<span class="op">-</span><span class="dv">1</span>, <span class="va">self</span>.num_heads)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+</section>
+<section id="summary" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Summary</h1>
+<p>在这篇文章中，我们学习了什么是Swin Transformer。Swin Transformer 在 ViT 的基础上引入了 层次化结构() 和 基于窗口的注意力机制。通过在固定窗口内计算注意力（W-MSA），显著降低计算复杂度；再利用 移位窗口（SW-MSA） 与 循环移位 技巧，实现跨窗口的信息交互。与此同时，Patch Merging 逐步降低分辨率、增加通道数，形成类似 CNN 的金字塔特征，适合检测与分割等多尺度任务。</p>
+<p>此外，Swin Transformer 使用 相对位置偏置 来增强局部建模能力，并通过 DropPath 等正则化方法提升训练稳定性。在下游任务中（分类、检测、分割），Swin Transformer 表现优于传统 CNN。升级版 Swin V2 进一步提出了 残差后归一化、缩放余弦注意力 和 对数连续位置偏置 等改进，使其能够扩展到更大模型和更高分辨率输入。</p>
+<p>除了模型外，我们还学习到了两个General的训练方法，一个是 DropPath，另一个是Gradient Checkpoint。</p>
+</section>
+<section id="key-concept-check-table" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Key Concept Check Table</h1>
+<table class="table">
+<colgroup>
+<col style="width: 37%">
+<col style="width: 62%">
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Concept</strong></th>
+<th><strong>Explanation</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Hierarchical Representation（层级表示）</strong></td>
+<td>通过 <strong>Patch Merging</strong> 逐层降低分辨率、增加通道数，形成类似 CNN 的多尺度特征图，适合检测/分割任务。</td>
+</tr>
+<tr class="even">
+<td><strong>Patch Merging（补丁合并）</strong></td>
+<td>将 (2 ) 邻近 patch 拼接，再通过线性投影，减少空间尺寸、增加特征维度。</td>
+</tr>
+<tr class="odd">
+<td><strong>Window-based Self-Attention (W-MSA)</strong></td>
+<td>将特征图划分为固定大小的窗口（如 (7 )），仅在窗口内计算自注意力，大幅降低计算复杂度。</td>
+</tr>
+<tr class="even">
+<td><strong>Shifted Windows (SW-MSA)</strong></td>
+<td>在下一层将窗口整体平移（如移动一半窗口大小），让跨窗口 token 得以交互，实现全局建模。</td>
+</tr>
+<tr class="odd">
+<td><strong>Cyclic Shift（循环移位）</strong></td>
+<td>实现 Shifted Window 的关键技巧：通过循环移位（cyclic shift）实现窗口偏移，保证实现高效且易于并行计算。</td>
+</tr>
+<tr class="even">
+<td><strong>Relative Position Bias（相对位置偏置）</strong></td>
+<td>每个窗口内为不同相对位置的 token 引入可学习偏置，增强局部感知，提升泛化能力。</td>
+</tr>
+<tr class="odd">
+<td><strong>DropPath（随机深度 / Stochastic Depth）</strong></td>
+<td>在训练中随机丢弃部分残差路径，防止过拟合并增强模型泛化能力（类似于 dropout 在层级上的应用）。</td>
+</tr>
+<tr class="even">
+<td><strong>Gradient Checkpoint（梯度检查点）</strong></td>
+<td>在训练时节省显存的技巧：通过重算中间激活值换取显存空间，从而能训练更深、更大的模型。</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="q-a" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Q &amp; A</h1>
+<p>Question: 为什么 ViT 的全局注意力不适合高分辨率图像？ 计算复杂度是二次方，图像尺寸越大，token 数越多，代价不可接受。</p>
+<p>Question: 窗口之间的信息如何流通？ 通过 shifted window 机制，使得窗口划分交错，从而令原本属于不同窗口的 token 进入同一窗口，从而实现跨窗口 attention。</p>
+<p>Q3. Swin Transformer 为什么能作为检测和分割的骨干？ 答：因为它构建了层级特征图，能和 FPN 等结构自然对接，像 ResNet 一样多尺度。</p>
+<p>Q4. 相对位置偏置为什么比绝对位置编码更好？ 答：相对位置编码可复用在不同分辨率下的窗口，泛化性更强，更贴合图像局部关系。</p>
+<p>Q7. Swin 的局限性有哪些？ 答：窗口大小固定，远距离依赖要堆叠多层；实现复杂度高；对超高分辨率图像仍然计算量大。</p>
+<p>Question: shifted window 的 mask 是怎样设计的？ 当窗口移动后，一些 token 会跨越旧窗口边界，使得它们和不应交互的 token 在同一个新窗口内。此时使用 mask，把那些不合法 token 对的 attention 权重设为极小值（或禁止），以防它们交互。</p>
+<p>Q8. Swin V2 做了哪些改进？ 答：提出 residual post-norm、更稳定的注意力缩放、对数连续位置偏置、更好的自监督训练（SimMIM）。</p>
+</section>
+<section id="related-resource-further-reading" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Related resource &amp; Further Reading</h1>
+<p>原始论文 - Swin Transformer: Hierarchical Vision Transformer using Shifted Windows - Swin Transformer V2: Scaling Up Capacity and Resolution</p>
+<p>Swin Transformer: Hierarchical Vision Transformer using Shifted Windows Video Swin Transformer<span class="citation" data-cites="VideoSwinTransformer2021liu">(<a href="#ref-VideoSwinTransformer2021liu" role="doc-biblioref">Liu, Ning, et al. 2021</a>)</span> 就是Swin Transformer在Video的应用。 Swin Transformer 官方实现：<a href="https://github.com/microsoft/Swin-Transformer">GitHub Link</a></p>
+
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-DeepNetworksStochastic2016huang" class="csl-entry" role="listitem">
+Huang, Gao, Yu Sun, Zhuang Liu, Daniel Sedra, and Kilian Weinberger. 2016. <span>“Deep <span>Networks</span> with <span>Stochastic Depth</span>.”</span> July 28, 2016. <a href="https://doi.org/10.48550/arXiv.1603.09382">https://doi.org/10.48550/arXiv.1603.09382</a>.
+</div>
+<div id="ref-FeaturePyramidNetworks2017lin" class="csl-entry" role="listitem">
+Lin, Tsung-Yi, Piotr Dollár, Ross Girshick, Kaiming He, Bharath Hariharan, and Serge Belongie. 2017. <span>“Feature <span>Pyramid Networks</span> for <span>Object Detection</span>.”</span> April 19, 2017. <a href="https://doi.org/10.48550/arXiv.1612.03144">https://doi.org/10.48550/arXiv.1612.03144</a>.
+</div>
+<div id="ref-SwinTransformerV22022liu" class="csl-entry" role="listitem">
+Liu, Ze, Han Hu, Yutong Lin, Zhuliang Yao, Zhenda Xie, Yixuan Wei, Jia Ning, et al. 2022. <span>“Swin <span>Transformer V2</span>: <span>Scaling Up Capacity</span> and <span>Resolution</span>.”</span> April 11, 2022. <a href="https://doi.org/10.48550/arXiv.2111.09883">https://doi.org/10.48550/arXiv.2111.09883</a>.
+</div>
+<div id="ref-SwinTransformerHierarchical2021liu" class="csl-entry" role="listitem">
+Liu, Ze, Yutong Lin, Yue Cao, Han Hu, Yixuan Wei, Zheng Zhang, Stephen Lin, and Baining Guo. 2021. <span>“Swin <span>Transformer</span>: <span>Hierarchical Vision Transformer</span> Using <span>Shifted Windows</span>.”</span> August 17, 2021. <a href="https://doi.org/10.48550/arXiv.2103.14030">https://doi.org/10.48550/arXiv.2103.14030</a>.
+</div>
+<div id="ref-VideoSwinTransformer2021liu" class="csl-entry" role="listitem">
+Liu, Ze, Jia Ning, Yue Cao, Yixuan Wei, Zheng Zhang, Stephen Lin, and Han Hu. 2021. <span>“Video <span>Swin Transformer</span>.”</span> June 24, 2021. <a href="https://doi.org/10.48550/arXiv.2106.13230">https://doi.org/10.48550/arXiv.2106.13230</a>.
+</div>
+<div id="ref-FasterRCNNRealTime2016ren" class="csl-entry" role="listitem">
+Ren, Shaoqing, Kaiming He, Ross Girshick, and Jian Sun. 2016. <span>“Faster <span>R-CNN</span>: <span>Towards Real-Time Object Detection</span> with <span>Region Proposal Networks</span>.”</span> January 6, 2016. <a href="https://doi.org/10.48550/arXiv.1506.01497">https://doi.org/10.48550/arXiv.1506.01497</a>.
+</div>
+<div id="ref-UnifiedPerceptualParsing2018xiao" class="csl-entry" role="listitem">
+Xiao, Tete, Yingcheng Liu, Bolei Zhou, Yuning Jiang, and Jian Sun. 2018. <span>“Unified <span>Perceptual Parsing</span> for <span>Scene Understanding</span>.”</span> July 26, 2018. <a href="https://doi.org/10.48550/arXiv.1807.10221">https://doi.org/10.48550/arXiv.1807.10221</a>.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© CC-By Yuyang, 2025</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>This page is built with ❤️ and <a href="https://quarto.org/">Quarto</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.js" defer="true"></script>
+</body></html>

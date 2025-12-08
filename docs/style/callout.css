@@ -1,0 +1,63 @@
+.callout-paper {
+  border-left: 4px solid #4b8bbe;
+  background-color: #f0f8ff;
+  padding: 1em;
+  border-radius: 6px;
+}
+
+.callout-paper > .callout-header::before {
+  content: "📄";
+  margin-right: 0.5em;
+}
+
+/* Shared */
+.callout-tldr, .callout-question {
+  padding: 1em;
+  border-radius: 6px;
+  margin: 1em 0;
+
+  color: #0a3d4d;
+}
+
+.callout-tldr h1, .callout-tldr h2,
+.callout-question h1, .callout-question h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+/* TL;DR */
+.callout-tldr {
+  border-left: 4px solid #0dcaf0;
+  background-color: #f0f9ff;
+}
+.callout-tldr h1::before, .callout-tldr h2::before {
+  content: "✅";
+  margin-right: 0.5em;
+}
+
+/* Question */
+.callout-question {
+  border-left: 4px solid #e55353;
+  background-color: #fff5f5;
+}
+.callout-question h1::before, .callout-question h2::before {
+  content: "❓";
+  margin-right: 0.5em;
+}
+
+
+.callout-paper {
+  border-left: 4px solid #4b8bbe;
+  background-color: #f0f8ff;
+  padding: 1em;
+  border-radius: 6px;
+  
+}
+
+.callout-paper > .callout-header::before {
+  content: "📄";
+  margin-right: 0.5em;
+}

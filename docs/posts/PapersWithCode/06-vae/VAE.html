@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Yuyang Zhang">
+<meta name="description" content="VAE（变分自动编码器）是一类结合概率图模型与神经网络的生成模型，它通过引入可参数化的近似后验 q_\phi(z|x) 来摊销推断成本，并用最大化 ELBO 的方式同时学习数据的潜在表示与生成过程：其中重建项确保模型能从潜变量还原数据，KL 项则将潜空间约束为接近先验的连续结构。借助重参数化技巧，VAE 能在端到端训练中高效地学习一个平滑、可采样的潜空间，从而实现表示学习、插值、生成等功能，是现代深度生成模型的重要基础。">
+
+<title>06: Auto-Encoding Variational Bayes(VAE)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<link href="../../.././style/icon.avif" rel="icon">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-0348920b7671f696dc9078d39bff215e.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-6e97c76ec7d7e44d6e697e3c9997636d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-84bb4237d43bdfa05598834a807c2e5a.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../../site_libs/bootstrap/bootstrap-6e97c76ec7d7e44d6e697e3c9997636d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link href="https://fonts.cdnfonts.com/css/cmu-sans-serif" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../../style/styles.css">
+<link rel="stylesheet" href="../../../style/callout.css">
+<meta property="og:title" content="06: Auto-Encoding Variational Bayes(VAE)">
+<meta property="og:description" content="VAE（变分自动编码器）是一类结合概率图模型与神经网络的生成模型，它通过引入可参数化的近似后验 \(q_\phi(z|x)\) 来摊销推断成本，并用最大化 ELBO 的方式同时学习数据的潜在表示与生成过程：其中重建项确保模型能从潜变量还原数据，KL 项则将潜空间约束为接近先验的连续结构。借助重参数化技巧，VAE 能在端到端训练中高效地学习一个平滑、可采样的潜空间，从而实现表示学习、插值、生成等功能，是现代深度生成模型的重要基础。">
+<meta property="og:image" content="assets/VAE-latent-variable-models-face.png">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../index.html"> 
+<span class="menu-text">About Me</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/YYZhang2025"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/zhang-yuyang/"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/Blogs/blogs_index.html"> 
+<span class="menu-text">Blogs</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-learning-notes" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Learning Notes</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-learning-notes">    
+        <li>
+    <a class="dropdown-item" href="../../../posts/LearningNotes/DLFaC_index.html">
+ <span class="dropdown-text">Deep Learning Foundations and Concepts</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../../posts/LearningNotes/CS336_index.html">
+ <span class="dropdown-text">Stanford CS336: LLM from Scratch</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/Projects/projects_index.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/PapersWithCode/100_Papers_index.html"> 
+<span class="menu-text">100 Papers with Code</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+          <h1 class="quarto-secondary-nav-title">06: Auto-Encoding Variational Bayes(VAE)</h1>
+        </a>     
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#preliminary" id="toc-preliminary" class="nav-link active" data-scroll-target="#preliminary"><span class="header-section-number">1</span> Preliminary</a>
+  <ul class="collapse">
+  <li><a href="#latent-variable-models" id="toc-latent-variable-models" class="nav-link" data-scroll-target="#latent-variable-models"><span class="header-section-number">1.1</span> Latent Variable Models</a></li>
+  <li><a href="#autoencoder" id="toc-autoencoder" class="nav-link" data-scroll-target="#autoencoder"><span class="header-section-number">1.2</span> AutoEncoder</a></li>
+  <li><a href="#kl-divergence" id="toc-kl-divergence" class="nav-link" data-scroll-target="#kl-divergence"><span class="header-section-number">1.3</span> KL-Divergence</a></li>
+  <li><a href="#variational-inference" id="toc-variational-inference" class="nav-link" data-scroll-target="#variational-inference"><span class="header-section-number">1.4</span> Variational Inference</a></li>
+  </ul></li>
+  <li><a href="#vae" id="toc-vae" class="nav-link" data-scroll-target="#vae"><span class="header-section-number">2</span> VAE</a>
+  <ul class="collapse">
+  <li><a href="#re-parameterization-trick" id="toc-re-parameterization-trick" class="nav-link" data-scroll-target="#re-parameterization-trick"><span class="header-section-number">2.1</span> Re-parameterization Trick</a></li>
+  <li><a href="#amortized-inference" id="toc-amortized-inference" class="nav-link" data-scroll-target="#amortized-inference"><span class="header-section-number">2.2</span> Amortized Inference</a></li>
+  <li><a href="#experiements" id="toc-experiements" class="nav-link" data-scroll-target="#experiements"><span class="header-section-number">2.3</span> Experiements</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">3</span> Summary</a></li>
+  <li><a href="#key-concepts" id="toc-key-concepts" class="nav-link" data-scroll-target="#key-concepts"><span class="header-section-number">4</span> Key Concepts</a></li>
+  <li><a href="#q-a" id="toc-q-a" class="nav-link" data-scroll-target="#q-a"><span class="header-section-number">5</span> Q &amp; A</a></li>
+  <li><a href="#related-resource-further-reading" id="toc-related-resource-further-reading" class="nav-link" data-scroll-target="#related-resource-further-reading"><span class="header-section-number">6</span> Related resource &amp; Further Reading</a></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">06: Auto-Encoding Variational Bayes(VAE)</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Self-Supervised-Learning</div>
+    <div class="quarto-category">Generative-Model</div>
+    <div class="quarto-category">Representation-Learning</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    VAE（变分自动编码器）是一类结合概率图模型与神经网络的生成模型，它通过引入可参数化的近似后验 <span class="math inline">\(q_\phi(z|x)\)</span> 来摊销推断成本，并用最大化 ELBO 的方式同时学习数据的潜在表示与生成过程：其中重建项确保模型能从潜变量还原数据，KL 项则将潜空间约束为接近先验的连续结构。借助重参数化技巧，VAE 能在端到端训练中高效地学习一个平滑、可采样的潜空间，从而实现表示学习、插值、生成等功能，是现代深度生成模型的重要基础。
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Yuyang Zhang </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+<nav id="TOC-body" role="doc-toc">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#preliminary" id="toc-preliminary"><span class="header-section-number">1</span> Preliminary</a>
+  <ul>
+  <li><a href="#latent-variable-models" id="toc-latent-variable-models"><span class="header-section-number">1.1</span> Latent Variable Models</a></li>
+  <li><a href="#autoencoder" id="toc-autoencoder"><span class="header-section-number">1.2</span> AutoEncoder</a></li>
+  <li><a href="#kl-divergence" id="toc-kl-divergence"><span class="header-section-number">1.3</span> KL-Divergence</a></li>
+  <li><a href="#variational-inference" id="toc-variational-inference"><span class="header-section-number">1.4</span> Variational Inference</a></li>
+  </ul></li>
+  <li><a href="#vae" id="toc-vae"><span class="header-section-number">2</span> VAE</a>
+  <ul>
+  <li><a href="#re-parameterization-trick" id="toc-re-parameterization-trick"><span class="header-section-number">2.1</span> Re-parameterization Trick</a></li>
+  <li><a href="#amortized-inference" id="toc-amortized-inference"><span class="header-section-number">2.2</span> Amortized Inference</a></li>
+  <li><a href="#experiements" id="toc-experiements"><span class="header-section-number">2.3</span> Experiements</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary"><span class="header-section-number">3</span> Summary</a></li>
+  <li><a href="#key-concepts" id="toc-key-concepts"><span class="header-section-number">4</span> Key Concepts</a></li>
+  <li><a href="#q-a" id="toc-q-a"><span class="header-section-number">5</span> Q &amp; A</a></li>
+  <li><a href="#related-resource-further-reading" id="toc-related-resource-further-reading"><span class="header-section-number">6</span> Related resource &amp; Further Reading</a></li>
+  </ul>
+</nav>
+<p>介绍了Vision Model 和 Language Model， 以及如何通过Self-Supervised Learning 来学习Vision的 Representation <a href="../../../posts/PapersWithCode/05-dino/DINO.html">DINO</a>, 接下来我们将会更新一系列的生成式模型（Generative Models）。生成式模型在当下是很热门的话题，比如<a href="https://stability.ai/">Stable Diffusion</a>， <a href="https://nanabanana.ai/">Nana Banana</a> 这些模型都是基本思想都是基于Latent Variable Models，接下来，我们就来看看Variable Autoencoder这一篇，Latent Variable 模型。</p>
+<section id="preliminary" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Preliminary</h1>
+<p>在这一节，我们先了解一些前置知识，以便我们可以更好的理解这篇文章。</p>
+<section id="latent-variable-models" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="latent-variable-models"><span class="header-section-number">1.1</span> Latent Variable Models</h2>
+<p>在深度学习中，我们经常处理 高维、复杂、带噪声的真实世界数据：图像、语音、文本…… 这些数据的背后，其实常常有一些 未被直接观测到的隐藏结构 —— 这就是 “Latent Variables”（潜变量）。</p>
+<p>想象一下，你看一张人脸照片。照片是观测变量（observed variable）。 但是让这张脸“看起来像某个人”的，是一些不能直接看到的因素： • 光照（lighting） • 情绪（expression） • 姿态（pose） • 脸部特征（identity） • 背景（background）</p>
+<p>这些因素虽然没有在数据中显式标注，却真实存在，并决定了我们看到的图像。 潜变量模型的目标，就是用数学方式把这些“隐藏因素”建模出来。</p>
+<p><img src="assets/VAE-latent-variable-models-face.png" class="img-fluid"></p>
+<p>Latent Variable Model（LVM）是一类 假设观测数据是由一些隐藏变量生成的概率模型。 比如我们看到的数据<span class="math inline">\(\mathrm{x} \in \mathbb{R}^{d}\)</span>, 那它有相对应的隐藏变量 <span class="math inline">\(z \in \mathbb{R}^{k}\)</span> 其中 <span class="math inline">\(k \ll d\)</span> . <span class="math inline">\(z\)</span> 是我们观察不到的，也就是所谓的 Latent Variable.</p>
+<p>在使用Latent Variable Model时，我们有两个关键的任务： 1. Inference: 根据 <span class="math inline">\(\mathrm{x}\)</span> 我们来推断出 <span class="math inline">\(\mathrm{z}\)</span> 是什么，比如，给定一张人脸的照片，这个模型需要找出 - 这张脸是男生还是女生 - 表情是开心还是悲伤 - 是什么样的姿势 在数学上，就是求后验分布 <span class="math inline">\(p(\mathrm{z} | \mathrm{x})\)</span> 2. Generation: 通过 <span class="math inline">\(\mathrm{z}\)</span>， 我们来生成一个 <span class="math inline">\(\mathrm{x}\)</span>。 这个就是生成模型。</p>
+<p>Latent Variable Model 是现代生成式模型的基石，基本上所有的生成式模型，比如 GAN， DDPM， Flow Model 等，都是以Latent Variable Model为基础，在此条件下，通过不同求 Latent Variable 的方法，来解决这种问题。</p>
+</section>
+<section id="autoencoder" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="autoencoder"><span class="header-section-number">1.2</span> AutoEncoder</h2>
+<p><img src="assets/VAE-Autoencoder.png" class="img-fluid"></p>
+<p>AutoEncoder 是一种Self-Supervised Learning 的方法。 它可以让神经网络学会压缩，并且在还原数据，通过这种方法，我们可以学习到的低纬度的Latent Variable <span class="math inline">\(\mathrm{z}\)</span>。 AutoEncoder 也可以看作是Latent Variable Model的一种学习方法。 AutoEncoder 也通常用在Representation Learning 表征学习。</p>
+</section>
+<section id="kl-divergence" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="kl-divergence"><span class="header-section-number">1.3</span> KL-Divergence</h2>
+<p>KL 散度（<strong>Kullback–Leibler Divergence</strong>）是用来衡量两个概率分布之间差异的一种度量方法。定义如下: <span class="math display">\[
+D_{KL}(Q \| P) = \mathbb{E}_{x \sim Q}\left[ \log \frac{Q(x)}{P(x)} \right]
+\]</span></p>
+<p>直观的解释KL-Divergence就是: - 如果数据 <span class="math inline">\(x\)</span> 是从 <span class="math inline">\(Q\)</span> 分布中来的，但如果我们用 <span class="math inline">\(P\)</span> 分布 来解释这些数据，会损失多少信息量</p>
+<p>对于高斯分布（Gaussian Distribution），我们KL- Divergence有以下的形式：</p>
+<p>$$</p>
+<p>D_{KL}(Q | P) = $$</p>
+<p>如果是Diagonal Gaussian， 那么KL-Divergence 可以简化为： $$ D_{KL}(q ,|, p)</p>
+<p>_{i=1}^{d} $$</p>
+<p><span class="math display">\[
+D_{KL}(q(\mathbf{z}) \ \| \  \mathcal{N}(0, I)) =
+\frac{1}{2}
+\sum_{i=1}^{d}
+\left(
+\mu_{q,i}^2 + \sigma_{q,i}^2 - \log \sigma_{q,i}^2 - 1
+\right)
+\]</span></p>
+<p>需要注意的一个点是，KL-Divergence是不对称的， <span class="math display">\[
+D_{KL}(Q \| P) \neq D_{KL}(P \| Q)
+\]</span></p>
+<p>为什么我们要强调这一点，是因为： 对于不同位置的Q，P我们所求的是不一样的，简单来说，就是用 <span class="math inline">\(\|\)</span> 后面的分布，来approximate <span class="math inline">\(\|\)</span> 前面的分布，具体如下图。</p>
+<p><img src="assets/VAE-KL-Divergnce.png" class="img-fluid"></p>
+</section>
+<section id="variational-inference" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="variational-inference"><span class="header-section-number">1.4</span> Variational Inference</h2>
+<p>Variational Inference（VI，变分推断）是一种用可优化、易计算的分布来近似一个难以求解的后验分布，通过最小化两者之间的 KL 距离，从而实现高效概率推断的方法。 在 Latent Variable 模型中，我们想求： <span class="math display">\[
+p (\mathrm{z} | \mathrm{x}) = \frac{p(\mathrm{x}, \mathrm{z})}{p(\mathrm{x})}
+\]</span></p>
+<p>通常 <span class="math inline">\(p(\mathrm{x})\)</span> 是不可求的，因为: <span class="math display">\[
+p(\mathrm{x}) = \int p(\mathrm{x}, \mathrm{z}) d\mathrm{z}
+\]</span> 通常是不可能直接求的。因此我们采取一种 “曲线救国” 的方式： 我们不去计算真正的后验，而是找一个 可计算并且可优化的分布来近似它： <span class="math display">\[
+q(z | x) \approx p(z | x)
+\]</span> 实现起来也是很简单的 1. 选一个可计算的分布族 （Variational Family） 2. 让它尽可能的接近真实的后验： <span class="math display">\[
+\underset{\phi}{\min}  D_{KL}(q_{\phi}(z | x ) \| p(z | x))
+\]</span></p>
+<p>直观的来说，Variational Inference 就是：不过不断拉升，旋转，一个椭圆型 <span class="math inline">\(q\)</span>, 来使它尽可能的可以和云朵形状的 <span class="math inline">\(p\)</span> 来重叠</p>
+</section>
+</section>
+<section id="vae" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> VAE</h1>
+<p>论文试图解决的核心问题是：</p>
+<blockquote class="blockquote">
+<p>How can we perform efficient inference and learning in directed probabilistic models, in the presence of continuous latent variables with intractable posterior distributions, and large datasets <cite> Auto-Encoding Variational Bayes, p.1 </cite></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>如何在具有连续潜变量、后验分布不可解（intractable posterior）、以及大规模数据集（large datasets）情况下，在有向概率模型（directed probabilistic model）中，进行有效的推断（inference）和学习（learning）？ ￼ 也就是说，当我们设定一个生成模型 p_(x,z) （观测 x、潜变量 z）但其后验 p_(z|x) 难以直接计算的时候，如何使用变分贝叶斯（variational Bayes）方法来进行近似推断，并且该方法能扩展到大数据、可用神经网络进行“编码-解码”结构使用。</p>
+</blockquote>
+<p>Variational Autoencoder（VAE）是一类通过引入可参数化的变分分布 <span class="math inline">\(q_\phi(z|x)\)</span> 来近似难以解析的真实后验 <span class="math inline">\(p(z|x)\)</span>，并以<strong>连续潜变量</strong>为核心结构，从而实现对数据潜在空间的建模与可采样生成的深度生成模型。</p>
+<p>我们有一些数据 <span class="math inline">\(\mathrm{x}_{1}, \dots \mathrm{x}_{n}\)</span>， 希望计算 <span class="math inline">\(\log p_{\theta}(\mathrm{X}) = \sum_{i=1}^{N} \log p_{\theta}(\mathrm{x}_{i})\)</span> <img src="assets/VAE-Overview.png" class="img-fluid"> ## Evidence Lower BOund(ELBO)</p>
+<p>Also known as variational lower bound</p>
+<p>我们知道，对于高纬度的数据，我们不能直接求出所谓的 Likelihood。对于一个 data point, 我们有: <span class="math display">\[
+\begin{split}
+\log p_\theta(x)
+&amp; = \log \int p_{\theta}(x, z)\ dz \\
+&amp; = \log  \int p_{\theta}(x, z)\
+\frac{q_\phi(z \mid x)}{q_\phi(z \mid x)}\  dz \\
+&amp; \geq \boxed{ \mathbb{E}_{q_{\phi}}[\log p_{\theta}(x, z) - \log q_{\phi}(z | x)] }\\
+&amp; = \mathbb{E}_{q_{\phi}}[\log p_{\theta}(x |z) + \log p_{\theta}(z) - \log q_{\phi}(z | x)] \\
+&amp;=  \mathbb{E}_{q_{\phi}}[\log p_{\theta}(x | z) ]  - \mathbb{E}_{q_{\phi}}\left[ \log \frac{q_{\phi}(z | x)}{p_{\theta}(z)} \right]\\
+&amp;=  \mathbb{E}_{q_{\phi}}[\log p_{\theta}(x | z) ]  - D_{KL}[q_{\phi}(z | x) \| p_{\theta}(z)] \\
+&amp; \approx \log p_{\theta}(x | z) - D_{KL}[q_{\phi}(z | x) \| p_{\theta}(z)]
+\end{split}
+\]</span></p>
+<p>This is known as SGVB estimator &gt; SGVB (Stochastic Gradient Variational Bayes) estimator can be used for ef- ficient approximate posterior inference in almost any model with continuous latent variables and/or parameters, and is straightforward to optimize using standard stochastic gradient ascent techniques. &gt; <cite> Auto-Encoding Variational Bayes, p.1 </cite></p>
+<p>我们可以看到，对于一个data point，我们可以通过这个ELBO来优化这个NN，对于一个 Batch的数据，我们则有: <span class="math display">\[
+\log p_{\theta}(X) = \sum_{i = 1}^{B} \log p_{\theta}(x_{i} | z) - D_{KL}[q_{\phi}(z | x_{i}) \| p_{\theta}(z)]
+\]</span></p>
+<p>不过对于这个方法，存在一个问题就是 <span class="math inline">\(z\)</span> 是从 <span class="math inline">\(q_{\phi}(z | x_{i})\)</span> 中 sample出来的，对于这种类型的数据，我们不能计算它的Gradient，于是作者提出了 Re-parameterization Trick</p>
+<section id="re-parameterization-trick" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="re-parameterization-trick"><span class="header-section-number">2.1</span> Re-parameterization Trick</h2>
+<p><img src="assets/VAE-Reparameter-Trick.png" class="img-fluid"> 如上图可见，<span class="math inline">\(z\)</span> 是由 <span class="math inline">\(x, \phi\)</span> 决定的。通过这种方式，那么我们改取怎么样的 <span class="math inline">\(g_{\phi}(x, \epsilon)\)</span> 呢。文章中给出了3个基本的方法： 1. 方法1 2. 2 3. c</p>
+<div class="callout callout-style-default callout-note callout-titled" title="REINFORCE">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+REINFORCE
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>对于 Re-Parametrization Trick是针对 <span class="math inline">\(z\)</span> 是 Continuous的情况，如果 <span class="math inline">\(z\)</span> 是离散（Discrete) 的 那么我们则可以使用 REINFOCE 的方法。</p>
+</div>
+</div>
+</section>
+<section id="amortized-inference" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="amortized-inference"><span class="header-section-number">2.2</span> Amortized Inference</h2>
+<p>还有一个比较容易被忽略的一点就是，VAE 还运用了Amortized Inference。什么意思呢？</p>
+<p>传统的变分推断中，我们需要为每一个观测样本 x 单独优化一个变分分布 q(z|x) 的参数，这意味着每来一个新样本都要重新做一遍变分优化，成本非常高。而在 VAE 中，我们不再为每个样本单独优化后验，而是训练一个 共享的推断网络（Encoder） 来预测 q_(z|x) 的参数。也就是说，模型通过学习一个函数 f_(x) 来一次性“摊销”所有样本的推断成本，使得对任意新样本 x，只需一次前向传播就能得到近似后验，不再需要昂贵的 per-sample 优化。这种方式极大地提升了推断效率，也让变分推断能够在深度学习规模上落地。</p>
+<p>也就是用神经网络来一次性学习后验</p>
+<p><img src="assets/VAE-AEVB-alg.png" class="img-fluid"> 将上面的几个结合起来，我们就得到的了 Auto-Encoding VB Algorithm。<br>
+## 和 AutoEncoder的关系</p>
+<p><img src="assets/encoder-decoder-architecture.png" class="img-fluid"></p>
+</section>
+<section id="experiements" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="experiements"><span class="header-section-number">2.3</span> Experiements</h2>
+<p>VAE Loss can be defined as this one:</p>
+<div class="sourceCode" id="cb1" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">class</span> VAELoss(nn.Module):</span>
+<span id="cb1-2"><a href="#cb1-2"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, rec_loss<span class="op">=</span><span class="st">"bce"</span>, kl_beta<span class="op">=</span><span class="fl">1.0</span>):</span>
+<span id="cb1-3"><a href="#cb1-3"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb1-4"><a href="#cb1-4"></a></span>
+<span id="cb1-5"><a href="#cb1-5"></a>        <span class="va">self</span>.rec_loss <span class="op">=</span> rec_loss.lower()</span>
+<span id="cb1-6"><a href="#cb1-6"></a>        <span class="va">self</span>.kl_beta <span class="op">=</span> kl_beta</span>
+<span id="cb1-7"><a href="#cb1-7"></a></span>
+<span id="cb1-8"><a href="#cb1-8"></a>        <span class="va">self</span>.<span class="bu">eval</span>()</span>
+<span id="cb1-9"><a href="#cb1-9"></a></span>
+<span id="cb1-10"><a href="#cb1-10"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x, x_recon, mu, logvar):</span>
+<span id="cb1-11"><a href="#cb1-11"></a>        B <span class="op">=</span> x.shape[<span class="dv">0</span>]</span>
+<span id="cb1-12"><a href="#cb1-12"></a>        <span class="cf">if</span> <span class="va">self</span>.rec_loss <span class="op">==</span> <span class="st">"bce"</span>:</span>
+<span id="cb1-13"><a href="#cb1-13"></a>            rec <span class="op">=</span> F.binary_cross_entropy(x_recon, x, reduction<span class="op">=</span><span class="st">"sum"</span>)</span>
+<span id="cb1-14"><a href="#cb1-14"></a>        <span class="cf">elif</span> <span class="va">self</span>.rec_loss <span class="op">==</span> <span class="st">"mse"</span>:</span>
+<span id="cb1-15"><a href="#cb1-15"></a>            rec <span class="op">=</span> F.mse_loss(x_recon, x, reduction<span class="op">=</span><span class="st">"sum"</span>)</span>
+<span id="cb1-16"><a href="#cb1-16"></a></span>
+<span id="cb1-17"><a href="#cb1-17"></a>        <span class="co"># KL divergence: D_KL(q(z|x) || p(z))</span></span>
+<span id="cb1-18"><a href="#cb1-18"></a>        kl <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> torch.<span class="bu">sum</span>(logvar.exp() <span class="op">+</span> mu.<span class="bu">pow</span>(<span class="dv">2</span>) <span class="op">-</span> logvar <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb1-19"><a href="#cb1-19"></a></span>
+<span id="cb1-20"><a href="#cb1-20"></a>        total <span class="op">=</span> (rec <span class="op">+</span> <span class="va">self</span>.kl_beta <span class="op">*</span> kl) <span class="op">/</span> B</span>
+<span id="cb1-21"><a href="#cb1-21"></a></span>
+<span id="cb1-22"><a href="#cb1-22"></a>        <span class="cf">return</span> total, {</span>
+<span id="cb1-23"><a href="#cb1-23"></a>            <span class="st">"recon"</span>: rec.detach().cpu() <span class="op">/</span> B,</span>
+<span id="cb1-24"><a href="#cb1-24"></a>            <span class="st">"kl"</span>: kl.detach().cpu() <span class="op">/</span> B,</span>
+<span id="cb1-25"><a href="#cb1-25"></a>        }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The Loss curve and illustration examples:</p>
+</section>
+</section>
+<section id="summary" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Summary</h1>
+<p>总结一下，VAE 这篇文章 <span class="citation" data-cites="AutoEncodingVariationalBayes2022kingma">(<a href="#ref-AutoEncodingVariationalBayes2022kingma" role="doc-biblioref">Kingma and Welling 2022</a>)</span> 讲了写什么： VAE 通过ELBO 来优化 Latent Variable Model，通过 Re-parameterization trick 和 Amortized Inference，使得Latent Variable Model 在大数据集上得到显著的效果。VAE 为之后的很多生成式模型奠定了基础。</p>
+</section>
+<section id="key-concepts" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Key Concepts</h1>
+<table class="table">
+<colgroup>
+<col style="width: 41%">
+<col style="width: 58%">
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Concept</strong></th>
+<th><strong>Explanation</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Latent Variable Model</td>
+<td>用潜变量建模数据生成过程<br></td>
+</tr>
+<tr class="even">
+<td>Variational Inference</td>
+<td>用可学习的分布近似后验<br></td>
+</tr>
+<tr class="odd">
+<td>Evidence Lower Bound (ELBO)</td>
+<td><span class="math inline">\(\log p(x)\)</span> 的可优化下界, 通常 $$<br></td>
+</tr>
+<tr class="even">
+<td>Amortized Inference</td>
+<td>利用一个 Encoder 网络来表示整体的变分推断</td>
+</tr>
+<tr class="odd">
+<td>Recognition Model / Encoder Network</td>
+<td>输出 <span class="math inline">\(z\)</span> 的分布函数 <span class="math inline">\(p_\phi(z \| x)\)</span></td>
+</tr>
+<tr class="even">
+<td>Generative Model / Decoder Network</td>
+<td>从latent variable <span class="math inline">\(z\)</span> 来生成 <span class="math inline">\(x\)</span> <span class="math inline">\(p_{\theta}(x \| z)\)</span></td>
+</tr>
+<tr class="odd">
+<td>AutoEncoder</td>
+<td>数据压缩的一种方法，让</td>
+</tr>
+<tr class="even">
+<td>Re-parameterization trick</td>
+<td>使得梯度可以传递到Recognition Model里面</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="q-a" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Q &amp; A</h1>
+<p>Question 1: What is the machine learning framework of VAE-type models? VAE 属于 生成模型（generative model）+ 变分推断（variational inference） 框架。它将生成过程 p_(z) 和 p_(x|z) 与推断网络 q_(z|x) 结合，通过最大化 ELBO 来同时学习 和 。</p>
+<p>Question 2: 在 VAE 中，为什么直接对 p_(x) 进行优化不可行？ 因为 p_(x) 里有一个对潜变量 z 的积分（或求和），通常是不可解析的： <span class="math display">\[
+\log p_\theta(x) = \log \int p_\theta(x, z)\, dz
+                 = \log \int p_\theta(x \mid z)\, p(z)\, dz
+\]</span></p>
+<p>Question 3: reparameterization trick）是如何让 q_(z|x) 的梯度可计算的？</p>
+<p>Question 4: 为什么 VAE 有时生成模糊？根本原因是什么？如何改进？</p>
+</section>
+<section id="related-resource-further-reading" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Related resource &amp; Further Reading</h1>
+<p>虽然VAE提出的概念很简单的，但是训练时，还是会存在许多的问题，就比如 Poster Collapse。</p>
+<p><span class="citation" data-cites="VVAELEARNINGBASIC2017higgins">(<a href="#ref-VVAELEARNINGBASIC2017higgins" role="doc-biblioref">Higgins et al. 2017</a>)</span> <span class="math inline">\(\beta\)</span>-VAE: https://openreview.net/forum?id=Sy2fzU9gl</p>
+<p><span class="citation" data-cites="UnderstandingDisentangling$v$VAE2018burgess">(<a href="#ref-UnderstandingDisentangling$v$VAE2018burgess" role="doc-biblioref">Burgess et al. 2018</a>)</span></p>
+<p>文章中有提到 <span class="citation" data-cites="NVAEDeepHierarchical2021vahdat">(<a href="#ref-NVAEDeepHierarchical2021vahdat" role="doc-biblioref">Vahdat and Kautz 2021</a>)</span> <a href="https://arxiv.org/abs/2007.03898">NVAE: A Deep Hierarchical Variational Autoencoder</a> NVAE 相比传统 VAE 的最大不同在于：它不是只使用一个简单的潜变量 <span class="math inline">\(\mathrm{z}\)</span> 来一次性生成整张图像，而是采用深度分层的潜变量结构，让图像生成过程从粗到细逐层细化。同时，它为了解决深层 VAE 容易训练不稳定的问题，使用了专门设计的<strong>深度解码器结构（ResNet + GroupNorm）</strong>和训练技巧来防止 KL 崩塌，使每一层潜变量都能有效工作。简单来说，传统 VAE 是一次性生成图像，而 NVAE 是像画画一样分多层逐步完善图像，并通过改进架构保证训练稳定和生成质量更高。</p>
+<p>可以发现，我们这个VAE，是无法根据我们的要求来生成数据，只能Random Generate Image。那如何给他一个 Conditional 呢 <span class="citation" data-cites="LearningStructuredOutput2015sohn">(<a href="#ref-LearningStructuredOutput2015sohn" role="doc-biblioref">Sohn, Lee, and Yan 2015</a>)</span> Conditional VAE（CVAE） <span class="math display">\[
+p_\theta(x \mid y, z)
+\]</span></p>
+<p><span class="math display">\[
+q_\phi(z \mid x, y)
+\]</span></p>
+<p><span class="math display">\[
+\mathcal{L}(x, y)
+= \mathbb{E}_{q_\phi(z\mid x,y)}[\log p_\theta(x \mid y, z)]
+  - D_{KL}(q_\phi(z\mid x,y) \Vert p(z))
+\]</span></p>
+
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-UnderstandingDisentangling$v$VAE2018burgess" class="csl-entry" role="listitem">
+Burgess, Christopher P., Irina Higgins, Arka Pal, Loic Matthey, Nick Watters, Guillaume Desjardins, and Alexander Lerchner. 2018. <span>“Understanding Disentangling in $β$-<span>VAE</span>.”</span> April 10, 2018. <a href="https://doi.org/10.48550/arXiv.1804.03599">https://doi.org/10.48550/arXiv.1804.03599</a>.
+</div>
+<div id="ref-VVAELEARNINGBASIC2017higgins" class="csl-entry" role="listitem">
+Higgins, Irina, Loic Matthey, Arka Pal, Christopher Burgess, Xavier Glorot, Matthew Botvinick, Shakir Mohamed, and Alexander Lerchner. 2017. <span>“Β-<span>VAE</span>: <span>LEARNING BASIC VISUAL CONCEPTS WITH A CONSTRAINED VARIATIONAL FRAMEWORK</span>.”</span>
+</div>
+<div id="ref-AutoEncodingVariationalBayes2022kingma" class="csl-entry" role="listitem">
+Kingma, Diederik P., and Max Welling. 2022. <span>“Auto-<span>Encoding Variational Bayes</span>.”</span> December 10, 2022. <a href="https://doi.org/10.48550/arXiv.1312.6114">https://doi.org/10.48550/arXiv.1312.6114</a>.
+</div>
+<div id="ref-LearningStructuredOutput2015sohn" class="csl-entry" role="listitem">
+Sohn, Kihyuk, Honglak Lee, and Xinchen Yan. 2015. <span>“Learning <span>Structured Output Representation</span> Using <span>Deep Conditional Generative Models</span>.”</span> In <em>Advances in <span>Neural Information Processing Systems</span></em>. Vol. 28. Curran Associates, Inc. <a href="https://proceedings.neurips.cc/paper_files/paper/2015/hash/8d55a249e6baa5c06772297520da2051-Abstract.html">https://proceedings.neurips.cc/paper_files/paper/2015/hash/8d55a249e6baa5c06772297520da2051-Abstract.html</a>.
+</div>
+<div id="ref-NVAEDeepHierarchical2021vahdat" class="csl-entry" role="listitem">
+Vahdat, Arash, and Jan Kautz. 2021. <span>“<span>NVAE</span>: <span>A Deep Hierarchical Variational Autoencoder</span>.”</span> January 8, 2021. <a href="https://doi.org/10.48550/arXiv.2007.03898">https://doi.org/10.48550/arXiv.2007.03898</a>.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© CC-By Yuyang, 2025</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>This page is built with ❤️ and <a href="https://quarto.org/">Quarto</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.js" defer="true"></script>
+</body></html>

@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Yuyang Zhang">
+<meta name="dcterms.date" content="2025-09-10">
+<meta name="description" content="Training large neural networks can be time-consuming and resource-intensive. This blog post explores various techniques to speed up the training process, including optimizing calculating in the single GPUs, and parallelizing the training across multiple GPUs.">
+
+<title>Speed Up Training for Neural Networks</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<link href="../../.././style/icon.avif" rel="icon">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-0348920b7671f696dc9078d39bff215e.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-6e97c76ec7d7e44d6e697e3c9997636d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-84bb4237d43bdfa05598834a807c2e5a.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../../site_libs/bootstrap/bootstrap-6e97c76ec7d7e44d6e697e3c9997636d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link href="https://fonts.cdnfonts.com/css/cmu-sans-serif" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../../style/styles.css">
+<link rel="stylesheet" href="../../../style/callout.css">
+<meta property="og:title" content="Speed Up Training for Neural Networks">
+<meta property="og:description" content="Training large neural networks can be time-consuming and resource-intensive. This blog post explores various techniques to speed up the training process, including optimizing calculating in the single GPUs, and parallelizing the training across multiple GPUs.">
+<meta property="og:image" content="assets/float32.png">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../index.html"> 
+<span class="menu-text">About Me</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/YYZhang2025"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/zhang-yuyang/"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/Blogs/blogs_index.html"> 
+<span class="menu-text">Blogs</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-learning-notes" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Learning Notes</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-learning-notes">    
+        <li>
+    <a class="dropdown-item" href="../../../posts/LearningNotes/DLFaC_index.html">
+ <span class="dropdown-text">Deep Learning Foundations and Concepts</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../../posts/LearningNotes/CS336_index.html">
+ <span class="dropdown-text">Stanford CS336: LLM from Scratch</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/Projects/projects_index.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/PapersWithCode/100_Papers_index.html"> 
+<span class="menu-text">100 Papers with Code</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+          <h1 class="quarto-secondary-nav-title">Speed Up Training for Neural Networks</h1>
+        </a>     
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#preliminary" id="toc-preliminary" class="nav-link active" data-scroll-target="#preliminary"><span class="header-section-number">1</span> Preliminary</a>
+  <ul class="collapse">
+  <li><a href="#sec-data-types" id="toc-sec-data-types" class="nav-link" data-scroll-target="#sec-data-types"><span class="header-section-number">1.1</span> Data Representation</a></li>
+  <li><a href="#sec-calculate-memory-usage" id="toc-sec-calculate-memory-usage" class="nav-link" data-scroll-target="#sec-calculate-memory-usage"><span class="header-section-number">1.2</span> Calculate Memory Usage of Model</a></li>
+  <li><a href="#collective-operations" id="toc-collective-operations" class="nav-link" data-scroll-target="#collective-operations"><span class="header-section-number">1.3</span> Collective operations</a></li>
+  </ul></li>
+  <li><a href="#profiling" id="toc-profiling" class="nav-link" data-scroll-target="#profiling"><span class="header-section-number">2</span> Profiling</a>
+  <ul class="collapse">
+  <li><a href="#sec-simple-benchmarking" id="toc-sec-simple-benchmarking" class="nav-link" data-scroll-target="#sec-simple-benchmarking"><span class="header-section-number">2.1</span> Simple Benchmarking</a></li>
+  <li><a href="#sec-pytorch-profiler" id="toc-sec-pytorch-profiler" class="nav-link" data-scroll-target="#sec-pytorch-profiler"><span class="header-section-number">2.2</span> PyTorch Profiler</a></li>
+  <li><a href="#sec-nsight-systems" id="toc-sec-nsight-systems" class="nav-link" data-scroll-target="#sec-nsight-systems"><span class="header-section-number">2.3</span> NVIDIA Nsight Systems</a></li>
+  </ul></li>
+  <li><a href="#single-gpu-optimization" id="toc-single-gpu-optimization" class="nav-link" data-scroll-target="#single-gpu-optimization"><span class="header-section-number">3</span> Single GPU Optimization</a>
+  <ul class="collapse">
+  <li><a href="#sec-fusion" id="toc-sec-fusion" class="nav-link" data-scroll-target="#sec-fusion"><span class="header-section-number">3.1</span> Fusion</a></li>
+  <li><a href="#sec-tiling" id="toc-sec-tiling" class="nav-link" data-scroll-target="#sec-tiling"><span class="header-section-number">3.2</span> Tiling</a></li>
+  <li><a href="#sec-memory-coalescing" id="toc-sec-memory-coalescing" class="nav-link" data-scroll-target="#sec-memory-coalescing"><span class="header-section-number">3.3</span> Memory Coalescing</a></li>
+  <li><a href="#sec-mixed-precision-training" id="toc-sec-mixed-precision-training" class="nav-link" data-scroll-target="#sec-mixed-precision-training"><span class="header-section-number">3.4</span> Mixed Precision Training</a></li>
+  <li><a href="#sec-gradient-accumulation" id="toc-sec-gradient-accumulation" class="nav-link" data-scroll-target="#sec-gradient-accumulation"><span class="header-section-number">3.5</span> Gradient Accumulation</a></li>
+  <li><a href="#case-study-flash-attention" id="toc-case-study-flash-attention" class="nav-link" data-scroll-target="#case-study-flash-attention"><span class="header-section-number">3.6</span> Case Study: Flash Attention</a></li>
+  </ul></li>
+  <li><a href="#multi-gpu-optimizationparallelism" id="toc-multi-gpu-optimizationparallelism" class="nav-link" data-scroll-target="#multi-gpu-optimizationparallelism"><span class="header-section-number">4</span> Multi-GPU Optimization(Parallelism)</a>
+  <ul class="collapse">
+  <li><a href="#sec-data-parallelism" id="toc-sec-data-parallelism" class="nav-link" data-scroll-target="#sec-data-parallelism"><span class="header-section-number">4.1</span> Data Parallelism</a></li>
+  <li><a href="#sec-model-parallelism" id="toc-sec-model-parallelism" class="nav-link" data-scroll-target="#sec-model-parallelism"><span class="header-section-number">4.2</span> Model Parallelism</a></li>
+  <li><a href="#sec-pipeline-parallelism" id="toc-sec-pipeline-parallelism" class="nav-link" data-scroll-target="#sec-pipeline-parallelism"><span class="header-section-number">4.3</span> Pipeline Parallelism</a></li>
+  <li><a href="#sec-tensor-parallelism" id="toc-sec-tensor-parallelism" class="nav-link" data-scroll-target="#sec-tensor-parallelism"><span class="header-section-number">4.4</span> Tensor Parallelism</a></li>
+  <li><a href="#sec-context-parallelism" id="toc-sec-context-parallelism" class="nav-link" data-scroll-target="#sec-context-parallelism"><span class="header-section-number">4.5</span> Context Parallelism</a></li>
+  <li><a href="#case-study-deepspeed" id="toc-case-study-deepspeed" class="nav-link" data-scroll-target="#case-study-deepspeed"><span class="header-section-number">4.6</span> Case Study: DeepSpeed</a></li>
+  <li><a href="#case-study-megatron-lm" id="toc-case-study-megatron-lm" class="nav-link" data-scroll-target="#case-study-megatron-lm"><span class="header-section-number">4.7</span> Case Study: Megatron-LM</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content page-columns page-full" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">Speed Up Training for Neural Networks</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Training Tricks</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    <em>Training large neural networks can be time-consuming and resource-intensive. This blog post explores various techniques to speed up the training process, including optimizing calculating in the single GPUs, and parallelizing the training across multiple GPUs.</em>
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Yuyang Zhang </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">2025-09-10</p>
+    </div>
+  </div>
+  
+    <div>
+    <div class="quarto-title-meta-heading">Last modified</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date-modified">2025-11-25</p>
+    </div>
+  </div>
+    
+  </div>
+  
+
+
+</header>
+
+<nav id="TOC-body" role="doc-toc">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#preliminary" id="toc-preliminary"><span class="header-section-number">1</span> Preliminary</a>
+  <ul>
+  <li><a href="#sec-data-types" id="toc-sec-data-types"><span class="header-section-number">1.1</span> Data Representation</a></li>
+  <li><a href="#sec-calculate-memory-usage" id="toc-sec-calculate-memory-usage"><span class="header-section-number">1.2</span> Calculate Memory Usage of Model</a></li>
+  <li><a href="#collective-operations" id="toc-collective-operations"><span class="header-section-number">1.3</span> Collective operations</a></li>
+  </ul></li>
+  <li><a href="#profiling" id="toc-profiling"><span class="header-section-number">2</span> Profiling</a>
+  <ul>
+  <li><a href="#sec-simple-benchmarking" id="toc-sec-simple-benchmarking"><span class="header-section-number">2.1</span> Simple Benchmarking</a></li>
+  <li><a href="#sec-pytorch-profiler" id="toc-sec-pytorch-profiler"><span class="header-section-number">2.2</span> PyTorch Profiler</a></li>
+  <li><a href="#sec-nsight-systems" id="toc-sec-nsight-systems"><span class="header-section-number">2.3</span> NVIDIA Nsight Systems</a></li>
+  </ul></li>
+  <li><a href="#single-gpu-optimization" id="toc-single-gpu-optimization"><span class="header-section-number">3</span> Single GPU Optimization</a>
+  <ul>
+  <li><a href="#sec-fusion" id="toc-sec-fusion"><span class="header-section-number">3.1</span> Fusion</a></li>
+  <li><a href="#sec-tiling" id="toc-sec-tiling"><span class="header-section-number">3.2</span> Tiling</a></li>
+  <li><a href="#sec-memory-coalescing" id="toc-sec-memory-coalescing"><span class="header-section-number">3.3</span> Memory Coalescing</a></li>
+  <li><a href="#sec-mixed-precision-training" id="toc-sec-mixed-precision-training"><span class="header-section-number">3.4</span> Mixed Precision Training</a></li>
+  <li><a href="#sec-gradient-accumulation" id="toc-sec-gradient-accumulation"><span class="header-section-number">3.5</span> Gradient Accumulation</a></li>
+  <li><a href="#case-study-flash-attention" id="toc-case-study-flash-attention"><span class="header-section-number">3.6</span> Case Study: Flash Attention</a></li>
+  </ul></li>
+  <li><a href="#multi-gpu-optimizationparallelism" id="toc-multi-gpu-optimizationparallelism"><span class="header-section-number">4</span> Multi-GPU Optimization(Parallelism)</a>
+  <ul>
+  <li><a href="#sec-data-parallelism" id="toc-sec-data-parallelism"><span class="header-section-number">4.1</span> Data Parallelism</a></li>
+  <li><a href="#sec-model-parallelism" id="toc-sec-model-parallelism"><span class="header-section-number">4.2</span> Model Parallelism</a></li>
+  <li><a href="#sec-pipeline-parallelism" id="toc-sec-pipeline-parallelism"><span class="header-section-number">4.3</span> Pipeline Parallelism</a></li>
+  <li><a href="#sec-tensor-parallelism" id="toc-sec-tensor-parallelism"><span class="header-section-number">4.4</span> Tensor Parallelism</a></li>
+  <li><a href="#sec-context-parallelism" id="toc-sec-context-parallelism"><span class="header-section-number">4.5</span> Context Parallelism</a></li>
+  <li><a href="#case-study-deepspeed" id="toc-case-study-deepspeed"><span class="header-section-number">4.6</span> Case Study: DeepSpeed</a></li>
+  <li><a href="#case-study-megatron-lm" id="toc-case-study-megatron-lm"><span class="header-section-number">4.7</span> Case Study: Megatron-LM</a></li>
+  </ul></li>
+  </ul>
+</nav>
+<hr>
+<p>Training large neural networks(such as large language models) can be time-consuming and resource-intensive. This blog post explores various techniques to speed up the training process, including optimizing calculations on a single GPU through different techniques such as fusion, tiling, memory coalescing, and parallelizing the training across multiple GPUs such as model parallelism and data parallelism. But before that, we need to understand the basic concepts of GPU, and data types to better understand why and when we need to use these techniques.</p>
+<section id="preliminary" class="level2 page-columns page-full" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="preliminary"><span class="header-section-number">1</span> Preliminary</h2>
+<section id="sec-data-types" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="sec-data-types"><span class="header-section-number">1.1</span> Data Representation</h3>
+<p>In deep learning, we often use different data types to represent our data and model parameters. The most common data types are:</p>
+<ul>
+<li><strong>Float32</strong>: also known as <strong>single-precision floating-point format</strong>. This is the <u>default floating-point representation </u> used in most deep learning frameworks. It provides a good balance between precision and performance. It use 32 bits (4 bytes) to represent a number.</li>
+<li><strong>Float16</strong>: This is a half-precision floating-point representation that uses 16 bits instead of 32 bits. It can significantly speed up training and reduce memory usage, but it may lead to numerical instability in some cases.</li>
+<li><strong>BFloat16</strong>: This is a truncated version of Float32 that retains the exponent bits but reduces the mantissa bits. It is designed to provide a good trade-off between precision and performance, especially for training large models.</li>
+</ul>
+<div id="fig-different-data-types" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-different-data-types-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-different-data-types" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-float32" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-float32-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/float32.png" class="img-fluid figure-img" data-ref-parent="fig-different-data-types">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-float32-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) The representation of Float32
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-different-data-types" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-float16" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-float16-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/float16.png" class="img-fluid figure-img" data-ref-parent="fig-different-data-types">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-float16-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) The representation of Float16
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-different-data-types" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-bfloat16" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-bfloat16-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/bfloat16.png" class="img-fluid figure-img" data-ref-parent="fig-different-data-types">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-bfloat16-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(c) The representation of BFloat16
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-different-data-types-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: The representation of float32, float16, and bfloat16 data types. The figure shows how the bits are allocated for the sign, exponent, and mantissa in each data type.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="How those bits represent the number?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+How those bits represent the number?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><span class="math display">\[
+\text{value} = (-1)^s \times (1.f) \times 2^{e - 127}
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(s\)</span> is the sign bit (0 for positive, 1 for negative)</li>
+<li><span class="math inline">\(f\)</span> is the mantissa (the fractional part): <span class="math inline">\(1.f = 1 + \sum_{i=1}^{23} b_i \cdot 2^{-i}\)</span>, where <span class="math inline">\(b_i\)</span> are the bits of the mantissa either 0 or 1.</li>
+<li><span class="math inline">\(e\)</span> is the exponent (an 8-bit <strong>unsigned int</strong>) with a bias of 127:
+<ul>
+<li>For Float32, <span class="math inline">\(e\)</span> is 8 bits, which range from [1, 254]</li>
+<li>For Float16, <span class="math inline">\(e\)</span> is 5 bits, which range from [1, 30]</li>
+<li>For BFloat16, <span class="math inline">\(e\)</span> is 8 bits, which range from [1, 254]</li>
+</ul></li>
+</ul>
+</div>
+</div>
+<p>To check the data type of a tensor and its properties in PyTorch, you can use the <code>.dtype</code> attribute. For example:</p>
+<div class="sourceCode" id="cb1" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a>x <span class="op">=</span> torch.zeros(<span class="dv">4</span>, <span class="dv">8</span>)</span>
+<span id="cb1-2"><a href="#cb1-2"></a>x.dtype <span class="co"># check the data type of x</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a>x.numel() <span class="co"># check the number of elements in x</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a>x.element_size() <span class="co"># check the size of each element in bytes</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a>x.numel() <span class="op">*</span> x.element_size() <span class="co"># check the total size in bytes</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="sec-calculate-memory-usage" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="sec-calculate-memory-usage"><span class="header-section-number">1.2</span> Calculate Memory Usage of Model</h3>
+<p>Assume we have a model with <span class="math inline">\(N\)</span> parameters, and each parameter is represented by <code>float32</code> (4 bytes). <span class="math inline">\(A\)</span> is the number of activation elements stored during forward (depends on input and model depth). How can we calculate the memory need for training this model? Notice that the memory usage of a model is not only determined by the parameters, but also by:</p>
+<ul>
+<li>activations</li>
+<li>gradients</li>
+<li>optimizer states</li>
+</ul>
+<p>For a single parameter, the memory usage for one forward pass and backward pass is:</p>
+<ul>
+<li>parameter: 4 bytes (<code>float32</code>)</li>
+<li>activation: 4 bytes (<code>float32</code>)</li>
+<li>gradient: 4 bytes (<code>float32</code>)</li>
+<li>optimizer state, which can vary depending on the optimizer used. For example, Adam optimizer requires 2 additional states (momentum and variance), each of which is 4 bytes (<code>float32</code>).</li>
+</ul>
+<p>So, the total memory usage for one parameter is: <span class="math display">\[
+\text{Memory per parameter} = 4 + 4  + 2 \times 4 = 16 \text{ bytes}
+\]</span><br>
+Thus, the total memory usage for the model is: <span class="math display">\[
+\text{Total Memory} = N \times 16 \text{ bytes} + A \times 4 \text{ bytes}
+\]</span></p>
+<div class="callout callout-style-default callout-note callout-titled" title="Why need activation for backward pass?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Why need activation for backward pass?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Say a layer denotes the input to the layer as <span class="math inline">\(\mathbf{x}\)</span>, the weights as <span class="math inline">\(\theta\)</span>, and the output as <span class="math inline">\(\mathbf{y}\)</span>. The loss function is denoted as <span class="math inline">\(L\)</span>, which is a function of the output <span class="math inline">\(\mathbf{y}\)</span> and the target <span class="math inline">\(t\)</span>: <span class="math display">\[
+\mathbf{y} = f(\mathbf{x}; \theta)
+\]</span> To compute the gradient of the loss with respect to the weights, we need to use the chain rule: <span class="math display">\[
+\frac{\partial L}{\partial \theta} = \frac{\partial L}{\partial \mathbf{y}} \cdot \frac{\partial \mathbf{y}}{\partial \theta}
+\]</span></p>
+<p>where <span class="math inline">\(\frac{\partial \mathbf{y}}{\partial \theta}\)</span> is the gradient of the output with respect to the weights <span class="math inline">\(\theta\)</span>, which usually are the function of the input <span class="math inline">\(\mathbf{x}\)</span> and the weights <span class="math inline">\(\theta\)</span>. To compute this gradient, we need to know the input <span class="math inline">\(\mathbf{x}\)</span>. For example, the <em>linear layer</em> computes: <span class="math display">\[
+\mathbf{y} = \mathbf{x} \cdot \theta + b
+\]</span> to compute the gradient, we need to know the input <span class="math inline">\(\mathbf{x}\)</span>, <span class="math display">\[
+\frac{\partial L}{\partial \theta} = \frac{\partial L}{\partial \mathbf{y}} \cdot \mathbf{x}
+\]</span> where <span class="math inline">\(\mathbf{x}\)</span> is the input to the layer, which is the activation of the previous layer. Thus, we need to store the activation for the backward pass.</p>
+</div>
+</div>
+</section>
+<section id="collective-operations" class="level3 page-columns page-full" data-number="1.3">
+<h3 data-number="1.3" class="anchored" data-anchor-id="collective-operations"><span class="header-section-number">1.3</span> Collective operations</h3>
+<p>Collective operations are operations that involve multiple processes or devices, such as GPUs, to perform a computation. They are essential for parallelizing the training process across multiple GPUs. Some common collective operations include:</p>
+<ul>
+<li><p><strong>Broadcast</strong>(<a href="#fig-broadcast" class="quarto-xref">Figure&nbsp;2 (a)</a>): This operation <u>sends data from one process to all other processes</u>. It is commonly used to share model parameters or hyperparameters across multiple GPUs.</p></li>
+<li><p><strong>Scatter</strong>(<a href="#fig-scatter" class="quarto-xref">Figure&nbsp;2 (b)</a>): This operation distributes data from one process to multiple processes. It is often used to distribute input data across multiple GPUs.</p></li>
+<li><p><strong>Gather</strong>(<a href="#fig-gather" class="quarto-xref">Figure&nbsp;2 (c)</a>): This operation <u>collects data from multiple processes and combines it into a single process</u>. It is useful for aggregating results from multiple GPUs.</p></li>
+<li><p><strong>Reduce</strong>(<a href="#fig-reduce" class="quarto-xref">Figure&nbsp;2 (d)</a>): This operation <u>combines data from multiple processes into a single process</u>. It is commonly used to compute the sum or maximum of gradients across multiple GPUs.</p></li>
+<li><p><strong>All-gather</strong>(<a href="#fig-all-gather" class="quarto-xref">Figure&nbsp;2 (e)</a>): This operation <u>collects data from all processes and distributes it back to all processes</u>. It is often used to gather gradients or model parameters from multiple GPUs without losing any information.</p></li>
+<li><p><strong>All-reduce</strong>(<a href="#fig-all-reduce" class="quarto-xref">Figure&nbsp;2 (g)</a>): This operation <u>combines data from all processes and distributes the result back to all processes</u>. It is often used to average gradients across multiple GPUs during training.</p></li>
+<li><p><strong>Reduce-scatter</strong>(<a href="#fig-reduce-scatter" class="quarto-xref">Figure&nbsp;2 (f)</a>): This operation <u>combines data from multiple processes and distributes the result to each process</u>. It is often used to reduce the amount of data that needs to be communicated between processes.</p></li>
+</ul>
+<div class="column-page">
+<div id="fig-collective-ops" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-collective-ops-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-collective-ops" style="flex-basis: 25.0%;justify-content: flex-start;">
+<div id="fig-broadcast" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-broadcast-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/broadcast.png" class="img-fluid figure-img" data-ref-parent="fig-collective-ops">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-broadcast-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Broadcast
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-collective-ops" style="flex-basis: 25.0%;justify-content: flex-start;">
+<div id="fig-scatter" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-scatter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/scatter.png" class="img-fluid figure-img" data-ref-parent="fig-collective-ops">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-scatter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Scatter
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-collective-ops" style="flex-basis: 25.0%;justify-content: flex-start;">
+<div id="fig-gather" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-gather-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/gather.png" class="img-fluid figure-img" data-ref-parent="fig-collective-ops">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-gather-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(c) Gather
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-collective-ops" style="flex-basis: 25.0%;justify-content: flex-start;">
+<div id="fig-reduce" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-reduce-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/reduce.png" class="img-fluid figure-img" data-ref-parent="fig-collective-ops">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-reduce-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(d) Reduce
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-collective-ops" style="flex-basis: 33.3%;justify-content: flex-start;">
+<div id="fig-all-gather" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-all-gather-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/all-gather.png" class="img-fluid figure-img" data-ref-parent="fig-collective-ops">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-all-gather-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(e) All-gather
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-collective-ops" style="flex-basis: 33.3%;justify-content: flex-start;">
+<div id="fig-reduce-scatter" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-reduce-scatter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/reduce-scatter.png" class="img-fluid figure-img" data-ref-parent="fig-collective-ops">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-reduce-scatter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(f) Reduce-scatter
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-collective-ops" style="flex-basis: 33.3%;justify-content: flex-start;">
+<div id="fig-all-reduce" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-all-reduce-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/all-reduce.png" class="img-fluid figure-img" data-ref-parent="fig-collective-ops">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-all-reduce-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(g) All-reduce
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-collective-ops-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: The illustration of different collective operations. The figure shows how data is communicated between processes in each operation.(Image take from: <a href="https://stanford-cs336.github.io/spring2025/">Stanford CS336</a>)
+</figcaption>
+</figure>
+</div>
+</div>
+<p>One should take note is <strong>Reduce-Scatter</strong> combines two operations:</p>
+<ol type="1">
+<li><strong>Reduce</strong>: Each process (or GPU) contributes its data, and a reduction operation (usually sum, mean, max, etc.) is applied across processes.</li>
+<li><strong>Scatter</strong>: The reduced result is partitioned and each process gets only a portion (its shard) of the reduced result.</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Way to remember the terminology:</p>
+<ul>
+<li><strong>Gather</strong>: collects data from multiple sources into one destination(not do any operation)</li>
+<li><strong>Reduce</strong>: performs some associative/commutative operation (sum, min, max)</li>
+<li><strong>Broadcast/Scatter</strong>: is inverse of <strong>Gather</strong></li>
+<li><strong>All</strong>: means destination is all devices</li>
+</ul>
+</div>
+</div>
+</section>
+</section>
+<section id="profiling" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="profiling"><span class="header-section-number">2</span> Profiling</h2>
+<p>To optimize the training process, we need to first profile our model to identify the bottlenecks. In this section, we will introduce several tools to profile the model and understand where the time is spent during training. We will discuss several tools that can help us profile our model and identify the bottlenecks in the training process:</p>
+<ul>
+<li>Simple Benchmarking (<a href="#sec-simple-benchmarking" class="quarto-xref">Section&nbsp;2.1</a>): The simplest way to measure the time taken for each operation in your model. You can use the <code>time</code> module in Python to measure the time taken for each operation. For example, you can wrap your forward pass in a timer to measure the time taken for each layer.</li>
+<li>PyTorch Profiler (<a href="#sec-pytorch-profiler" class="quarto-xref">Section&nbsp;2.2</a>): PyTorch provides a built-in profiler that can help you analyze the performance of your model. You can use the <code>torch.profiler</code> module to profile your model and visualize the results. The profiler provides detailed information about the time spent on each operation, memory usage, and more.</li>
+<li>NVIDIA Nsight Systems (<a href="#sec-nsight-systems" class="quarto-xref">Section&nbsp;2.3</a>): This is a powerful profiling tool that can help you analyze the performance of your model on NVIDIA GPUs. It provides detailed information about the GPU utilization, memory usage, and more. You can use it to identify bottlenecks in your model and optimize the performance.</li>
+</ul>
+<section id="sec-simple-benchmarking" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="sec-simple-benchmarking"><span class="header-section-number">2.1</span> Simple Benchmarking</h3>
+</section>
+<section id="sec-pytorch-profiler" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="sec-pytorch-profiler"><span class="header-section-number">2.2</span> PyTorch Profiler</h3>
+</section>
+<section id="sec-nsight-systems" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="sec-nsight-systems"><span class="header-section-number">2.3</span> NVIDIA Nsight Systems</h3>
+</section>
+</section>
+<section id="single-gpu-optimization" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="single-gpu-optimization"><span class="header-section-number">3</span> Single GPU Optimization</h2>
+<p>In this section, we will discuss various techniques to optimize the training process on a single GPU. These techniques include: - <strong>Fusion</strong>(<a href="#sec-fusion" class="quarto-xref">Section&nbsp;3.1</a>): This technique combines multiple operations into a single operation to reduce the number of kernel launches and improve performance. For example, you can fuse the forward and backward passes of a layer into a single operation. - <strong>Tiling</strong>(<a href="#sec-tiling" class="quarto-xref">Section&nbsp;3.2</a>): This technique divides the input data into smaller tiles and processes them in parallel to improve memory access patterns and reduce memory usage. For example, you can tile the input data into smaller chunks and process them in parallel. - <strong>Memory Coalescing</strong>(<a href="#sec-memory-coalescing" class="quarto-xref">Section&nbsp;3.3</a>): This technique optimizes memory access patterns to improve memory bandwidth utilization. For example, you can coalesce memory accesses to reduce the number of memory transactions and improve performance. - <strong>Mixed Precision Training</strong>(<a href="#sec-mixed-precision-training" class="quarto-xref">Section&nbsp;3.4</a>): This technique uses lower precision data types (such as <code>float16</code> or <code>bfloat16</code>) to reduce memory usage and improve performance. It can significantly speed up training while maintaining model accuracy. PyTorch provides built-in support for mixed precision training through the <code>torch.cuda.amp</code> module, which allows you to automatically cast your model and inputs to lower precision during training. - <strong>Gradient Accumulation</strong>(<a href="#sec-gradient-accumulation" class="quarto-xref">Section&nbsp;3.5</a>): This technique accumulates gradients over multiple mini-batches before performing a weight update. It can help reduce the number of weight updates and improve training stability, especially when using large batch sizes. You can implement gradient accumulation by accumulating gradients in a buffer and updating the model parameters only after a certain number of mini-batches.</p>
+<section id="sec-fusion" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="sec-fusion"><span class="header-section-number">3.1</span> Fusion</h3>
+</section>
+<section id="sec-tiling" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="sec-tiling"><span class="header-section-number">3.2</span> Tiling</h3>
+</section>
+<section id="sec-memory-coalescing" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="sec-memory-coalescing"><span class="header-section-number">3.3</span> Memory Coalescing</h3>
+</section>
+<section id="sec-mixed-precision-training" class="level3" data-number="3.4">
+<h3 data-number="3.4" class="anchored" data-anchor-id="sec-mixed-precision-training"><span class="header-section-number">3.4</span> Mixed Precision Training</h3>
+</section>
+<section id="sec-gradient-accumulation" class="level3" data-number="3.5">
+<h3 data-number="3.5" class="anchored" data-anchor-id="sec-gradient-accumulation"><span class="header-section-number">3.5</span> Gradient Accumulation</h3>
+</section>
+<section id="case-study-flash-attention" class="level3" data-number="3.6">
+<h3 data-number="3.6" class="anchored" data-anchor-id="case-study-flash-attention"><span class="header-section-number">3.6</span> Case Study: Flash Attention</h3>
+</section>
+</section>
+<section id="multi-gpu-optimizationparallelism" class="level2 page-columns page-full" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="multi-gpu-optimizationparallelism"><span class="header-section-number">4</span> Multi-GPU Optimization(Parallelism)</h2>
+<p>In this section, we will discuss various techniques to optimize the training process across multiple GPUs. These techniques include: - <strong>Data Parallelism</strong>(<a href="#sec-data-parallelism" class="quarto-xref">Section&nbsp;4.1</a>): This technique splits the input data across multiple GPUs and performs the forward and backward passes in parallel. Each GPU processes a different subset of the input data, and the gradients are averaged across GPUs before updating the model parameters. - <strong>Model Parallelism</strong>(<a href="#sec-model-parallelism" class="quarto-xref">Section&nbsp;4.2</a>): This technique splits the model across multiple GPUs and performs the forward and backward passes in parallel. Each GPU processes a different part of the model, and the gradients are averaged across GPUs before updating the model parameters. This is particularly useful for large models that do not fit into a single GPU’s memory. - <strong>Pipeline Parallelism</strong>(<a href="#sec-pipeline-parallelism" class="quarto-xref">Section&nbsp;4.3</a>): This technique splits the model into multiple stages and processes each stage in parallel across multiple GPUs. Each GPU processes a different stage of the model, and the output of one stage is passed to the next stage. This can help improve throughput and reduce memory usage, especially for large models. - <strong>Tensor Parallelism</strong>(<a href="#sec-tensor-parallelism" class="quarto-xref">Section&nbsp;4.4</a>): This technique splits the tensors across multiple GPUs and performs the forward and backward passes in parallel. Each GPU processes a different part of the tensor, and the gradients are averaged across GPUs before updating the model parameters. This is particularly useful for large tensors that do not fit into a single GPU’s memory. - <strong>Context Parallelism</strong>(<a href="#sec-context-parallelism" class="quarto-xref">Section&nbsp;4.5</a>): This technique splits the context across multiple GPUs and performs the forward and backward passes in parallel. Each GPU processes a different part of the context, and the gradients are averaged across GPUs before updating the model parameters. This is particularly useful for large contexts that do not fit into a single GPU’s memory.</p>
+<section id="sec-data-parallelism" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="sec-data-parallelism"><span class="header-section-number">4.1</span> Data Parallelism</h3>
+</section>
+<section id="sec-model-parallelism" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="sec-model-parallelism"><span class="header-section-number">4.2</span> Model Parallelism</h3>
+</section>
+<section id="sec-pipeline-parallelism" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="sec-pipeline-parallelism"><span class="header-section-number">4.3</span> Pipeline Parallelism</h3>
+</section>
+<section id="sec-tensor-parallelism" class="level3" data-number="4.4">
+<h3 data-number="4.4" class="anchored" data-anchor-id="sec-tensor-parallelism"><span class="header-section-number">4.4</span> Tensor Parallelism</h3>
+</section>
+<section id="sec-context-parallelism" class="level3" data-number="4.5">
+<h3 data-number="4.5" class="anchored" data-anchor-id="sec-context-parallelism"><span class="header-section-number">4.5</span> Context Parallelism</h3>
+</section>
+<section id="case-study-deepspeed" class="level3" data-number="4.6">
+<h3 data-number="4.6" class="anchored" data-anchor-id="case-study-deepspeed"><span class="header-section-number">4.6</span> Case Study: DeepSpeed</h3>
+</section>
+<section id="case-study-megatron-lm" class="level3 page-columns page-full" data-number="4.7">
+<h3 data-number="4.7" class="anchored" data-anchor-id="case-study-megatron-lm"><span class="header-section-number">4.7</span> Case Study: Megatron-LM</h3>
+<div class="column-page" data-scrollable="true">
+<table class="table-hover table">
+<colgroup>
+<col style="width: 35%">
+<col style="width: 6%">
+<col style="width: 5%">
+<col style="width: 6%">
+<col style="width: 5%">
+<col style="width: 7%">
+<col style="width: 6%">
+<col style="width: 7%">
+<col style="width: 6%">
+<col style="width: 8%">
+<col style="width: 6%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Self CPU %</th>
+<th>Self CPU</th>
+<th>CPU total %</th>
+<th>CPU total</th>
+<th>CPU time avg</th>
+<th>Self CUDA</th>
+<th>Self CUDA %</th>
+<th>CUDA total</th>
+<th>CUDA time avg</th>
+<th># of Calls</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>aten::gelu</td>
+<td>6.76%</td>
+<td>669.785us</td>
+<td>13.48%</td>
+<td>1.336ms</td>
+<td>1.336ms</td>
+<td>8.642ms</td>
+<td>100.00%</td>
+<td>8.642ms</td>
+<td>8.642ms</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>void at::native::vectorized_elementwise_kernel&lt;…&gt;</td>
+<td>0.00%</td>
+<td>0.000us</td>
+<td>0.00%</td>
+<td>0.000us</td>
+<td>0.000us</td>
+<td>8.642ms</td>
+<td>100.00%</td>
+<td>8.642ms</td>
+<td>8.642ms</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>cudaLaunchKernel</td>
+<td>6.72%</td>
+<td>665.807us</td>
+<td>6.72%</td>
+<td>665.807us</td>
+<td>665.807us</td>
+<td>0.000us</td>
+<td>0.00%</td>
+<td>0.000us</td>
+<td>0.000us</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>cudaDeviceSynchronize</td>
+<td>86.52%</td>
+<td>8.574ms</td>
+<td>86.52%</td>
+<td>8.574ms</td>
+<td>4.287ms</td>
+<td>0.000us</td>
+<td>0.00%</td>
+<td>0.000us</td>
+<td>0.000us</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Self CPU time total</strong>: 9.909 ms<br>
+<strong>Self CUDA time total</strong>: 8.642 ms</p>
+</div>
+
+
+</section>
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© CC-By Yuyang, 2025</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>This page is built with ❤️ and <a href="https://quarto.org/">Quarto</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.js" defer="true"></script>
+</body></html>

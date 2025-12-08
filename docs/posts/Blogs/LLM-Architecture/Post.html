@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Yuyang Zhang">
+<meta name="dcterms.date" content="2025-09-25">
+<meta name="description" content="In this blog, we will going through different transformer architectures that power LLMs. Such as position encoding, attention mechanisms, and more. In the end, we will explore some SOTA LLM architectures, and study how to they combine those techniques to achieve better performance.">
+
+<title>LLM Part1: Architecture</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<link href="../../.././style/icon.avif" rel="icon">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-0348920b7671f696dc9078d39bff215e.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-6e97c76ec7d7e44d6e697e3c9997636d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-84bb4237d43bdfa05598834a807c2e5a.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../../site_libs/bootstrap/bootstrap-6e97c76ec7d7e44d6e697e3c9997636d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.css" rel="stylesheet">
+<script src="../../../site_libs/quarto-contrib/videojs/video.min.js"></script>
+<link href="../../../site_libs/quarto-contrib/videojs/video-js.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link href="https://fonts.cdnfonts.com/css/cmu-sans-serif" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../../style/styles.css">
+<link rel="stylesheet" href="../../../style/callout.css">
+<meta property="og:title" content="LLM Part1: Architecture">
+<meta property="og:description" content="In this blog, we will going through different transformer architectures that power LLMs. Such as position encoding, attention mechanisms, and more. In the end, we will explore some SOTA LLM architectures, and study how to they combine those techniques to achieve better performance.">
+<meta property="og:image" content="assets/original_transformer_architecture.png">
+</head>
+
+<body class="nav-sidebar docked nav-fixed slimcontent quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../index.html"> 
+<span class="menu-text">About Me</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/YYZhang2025"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/zhang-yuyang/"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/Blogs/blogs_index.html"> 
+<span class="menu-text">Blogs</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-learning-notes" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Learning Notes</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-learning-notes">    
+        <li>
+    <a class="dropdown-item" href="../../../posts/LearningNotes/DLFaC_index.html">
+ <span class="dropdown-text">Deep Learning Foundations and Concepts</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../../posts/LearningNotes/CS336_index.html">
+ <span class="dropdown-text">Stanford CS336: LLM from Scratch</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/Projects/projects_index.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../posts/PapersWithCode/100_Papers_index.html"> 
+<span class="menu-text">100 Papers with Code</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+          <h1 class="quarto-secondary-nav-title">LLM Part1: Architecture</h1>
+        </a>     
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-overview-of-transformer-model" id="toc-the-overview-of-transformer-model" class="nav-link active" data-scroll-target="#the-overview-of-transformer-model"><span class="header-section-number">1</span> The overview of transformer model</a></li>
+  <li><a href="#position-encoding" id="toc-position-encoding" class="nav-link" data-scroll-target="#position-encoding"><span class="header-section-number">2</span> Position Encoding</a>
+  <ul class="collapse">
+  <li><a href="#learned-position-encoding" id="toc-learned-position-encoding" class="nav-link" data-scroll-target="#learned-position-encoding"><span class="header-section-number">2.1</span> Learned Position Encoding</a></li>
+  <li><a href="#absolute-position-encoding" id="toc-absolute-position-encoding" class="nav-link" data-scroll-target="#absolute-position-encoding"><span class="header-section-number">2.2</span> Absolute Position Encoding</a></li>
+  <li><a href="#relative-position-encoding" id="toc-relative-position-encoding" class="nav-link" data-scroll-target="#relative-position-encoding"><span class="header-section-number">2.3</span> Relative Position Encoding</a></li>
+  <li><a href="#rope-rotary-position-embedding" id="toc-rope-rotary-position-embedding" class="nav-link" data-scroll-target="#rope-rotary-position-embedding"><span class="header-section-number">2.4</span> RoPE (Rotary Position Embedding)</a></li>
+  <li><a href="#alibi" id="toc-alibi" class="nav-link" data-scroll-target="#alibi"><span class="header-section-number">2.5</span> ALIBI</a></li>
+  <li><a href="#extend-to-longer-context" id="toc-extend-to-longer-context" class="nav-link" data-scroll-target="#extend-to-longer-context"><span class="header-section-number">2.6</span> Extend to longer context</a>
+  <ul class="collapse">
+  <li><a href="#linear-position-interpolation" id="toc-linear-position-interpolation" class="nav-link" data-scroll-target="#linear-position-interpolation"><span class="header-section-number">2.6.1</span> Linear Position Interpolation</a></li>
+  <li><a href="#ntk-aware-position-interpolation" id="toc-ntk-aware-position-interpolation" class="nav-link" data-scroll-target="#ntk-aware-position-interpolation"><span class="header-section-number">2.6.2</span> NTK-Aware Position Interpolation</a></li>
+  <li><a href="#yarn" id="toc-yarn" class="nav-link" data-scroll-target="#yarn"><span class="header-section-number">2.6.3</span> YaRN</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#normalization" id="toc-normalization" class="nav-link" data-scroll-target="#normalization"><span class="header-section-number">3</span> Normalization</a>
+  <ul class="collapse">
+  <li><a href="#layer-normalization-vs.-rms-normalization" id="toc-layer-normalization-vs.-rms-normalization" class="nav-link" data-scroll-target="#layer-normalization-vs.-rms-normalization"><span class="header-section-number">3.1</span> Layer Normalization vs.&nbsp;RMS Normalization</a></li>
+  <li><a href="#pre-layer-normalization-vs.-post-layer-normalization" id="toc-pre-layer-normalization-vs.-post-layer-normalization" class="nav-link" data-scroll-target="#pre-layer-normalization-vs.-post-layer-normalization"><span class="header-section-number">3.2</span> Pre-Layer Normalization vs.&nbsp;Post-Layer Normalization</a></li>
+  <li><a href="#qk-norm" id="toc-qk-norm" class="nav-link" data-scroll-target="#qk-norm"><span class="header-section-number">3.3</span> QK Norm</a></li>
+  </ul></li>
+  <li><a href="#attention-mechanism" id="toc-attention-mechanism" class="nav-link" data-scroll-target="#attention-mechanism"><span class="header-section-number">4</span> Attention Mechanism</a>
+  <ul class="collapse">
+  <li><a href="#multi-headed-attention" id="toc-multi-headed-attention" class="nav-link" data-scroll-target="#multi-headed-attention"><span class="header-section-number">4.1</span> Multi Headed Attention</a>
+  <ul class="collapse">
+  <li><a href="#time-complexity-of-scaled-dot-product-attention" id="toc-time-complexity-of-scaled-dot-product-attention" class="nav-link" data-scroll-target="#time-complexity-of-scaled-dot-product-attention"><span class="header-section-number">4.1.1</span> Time Complexity of Scaled Dot-Product Attention</a></li>
+  </ul></li>
+  <li><a href="#grouped-query-attention-multi-query-attention" id="toc-grouped-query-attention-multi-query-attention" class="nav-link" data-scroll-target="#grouped-query-attention-multi-query-attention"><span class="header-section-number">4.2</span> Grouped Query Attention / Multi Query Attention</a></li>
+  <li><a href="#sparse-attention" id="toc-sparse-attention" class="nav-link" data-scroll-target="#sparse-attention"><span class="header-section-number">4.3</span> Sparse Attention</a>
+  <ul class="collapse">
+  <li><a href="#sliding-window-attention" id="toc-sliding-window-attention" class="nav-link" data-scroll-target="#sliding-window-attention"><span class="header-section-number">4.3.1</span> Sliding window attention</a></li>
+  <li><a href="#dilated-attention" id="toc-dilated-attention" class="nav-link" data-scroll-target="#dilated-attention"><span class="header-section-number">4.3.2</span> Dilated Attention</a></li>
+  </ul></li>
+  <li><a href="#multi-latent-attention" id="toc-multi-latent-attention" class="nav-link" data-scroll-target="#multi-latent-attention"><span class="header-section-number">4.4</span> Multi Latent Attention</a></li>
+  <li><a href="#flash-attention" id="toc-flash-attention" class="nav-link" data-scroll-target="#flash-attention"><span class="header-section-number">4.5</span> Flash Attention</a>
+  <ul class="collapse">
+  <li><a href="#flash-attention-v1-vs.-v2-vs.-v3" id="toc-flash-attention-v1-vs.-v2-vs.-v3" class="nav-link" data-scroll-target="#flash-attention-v1-vs.-v2-vs.-v3"><span class="header-section-number">4.5.1</span> Flash Attention V1 vs.&nbsp;V2 vs.&nbsp;V3</a></li>
+  </ul></li>
+  <li><a href="#native-sparse-attention" id="toc-native-sparse-attention" class="nav-link" data-scroll-target="#native-sparse-attention"><span class="header-section-number">4.6</span> Native Sparse Attention</a></li>
+  <li><a href="#attention-sink" id="toc-attention-sink" class="nav-link" data-scroll-target="#attention-sink"><span class="header-section-number">4.7</span> Attention Sink</a></li>
+  </ul></li>
+  <li><a href="#activations" id="toc-activations" class="nav-link" data-scroll-target="#activations"><span class="header-section-number">5</span> Activations</a>
+  <ul class="collapse">
+  <li><a href="#swish" id="toc-swish" class="nav-link" data-scroll-target="#swish"><span class="header-section-number">5.1</span> Swish</a></li>
+  <li><a href="#gated-linear-unit-glu" id="toc-gated-linear-unit-glu" class="nav-link" data-scroll-target="#gated-linear-unit-glu"><span class="header-section-number">5.2</span> Gated Linear Unit (GLU)</a></li>
+  </ul></li>
+  <li><a href="#feed-forward-network-mixture-of-experts" id="toc-feed-forward-network-mixture-of-experts" class="nav-link" data-scroll-target="#feed-forward-network-mixture-of-experts"><span class="header-section-number">6</span> Feed Forward Network &amp; Mixture of Experts</a>
+  <ul class="collapse">
+  <li><a href="#multi-layer-perceptron-mlp" id="toc-multi-layer-perceptron-mlp" class="nav-link" data-scroll-target="#multi-layer-perceptron-mlp"><span class="header-section-number">6.1</span> Multi Layer Perceptron (MLP)</a></li>
+  <li><a href="#gated-linear-unit-glu-1" id="toc-gated-linear-unit-glu-1" class="nav-link" data-scroll-target="#gated-linear-unit-glu-1"><span class="header-section-number">6.2</span> Gated Linear Unit (GLU)</a></li>
+  <li><a href="#mixture-of-experts-moe" id="toc-mixture-of-experts-moe" class="nav-link" data-scroll-target="#mixture-of-experts-moe"><span class="header-section-number">6.3</span> Mixture of Experts (MoE)</a></li>
+  </ul></li>
+  <li><a href="#model-initialization" id="toc-model-initialization" class="nav-link" data-scroll-target="#model-initialization"><span class="header-section-number">7</span> Model Initialization</a>
+  <ul class="collapse">
+  <li><a href="#weight-initialization" id="toc-weight-initialization" class="nav-link" data-scroll-target="#weight-initialization"><span class="header-section-number">7.1</span> Weight Initialization</a></li>
+  <li><a href="#layer-initialization" id="toc-layer-initialization" class="nav-link" data-scroll-target="#layer-initialization"><span class="header-section-number">7.2</span> Layer Initialization</a></li>
+  </ul></li>
+  <li><a href="#case-study" id="toc-case-study" class="nav-link" data-scroll-target="#case-study"><span class="header-section-number">8</span> Case Study</a>
+  <ul class="collapse">
+  <li><a href="#llama" id="toc-llama" class="nav-link" data-scroll-target="#llama"><span class="header-section-number">8.1</span> LLaMA</a></li>
+  <li><a href="#qwen" id="toc-qwen" class="nav-link" data-scroll-target="#qwen"><span class="header-section-number">8.2</span> Qwen</a></li>
+  <li><a href="#deepseek" id="toc-deepseek" class="nav-link" data-scroll-target="#deepseek"><span class="header-section-number">8.3</span> DeepSeek</a></li>
+  <li><a href="#gpt-oss" id="toc-gpt-oss" class="nav-link" data-scroll-target="#gpt-oss"><span class="header-section-number">8.4</span> GPT-Oss</a></li>
+  </ul></li>
+  <li><a href="#other-architectures" id="toc-other-architectures" class="nav-link" data-scroll-target="#other-architectures"><span class="header-section-number">9</span> Other Architectures</a>
+  <ul class="collapse">
+  <li><a href="#diffusion-language-models" id="toc-diffusion-language-models" class="nav-link" data-scroll-target="#diffusion-language-models"><span class="header-section-number">9.1</span> Diffusion Language Models</a></li>
+  <li><a href="#state-space-model-ssm" id="toc-state-space-model-ssm" class="nav-link" data-scroll-target="#state-space-model-ssm"><span class="header-section-number">9.2</span> State Space Model (SSM)</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">10</span> Conclusion</a></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content page-columns page-full" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">LLM Part1: Architecture</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Transformer</div>
+    <div class="quarto-category">Large Language Model</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    In this blog, we will going through different transformer architectures that power LLMs. Such as position encoding, attention mechanisms, and more. In the end, we will explore some SOTA LLM architectures, and study how to they combine those techniques to achieve better performance.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Yuyang Zhang </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">2025-09-25</p>
+    </div>
+  </div>
+  
+    <div>
+    <div class="quarto-title-meta-heading">Modified</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date-modified">2025-11-25</p>
+    </div>
+  </div>
+    
+  </div>
+  
+
+
+</header>
+
+<nav id="TOC-body" role="doc-toc">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-overview-of-transformer-model" id="toc-the-overview-of-transformer-model"><span class="header-section-number">1</span> The overview of transformer model</a></li>
+  <li><a href="#position-encoding" id="toc-position-encoding"><span class="header-section-number">2</span> Position Encoding</a>
+  <ul>
+  <li><a href="#learned-position-encoding" id="toc-learned-position-encoding"><span class="header-section-number">2.1</span> Learned Position Encoding</a></li>
+  <li><a href="#absolute-position-encoding" id="toc-absolute-position-encoding"><span class="header-section-number">2.2</span> Absolute Position Encoding</a></li>
+  <li><a href="#relative-position-encoding" id="toc-relative-position-encoding"><span class="header-section-number">2.3</span> Relative Position Encoding</a></li>
+  <li><a href="#rope-rotary-position-embedding" id="toc-rope-rotary-position-embedding"><span class="header-section-number">2.4</span> RoPE (Rotary Position Embedding)</a></li>
+  <li><a href="#alibi" id="toc-alibi"><span class="header-section-number">2.5</span> ALIBI</a></li>
+  <li><a href="#extend-to-longer-context" id="toc-extend-to-longer-context"><span class="header-section-number">2.6</span> Extend to longer context</a>
+  <ul>
+  <li><a href="#linear-position-interpolation" id="toc-linear-position-interpolation"><span class="header-section-number">2.6.1</span> Linear Position Interpolation</a></li>
+  <li><a href="#ntk-aware-position-interpolation" id="toc-ntk-aware-position-interpolation"><span class="header-section-number">2.6.2</span> NTK-Aware Position Interpolation</a></li>
+  <li><a href="#yarn" id="toc-yarn"><span class="header-section-number">2.6.3</span> YaRN</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#normalization" id="toc-normalization"><span class="header-section-number">3</span> Normalization</a>
+  <ul>
+  <li><a href="#layer-normalization-vs.-rms-normalization" id="toc-layer-normalization-vs.-rms-normalization"><span class="header-section-number">3.1</span> Layer Normalization vs.&nbsp;RMS Normalization</a></li>
+  <li><a href="#pre-layer-normalization-vs.-post-layer-normalization" id="toc-pre-layer-normalization-vs.-post-layer-normalization"><span class="header-section-number">3.2</span> Pre-Layer Normalization vs.&nbsp;Post-Layer Normalization</a></li>
+  <li><a href="#qk-norm" id="toc-qk-norm"><span class="header-section-number">3.3</span> QK Norm</a></li>
+  </ul></li>
+  <li><a href="#attention-mechanism" id="toc-attention-mechanism"><span class="header-section-number">4</span> Attention Mechanism</a>
+  <ul>
+  <li><a href="#multi-headed-attention" id="toc-multi-headed-attention"><span class="header-section-number">4.1</span> Multi Headed Attention</a>
+  <ul>
+  <li><a href="#time-complexity-of-scaled-dot-product-attention" id="toc-time-complexity-of-scaled-dot-product-attention"><span class="header-section-number">4.1.1</span> Time Complexity of Scaled Dot-Product Attention</a></li>
+  </ul></li>
+  <li><a href="#grouped-query-attention-multi-query-attention" id="toc-grouped-query-attention-multi-query-attention"><span class="header-section-number">4.2</span> Grouped Query Attention / Multi Query Attention</a></li>
+  <li><a href="#sparse-attention" id="toc-sparse-attention"><span class="header-section-number">4.3</span> Sparse Attention</a>
+  <ul>
+  <li><a href="#sliding-window-attention" id="toc-sliding-window-attention"><span class="header-section-number">4.3.1</span> Sliding window attention</a></li>
+  <li><a href="#dilated-attention" id="toc-dilated-attention"><span class="header-section-number">4.3.2</span> Dilated Attention</a></li>
+  </ul></li>
+  <li><a href="#multi-latent-attention" id="toc-multi-latent-attention"><span class="header-section-number">4.4</span> Multi Latent Attention</a></li>
+  <li><a href="#flash-attention" id="toc-flash-attention"><span class="header-section-number">4.5</span> Flash Attention</a>
+  <ul>
+  <li><a href="#flash-attention-v1-vs.-v2-vs.-v3" id="toc-flash-attention-v1-vs.-v2-vs.-v3"><span class="header-section-number">4.5.1</span> Flash Attention V1 vs.&nbsp;V2 vs.&nbsp;V3</a></li>
+  </ul></li>
+  <li><a href="#native-sparse-attention" id="toc-native-sparse-attention"><span class="header-section-number">4.6</span> Native Sparse Attention</a></li>
+  <li><a href="#attention-sink" id="toc-attention-sink"><span class="header-section-number">4.7</span> Attention Sink</a></li>
+  </ul></li>
+  <li><a href="#activations" id="toc-activations"><span class="header-section-number">5</span> Activations</a>
+  <ul>
+  <li><a href="#swish" id="toc-swish"><span class="header-section-number">5.1</span> Swish</a></li>
+  <li><a href="#gated-linear-unit-glu" id="toc-gated-linear-unit-glu"><span class="header-section-number">5.2</span> Gated Linear Unit (GLU)</a></li>
+  </ul></li>
+  <li><a href="#feed-forward-network-mixture-of-experts" id="toc-feed-forward-network-mixture-of-experts"><span class="header-section-number">6</span> Feed Forward Network &amp; Mixture of Experts</a>
+  <ul>
+  <li><a href="#multi-layer-perceptron-mlp" id="toc-multi-layer-perceptron-mlp"><span class="header-section-number">6.1</span> Multi Layer Perceptron (MLP)</a></li>
+  <li><a href="#gated-linear-unit-glu-1" id="toc-gated-linear-unit-glu-1"><span class="header-section-number">6.2</span> Gated Linear Unit (GLU)</a></li>
+  <li><a href="#mixture-of-experts-moe" id="toc-mixture-of-experts-moe"><span class="header-section-number">6.3</span> Mixture of Experts (MoE)</a></li>
+  </ul></li>
+  <li><a href="#model-initialization" id="toc-model-initialization"><span class="header-section-number">7</span> Model Initialization</a>
+  <ul>
+  <li><a href="#weight-initialization" id="toc-weight-initialization"><span class="header-section-number">7.1</span> Weight Initialization</a></li>
+  <li><a href="#layer-initialization" id="toc-layer-initialization"><span class="header-section-number">7.2</span> Layer Initialization</a></li>
+  </ul></li>
+  <li><a href="#case-study" id="toc-case-study"><span class="header-section-number">8</span> Case Study</a>
+  <ul>
+  <li><a href="#llama" id="toc-llama"><span class="header-section-number">8.1</span> LLaMA</a></li>
+  <li><a href="#qwen" id="toc-qwen"><span class="header-section-number">8.2</span> Qwen</a></li>
+  <li><a href="#deepseek" id="toc-deepseek"><span class="header-section-number">8.3</span> DeepSeek</a></li>
+  <li><a href="#gpt-oss" id="toc-gpt-oss"><span class="header-section-number">8.4</span> GPT-Oss</a></li>
+  </ul></li>
+  <li><a href="#other-architectures" id="toc-other-architectures"><span class="header-section-number">9</span> Other Architectures</a>
+  <ul>
+  <li><a href="#diffusion-language-models" id="toc-diffusion-language-models"><span class="header-section-number">9.1</span> Diffusion Language Models</a></li>
+  <li><a href="#state-space-model-ssm" id="toc-state-space-model-ssm"><span class="header-section-number">9.2</span> State Space Model (SSM)</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion"><span class="header-section-number">10</span> Conclusion</a></li>
+  </ul>
+</nav>
+<hr>
+<p>This is the part 1 of the LLM series, architecture. In this blog, we will going through different transformer architectures that power LLMs. Such as position encoding, attention mechanisms, and more. In the end, we will explore some SOTA LLM architectures, and study how to they combine those techniques to achieve better performance. We are going from bottom to up:</p>
+<ul>
+<li>Position Encoding</li>
+<li>Attention Mechanism</li>
+<li>Feed Forward Network &amp; Mixture of Experts</li>
+<li>Output Layer</li>
+</ul>
+<p>Besides that, we will also explore different normalization techniques, such as Layer Normalization and RMS Normalization, and the different position of the normalization layers within the architecture. Then, we will going through the training process and how to effectively train these architectures.</p>
+<section id="the-overview-of-transformer-model" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> The overview of transformer model</h1>
+<p>The Transformer model, originally proposed in the paper “Attention is All You Need” <span class="citation" data-cites="AttentionAllYou2023vaswani">(<a href="#ref-AttentionAllYou2023vaswani" role="doc-biblioref">Vaswani et al. 2023</a>)</span>, is a neural network architecture designed to process <strong>sequential data</strong>, such as natural language. With the high parallelization capabilities of transformers, they have become the foundation for many state-of-the-art natural language processing models. Nowadays, the most LLM are based on the variance of the transformer architecture. The transformer architecture consists of an encoder and a decoder, each composed of multiple layers of self-attention and feed-forward networks, as displayed in the <a href="#fig-original_transformer" class="quarto-xref">Figure&nbsp;1</a>.</p>
+<div id="fig-original_transformer" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-original_transformer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/original_transformer_architecture.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-original_transformer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: The illustration of the original transformer architecture. (Image Source:<a href="https://lilianweng.github.io/posts/2018-06-24-attention/#full-architecture">Lil’Log</a>)
+</figcaption>
+</figure>
+</div>
+<p>For those who are not familiar with the transformer architecture, it is important to understand its key components and how they work together to process sequential data. I highly recommend this post: <a href="https://yuyang.info/100-AI-Papers/posts/01-transformer.html">01-Attention is All You Need</a>, which I implement the transformer from scratch, not just transformer model, but also Adam optimizer, label smoothing, and training loop of the transformer.</p>
+</section>
+<section id="position-encoding" class="level1 page-columns page-full" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Position Encoding</h1>
+<p>Since the transformer architecture does not have any recurrence or convolution, it is necessary to provide some information about the position of the tokens in the sequence. This is achieved through <strong>position encoding</strong>, which adds a unique positional vector to each token embedding. There are several methods for implementing position encoding, including:</p>
+<ul>
+<li><strong>Absolute Position Encoding</strong>: This method assigns a unique position embedding to each position in the input sequence, regardless of the content of the tokens. This can be useful for tasks where the absolute position of tokens is important. One common approach is to use a fixed <strong>sinusoidal</strong> function to generate the position embeddings.</li>
+<li><strong>Learned Position Encoding</strong>: In this approach, the model learns a set of position embeddings during training, similar to word embeddings. This allows the model to adapt the position encodings to the specific task and dataset.</li>
+<li><strong>Relative Position Encoding</strong>: This method encodes the relative distances between tokens, rather than their absolute positions. This can be particularly useful for tasks where the relationships between tokens are more important than their specific locations in the sequence.</li>
+</ul>
+<p>First, let’s dive into the absolute position encoding.</p>
+<section id="learned-position-encoding" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="learned-position-encoding"><span class="header-section-number">2.1</span> Learned Position Encoding</h2>
+<p>In the absolute position encoding, we put our position information into fixed sinusoidal functions. It is hand-crafted for specific tasks and does not adapt to the data. So, is it possible to learn position encodings from the data itself? It is possible, and this leads us to the concept of learned position encodings. The learned position encodings are typically implemented as additional trainable parameters in the model. Instead of using fixed sinusoidal functions, the model learns to generate position embeddings that are optimized for the specific task and dataset.</p>
+<p>This method is used in such as Vision Transformers <span class="citation" data-cites="ImageWorth16x162021dosovitskiy">(<a href="#ref-ImageWorth16x162021dosovitskiy" role="doc-biblioref">Dosovitskiy et al. 2021</a>)</span>.</p>
+</section>
+<section id="absolute-position-encoding" class="level2 page-columns page-full" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="absolute-position-encoding"><span class="header-section-number">2.2</span> Absolute Position Encoding</h2>
+<p>As used in the <span class="citation" data-cites="AttentionAllYou2023vaswani">(<a href="#ref-AttentionAllYou2023vaswani" role="doc-biblioref">Vaswani et al. 2023</a>)</span>, absolute position encoding assigns a unique position embedding to each position in the input sequence, regardless of the content of the tokens. One common approach is to use a fixed <strong>sinusoidal</strong> function to generate the position embeddings. For example: for each position <span class="math inline">\(pos\)</span>, the position embedding <span class="math inline">\(PE(pos)\)</span> can be defined as:</p>
+<p><span id="eq-absolute-position-encoding"><span class="math display">\[
+\begin{aligned}
+\text{PE}(pos, 2i) &amp;= \sin\!\left(pos \times \frac{1}{10,000^{2i/d_{\text{model}}}}\right) \\
+\text{PE}(pos, 2i+1) &amp;= \cos\!\left(pos \times \frac{1}{10,000^{2i/d_{\text{model}}}}\right)
+\end{aligned}
+\tag{1}\]</span></span></p>
+<p>where</p>
+<ul>
+<li><span class="math inline">\(d_{\text{model}}\)</span> is the dimensionality of the embeddings.</li>
+<li><span class="math inline">\(i\)</span> is the index of the embedding dimension. The <em>sin function</em> is applied to the even indices <span class="math inline">\(2i\)</span>, while the <em>cos function</em> is applied to the odd indices <span class="math inline">\(2i+1\)</span>.</li>
+</ul>
+<p>We can illustrate the encoding as following:</p>
+<div class="page-columns page-full">
+<div id="fig-illustration-absolute-position-encoding" class="quarto-layout-panel page-columns page-full">
+<figure class="quarto-float quarto-float-fig figure page-columns page-full">
+<div aria-describedby="fig-illustration-absolute-position-encoding-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca" class="page-columns page-full">
+<div class="quarto-layout-row column-page">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-illustration-absolute-position-encoding" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-absolute-position-encoding-seq_variance" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-absolute-position-encoding-seq_variance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/position_seq_len_vary.gif" class="img-fluid figure-img" style="width:100.0%" data-ref-parent="fig-illustration-absolute-position-encoding">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-absolute-position-encoding-seq_variance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Display of the position with different sequence lengths
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-illustration-absolute-position-encoding" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-absolute-position-encoding-d_model_variance" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-absolute-position-encoding-d_model_variance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/position_dmodel_vary.gif" class="img-fluid figure-img" style="width:100.0%" data-ref-parent="fig-illustration-absolute-position-encoding">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-absolute-position-encoding-d_model_variance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Display of the position with different d_model
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-illustration-absolute-position-encoding-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Illustration of Absolute Position Encoding
+</figcaption>
+</figure>
+</div>
+</div>
+<p>There are several properties can be read from the <a href="#fig-illustration-absolute-position-encoding" class="quarto-xref">Figure&nbsp;2</a> and <a href="#eq-absolute-position-encoding" class="quarto-xref">Equation&nbsp;1</a>:</p>
+<ol type="1">
+<li><p><strong>Periodicity</strong>: The sine and cosine functions used in the position encoding have a periodic nature, which allows the model to easily learn to attend to relative positions. This is evident in <a href="#fig-absolute-position-encoding-seq_variance" class="quarto-xref">Figure&nbsp;2 (a)</a>, where the position encodings exhibit similar patterns for different sequence lengths.</p></li>
+<li><p><strong>Dimensionality</strong>: The choice of <span class="math inline">\(d_{\text{model}}\)</span> affects the granularity of the position encodings. As shown in <a href="#fig-absolute-position-encoding-d_model_variance" class="quarto-xref">Figure&nbsp;2 (b)</a>, increasing the dimensionality results in more fine-grained position encodings, which can help the model capture more subtle positional information.</p></li>
+<li><p>The low-dimension part of the dmodel is change more frequently than the high-dimension part, allowing the model to adapt more easily to different input lengths.</p></li>
+</ol>
+<blockquote class="blockquote">
+<p>We chose this function because we hypothesized it would allow the model to easily learn to attend by relative positions, since for any fixed offset <span class="math inline">\(k\)</span>, <span class="math inline">\(PE_{pos+k}\)</span> can be represented as a linear function of <span class="math inline">\(PE_{pos}\)</span>. <cite> Attention Is All You Need </cite></p>
+</blockquote>
+<p>How to understand this sentence. Let’s first redefine the position encoding. <span class="math display">\[
+\begin{aligned}
+\mathrm{PE}(pos,2i) &amp;= \sin\!\Big(\tfrac{pos}{\alpha_i}\Big), \\
+\mathrm{PE}(pos,2i+1) &amp;= \cos\!\Big(\tfrac{pos}{\alpha_i}\Big).
+\end{aligned}
+\]</span> where <span class="math inline">\(\alpha_i = 10,000^{2i/d_{\text{model}}}\)</span>. And we consider <span class="math inline">\((2i, 2i+1)\)</span> as one pair. Now, consider the same pair at position <span class="math inline">\(pos + k\)</span>. We can write the position encoding as:</p>
+<p><span id="eq-absolute-position-rotation"><span class="math display">\[
+\begin{align}
+\mathrm{PE}(pos+k,2i)
+&amp;= \sin\!\Big(\tfrac{pos+k}{\alpha_i}\Big)
+    = \sin\!\Big(\tfrac{pos}{\alpha_i}\Big)\cos\!\Big(\tfrac{k}{\alpha_i}\Big)
+    + \cos\!\Big(\tfrac{pos}{\alpha_i}\Big)\sin\!\Big(\tfrac{k}{\alpha_i}\Big) \\
+\mathrm{PE}(pos+k,2i+1)
+&amp;= \cos\!\Big(\tfrac{pos+k}{\alpha_i}\Big)
+    =\cos\!\Big(\tfrac{pos}{\alpha_i}\Big)\cos\!\Big(\tfrac{k}{\alpha_i}\Big)
+    - \sin\!\Big(\tfrac{pos}{\alpha_i}\Big)\sin\!\Big(\tfrac{k}{\alpha_i}\Big)
+\end{align}
+\tag{2}\]</span></span></p>
+
+<div class="no-row-height column-margin column-container"><div class="">
+<p>Angle addition formulas: <span class="math display">\[
+\begin{align*}
+&amp;\sin(a+b) = \sin(a)\cos(b) + \cos(a)\sin(b) \\
+&amp;\cos(a+b) = \cos(a)\cos(b) - \sin(a)\sin(b)
+\end{align*}
+\]</span></p>
+</div></div><p>Write this as vector form:</p>
+<p><span class="math display">\[
+\mathbf{p}_{pos}^{(i)} =
+\begin{bmatrix}
+\sin(pos/\alpha_i) \\
+\cos(pos/\alpha_i)
+\end{bmatrix}
+\]</span></p>
+<p>Then <span class="math inline">\(\mathbf{p}_{pos+k}^{(i)}\)</span> equal to: <span class="math display">\[
+\mathbf{p}_{pos+k}^{(i)} =
+\underbrace{
+\begin{bmatrix}
+\cos(\tfrac{k}{\alpha_i}) &amp; \ \ \sin(\tfrac{k}{\alpha_i}) \\
+-\sin(\tfrac{k}{\alpha_i}) &amp; \ \ \cos(\tfrac{k}{\alpha_i})
+\end{bmatrix}
+}_{\displaystyle R_i(k)}
+\ \mathbf{p}_{pos}^{(i)}
+\]</span></p>
+<p>Notice that <span class="math inline">\(R_i(k)\)</span> is known as <strong>rotation matrix</strong> which only depends on the relative position <span class="math inline">\(k\)</span> and not on the absolute position <span class="math inline">\(pos\)</span>. This is the key insight that allows the model to generalize to different positions.</p>
+<p>Stacking all pairs, <span class="math display">\[
+\mathrm{PE}(pos+k) =
+\underbrace{
+    \begin{pmatrix}
+\cos\!\big(\tfrac{k}{\alpha_1}\big) &amp; \sin\!\big(\tfrac{k}{\alpha_1}\big) &amp; 0 &amp; 0 &amp; \cdots &amp; 0 &amp; 0 \\
+-\sin\!\big(\tfrac{k}{\alpha_1}\big) &amp; \ \cos\!\big(\tfrac{k}{\alpha_1}\big) &amp; 0 &amp; 0 &amp; \cdots &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp; \cos\!\big(\tfrac{k}{\alpha_2}\big) &amp;\sin\!\big(\tfrac{k}{\alpha_2}\big) &amp; \cdots &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp;  -\sin\!\big(\tfrac{k}{\alpha_2}\big) &amp; \ \cos\!\big(\tfrac{k}{\alpha_2}\big) &amp; \cdots &amp; 0 &amp; 0 \\
+\vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \ddots &amp; \vdots &amp; \vdots \\
+0 &amp; 0 &amp; 0 &amp; 0 &amp; \cdots &amp; \cos\!\big(\tfrac{k}{\alpha_{d/2}}\big) &amp; \sin\!\big(\tfrac{k}{\alpha_{d/2}}\big) \\
+0 &amp; 0 &amp; 0 &amp; 0 &amp; \cdots &amp; -\sin\!\big(\tfrac{k}{\alpha_{d/2}}\big) &amp; \ \cos\!\big(\tfrac{k}{\alpha_{d/2}}\big)
+\end{pmatrix}
+}_{R(k)}
+\cdot
+\underbrace{
+    \begin{pmatrix}
+\sin(\tfrac{k}{\alpha_1}) \\
+\cos(\tfrac{k}{\alpha_1}) \\
+\sin(\tfrac{k}{\alpha_2}) \\
+\cos(\tfrac{k}{\alpha_2}) \\
+\vdots \\
+\sin(\tfrac{k}{\alpha_{d/2}}) \\
+\cos(\tfrac{k}{\alpha_{d/2}})
+\end{pmatrix}
+}_{\mathrm{PE}(pos)}
+\]</span></p>
+<p>where <span class="math inline">\(R(k)\)</span> is block-diagonal with those <span class="math inline">\(2\times2\)</span> rotations, <span class="math inline">\(R(k)\)</span> depends on <span class="math inline">\(k\)</span> but not on <span class="math inline">\(pos\)</span> → a linear map of <span class="math inline">\(\mathrm{PE}(pos)\)</span>.</p>
+</section>
+<section id="relative-position-encoding" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="relative-position-encoding"><span class="header-section-number">2.3</span> Relative Position Encoding</h2>
+<p>Relative Position Encoding, first proposed in Transformer-XL <span class="citation" data-cites="TransformerXLAttentiveLanguage2019dai">(<a href="#ref-TransformerXLAttentiveLanguage2019dai" role="doc-biblioref">Dai et al. 2019</a>)</span>, then adaptive in different language model.</p>
+<p><span class="math display">\[
+A_{i,j} =
+\underbrace{Q_i^\top K_j}_{\text{content-based addressing}}
++
+\underbrace{Q_i^\top R_{i-j}}_{\text{content-dependent positional bias}}
++
+\underbrace{u^\top K_j}_{\text{global content bias}}
++
+\underbrace{v^\top R_{i-j}}_{\text{global positional bias}}
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(Q_i \in \mathbb{R}^d\)</span>: query vector at position <span class="math inline">\(i\)</span><br>
+</li>
+<li><span class="math inline">\(K_j \in \mathbb{R}^d\)</span>: key vector at position <span class="math inline">\(j\)</span><br>
+</li>
+<li><span class="math inline">\(R_{i-j} \in \mathbb{R}^d\)</span>: embedding of the relative distance <span class="math inline">\((i-j)\)</span><br>
+</li>
+<li><span class="math inline">\(u, v \in \mathbb{R}^d\)</span>: learnable global bias vectors<br>
+</li>
+<li><span class="math inline">\(A_{i,j}\)</span>: unnormalized attention score between position <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span></li>
+</ul>
+<div class="sourceCode" id="cb1" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
+<span id="cb1-4"><a href="#cb1-4"></a></span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="kw">class</span> RelPositionalEncoding(nn.Module):</span>
+<span id="cb1-6"><a href="#cb1-6"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, d_model, max_len<span class="op">=</span><span class="dv">5000</span>):</span>
+<span id="cb1-7"><a href="#cb1-7"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb1-8"><a href="#cb1-8"></a>        <span class="va">self</span>.d_model <span class="op">=</span> d_model</span>
+<span id="cb1-9"><a href="#cb1-9"></a></span>
+<span id="cb1-10"><a href="#cb1-10"></a>        <span class="co"># relative positions: range [-max_len, max_len]</span></span>
+<span id="cb1-11"><a href="#cb1-11"></a>        range_len <span class="op">=</span> max_len <span class="op">*</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb1-12"><a href="#cb1-12"></a>        <span class="va">self</span>.rel_emb <span class="op">=</span> nn.Embedding(range_len, d_model)</span>
+<span id="cb1-13"><a href="#cb1-13"></a></span>
+<span id="cb1-14"><a href="#cb1-14"></a>        <span class="co"># trainable biases u, v (Transformer-XL)</span></span>
+<span id="cb1-15"><a href="#cb1-15"></a>        <span class="va">self</span>.u <span class="op">=</span> nn.Parameter(torch.Tensor(d_model))</span>
+<span id="cb1-16"><a href="#cb1-16"></a>        <span class="va">self</span>.v <span class="op">=</span> nn.Parameter(torch.Tensor(d_model))</span>
+<span id="cb1-17"><a href="#cb1-17"></a></span>
+<span id="cb1-18"><a href="#cb1-18"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, q, k, seq_len):</span>
+<span id="cb1-19"><a href="#cb1-19"></a>        B, H, L, Dh <span class="op">=</span> q.size()</span>
+<span id="cb1-20"><a href="#cb1-20"></a></span>
+<span id="cb1-21"><a href="#cb1-21"></a>        <span class="co"># (L, L): relative position indices</span></span>
+<span id="cb1-22"><a href="#cb1-22"></a>        pos_idx <span class="op">=</span> torch.arange(L, dtype<span class="op">=</span>torch.<span class="bu">long</span>, device<span class="op">=</span>q.device)</span>
+<span id="cb1-23"><a href="#cb1-23"></a>        rel_idx <span class="op">=</span> pos_idx[<span class="va">None</span>, :] <span class="op">-</span> pos_idx[:, <span class="va">None</span>]  <span class="co"># i-j</span></span>
+<span id="cb1-24"><a href="#cb1-24"></a>        rel_idx <span class="op">=</span> rel_idx <span class="op">+</span> seq_len  <span class="co"># shift to [0, 2*max_len]</span></span>
+<span id="cb1-25"><a href="#cb1-25"></a>        rel_pos_emb <span class="op">=</span> <span class="va">self</span>.rel_emb(rel_idx)  <span class="co"># (L, L, d_model)</span></span>
+<span id="cb1-26"><a href="#cb1-26"></a></span>
+<span id="cb1-27"><a href="#cb1-27"></a>        <span class="co"># compute QK^T (content-based)</span></span>
+<span id="cb1-28"><a href="#cb1-28"></a>        content_score <span class="op">=</span> torch.matmul(q, k.transpose(<span class="op">-</span><span class="dv">2</span>, <span class="op">-</span><span class="dv">1</span>))  <span class="co"># (B, H, L, L)</span></span>
+<span id="cb1-29"><a href="#cb1-29"></a></span>
+<span id="cb1-30"><a href="#cb1-30"></a>        <span class="co"># project queries with R</span></span>
+<span id="cb1-31"><a href="#cb1-31"></a>        rel_q <span class="op">=</span> q <span class="op">+</span> <span class="va">self</span>.v.view(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>)  <span class="co"># add bias v</span></span>
+<span id="cb1-32"><a href="#cb1-32"></a>        rel_score <span class="op">=</span> torch.einsum(<span class="st">'bhld,lrd-&gt;bhlr'</span>, rel_q, rel_pos_emb)</span>
+<span id="cb1-33"><a href="#cb1-33"></a></span>
+<span id="cb1-34"><a href="#cb1-34"></a>        <span class="co"># add global content bias (u)</span></span>
+<span id="cb1-35"><a href="#cb1-35"></a>        content_bias <span class="op">=</span> torch.einsum(<span class="st">'d,bhjd-&gt;bhj'</span>, <span class="va">self</span>.u, k).unsqueeze(<span class="dv">2</span>)</span>
+<span id="cb1-36"><a href="#cb1-36"></a></span>
+<span id="cb1-37"><a href="#cb1-37"></a>        <span class="co"># total score</span></span>
+<span id="cb1-38"><a href="#cb1-38"></a>        logits <span class="op">=</span> content_score <span class="op">+</span> rel_score <span class="op">+</span> content_bias</span>
+<span id="cb1-39"><a href="#cb1-39"></a>        <span class="cf">return</span> logits <span class="op">/</span> (Dh <span class="op">**</span> <span class="fl">0.5</span>)  <span class="co"># scale as in attention</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="rope-rotary-position-embedding" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="rope-rotary-position-embedding"><span class="header-section-number">2.4</span> RoPE (Rotary Position Embedding)</h2>
+<p>So far we have see the absolute position encoding and relative position encoding. However, there is an problem with absolute position encoding. For example, for two sentence:</p>
+<ul>
+<li>Every Day I will go to gym</li>
+<li>I will go to gym every day</li>
+</ul>
+<p>The absolute position encoding is totally different from two sentences, even though they have the same words and means. On the other hand, the problem of the relative position encoding is that it does not capture the absolute position information, which is crucial for understanding the meaning of the sentences for some task such as text summarization.</p>
+<p>RoPE <span class="citation" data-cites="RoFormerEnhancedTransformer2023su">(<a href="#ref-RoFormerEnhancedTransformer2023su" role="doc-biblioref">Su et al. 2023</a>)</span> is a method combine those two. The vector rotated certain degree according to the <em>absolute position</em> in the sentence. On the other hand, it relative position information is preserved. According to <a href="#eq-absolute-position-rotation" class="quarto-xref">Equation&nbsp;2</a>, the relative position is not related to the position.</p>
+<div id="fig-rope" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rope-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/rope.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rope-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Illustration of RoPE
+</figcaption>
+</figure>
+</div>
+<p><span id="eq-rope-simple"><span class="math display">\[
+R_{\Theta,m}^{d} \mathbf{x}
+=
+\begin{pmatrix}
+x_1\\
+x_2\\
+x_3\\
+x_4\\
+\vdots\\
+x_{d-1}\\
+x_d
+\end{pmatrix}
+\otimes
+\begin{pmatrix}
+\cos(m\theta_{1})\\
+\cos(m\theta_{1})\\
+\cos(m\theta_{2})\\
+\cos(m\theta_{2})\\
+\vdots\\
+\cos\!\big(m\theta_{d/2}\big)\\
+\cos\!\big(m\theta_{d/2}\big)
+\end{pmatrix}
++
+\begin{pmatrix}
+- x_2\\
+x_1\\
+- x_4\\
+x_3\\
+\vdots\\
+- x_d\\
+x_{d-1}
+\end{pmatrix}
+\otimes
+\begin{pmatrix}
+\sin(m\theta_{1})\\
+\sin(m\theta_{1})\\
+\sin(m\theta_{2})\\
+\sin(m\theta_{2})\\
+\vdots\\
+\sin\!\big(m\theta_{d/2}\big)\\
+\sin\!\big(m\theta_{d/2}\big)
+\end{pmatrix}
+\tag{3}\]</span></span></p>
+<p>where</p>
+<p><span class="math display">\[
+\theta_{i,d} = \frac{1}{10,000^{2(i - 1) / d}} ,\quad i \in [1, 2, \dots, d / 2 ]
+\]</span></p>
+<p>As we can see, to implement the RoPE in code, we can:</p>
+<ol type="1">
+<li>Construct <code>cos</code> and <code>sin</code> matrices for the given input dimensions and maximum position.</li>
+<li>Apply the rotation to the input embeddings using the constructed matrices.</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>One thing always bother me about this implementation is that the <code>rotate_half</code> function actually swap pair of the last dimension as mentioned in the paper. For example:</p>
+<div class="sourceCode" id="cb2" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1"></a><span class="op">&gt;&gt;&gt;</span> x <span class="op">=</span> torch.arange(<span class="dv">0</span>, <span class="dv">24</span>).reshape(<span class="dv">3</span>, <span class="dv">8</span>) <span class="co"># (B, D)</span></span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="op">&gt;&gt;&gt;</span> x</span>
+<span id="cb2-3"><a href="#cb2-3"></a>tensor([[ <span class="dv">0</span>,  <span class="dv">1</span>,  <span class="dv">2</span>,  <span class="dv">3</span>,  <span class="dv">4</span>,  <span class="dv">5</span>,  <span class="dv">6</span>,  <span class="dv">7</span>],</span>
+<span id="cb2-4"><a href="#cb2-4"></a>        [ <span class="dv">8</span>,  <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">11</span>, <span class="dv">12</span>, <span class="dv">13</span>, <span class="dv">14</span>, <span class="dv">15</span>],</span>
+<span id="cb2-5"><a href="#cb2-5"></a>        [<span class="dv">16</span>, <span class="dv">17</span>, <span class="dv">18</span>, <span class="dv">19</span>, <span class="dv">20</span>, <span class="dv">21</span>, <span class="dv">22</span>, <span class="dv">23</span>]])</span>
+<span id="cb2-6"><a href="#cb2-6"></a><span class="op">&gt;&gt;&gt;</span> x1 <span class="op">=</span> rotate_half(x)</span>
+<span id="cb2-7"><a href="#cb2-7"></a><span class="op">&gt;&gt;&gt;</span> x1</span>
+<span id="cb2-8"><a href="#cb2-8"></a>tensor([[ <span class="op">-</span><span class="dv">4</span>,  <span class="op">-</span><span class="dv">5</span>,  <span class="op">-</span><span class="dv">6</span>,  <span class="op">-</span><span class="dv">7</span>,   <span class="dv">0</span>,   <span class="dv">1</span>,   <span class="dv">2</span>,   <span class="dv">3</span>],</span>
+<span id="cb2-9"><a href="#cb2-9"></a>        [<span class="op">-</span><span class="dv">12</span>, <span class="op">-</span><span class="dv">13</span>, <span class="op">-</span><span class="dv">14</span>, <span class="op">-</span><span class="dv">15</span>,   <span class="dv">8</span>,   <span class="dv">9</span>,  <span class="dv">10</span>,  <span class="dv">11</span>],</span>
+<span id="cb2-10"><a href="#cb2-10"></a>        [<span class="op">-</span><span class="dv">20</span>, <span class="op">-</span><span class="dv">21</span>, <span class="op">-</span><span class="dv">22</span>, <span class="op">-</span><span class="dv">23</span>,  <span class="dv">16</span>,  <span class="dv">17</span>,  <span class="dv">18</span>,  <span class="dv">19</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The above function just change the x to <code>[-x_{d//2}, ..., -x_{d}, x_0, ..., x_{d//2-1}]</code></p>
+<p>Check this <a href="https://discuss.huggingface.co/t/is-llama-rotary-embedding-implementation-correct/44509/3">link</a>if you are interested.</p>
+<p>If this really bother you, you can just implement like this:</p>
+<div class="sourceCode" id="cb3" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">def</span> rotate_half_v2(x):</span>
+<span id="cb3-2"><a href="#cb3-2"></a>    <span class="co"># Assume x is (B, D)</span></span>
+<span id="cb3-3"><a href="#cb3-3"></a>    x <span class="op">=</span> x.reshape(x.shape[<span class="dv">0</span>], <span class="op">-</span><span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb3-4"><a href="#cb3-4"></a>    x1, x2 <span class="op">=</span> x.unbind(dim <span class="op">=</span> <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb3-5"><a href="#cb3-5"></a>    x <span class="op">=</span> torch.stack((<span class="op">-</span>x2, x1), dim <span class="op">=</span> <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb3-6"><a href="#cb3-6"></a>    <span class="cf">return</span> x.reshape(x.shape[<span class="dv">0</span>], <span class="op">-</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>which is same as they mentioned in the paper.</p>
+<div class="sourceCode" id="cb4" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1"></a><span class="op">&gt;&gt;&gt;</span> x</span>
+<span id="cb4-2"><a href="#cb4-2"></a>tensor([[ <span class="dv">0</span>,  <span class="dv">1</span>,  <span class="dv">2</span>,  <span class="dv">3</span>,  <span class="dv">4</span>,  <span class="dv">5</span>,  <span class="dv">6</span>,  <span class="dv">7</span>],</span>
+<span id="cb4-3"><a href="#cb4-3"></a>        [ <span class="dv">8</span>,  <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">11</span>, <span class="dv">12</span>, <span class="dv">13</span>, <span class="dv">14</span>, <span class="dv">15</span>],</span>
+<span id="cb4-4"><a href="#cb4-4"></a>        [<span class="dv">16</span>, <span class="dv">17</span>, <span class="dv">18</span>, <span class="dv">19</span>, <span class="dv">20</span>, <span class="dv">21</span>, <span class="dv">22</span>, <span class="dv">23</span>]])</span>
+<span id="cb4-5"><a href="#cb4-5"></a><span class="op">&gt;&gt;&gt;</span> x2 <span class="op">=</span> rotate_half_v2(x)</span>
+<span id="cb4-6"><a href="#cb4-6"></a><span class="op">&gt;&gt;&gt;</span> x2</span>
+<span id="cb4-7"><a href="#cb4-7"></a>tensor([[ <span class="op">-</span><span class="dv">1</span>,   <span class="dv">0</span>,  <span class="op">-</span><span class="dv">3</span>,   <span class="dv">2</span>,  <span class="op">-</span><span class="dv">5</span>,   <span class="dv">4</span>,  <span class="op">-</span><span class="dv">7</span>,   <span class="dv">6</span>],</span>
+<span id="cb4-8"><a href="#cb4-8"></a>        [ <span class="op">-</span><span class="dv">9</span>,   <span class="dv">8</span>, <span class="op">-</span><span class="dv">11</span>,  <span class="dv">10</span>, <span class="op">-</span><span class="dv">13</span>,  <span class="dv">12</span>, <span class="op">-</span><span class="dv">15</span>,  <span class="dv">14</span>],</span>
+<span id="cb4-9"><a href="#cb4-9"></a>        [<span class="op">-</span><span class="dv">17</span>,  <span class="dv">16</span>, <span class="op">-</span><span class="dv">19</span>,  <span class="dv">18</span>, <span class="op">-</span><span class="dv">21</span>,  <span class="dv">20</span>, <span class="op">-</span><span class="dv">23</span>,  <span class="dv">22</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Or</p>
+<div class="sourceCode" id="cb5" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">def</span> rotate_half_v3(x: torch.Tensor) <span class="op">-&gt;</span> torch.Tensor:</span>
+<span id="cb5-2"><a href="#cb5-2"></a>    y <span class="op">=</span> torch.empty_like(x)</span>
+<span id="cb5-3"><a href="#cb5-3"></a>    y[..., ::<span class="dv">2</span>] <span class="op">=</span> <span class="op">-</span>x[..., <span class="dv">1</span>::<span class="dv">2</span>]  <span class="co"># even positions get -odd</span></span>
+<span id="cb5-4"><a href="#cb5-4"></a>    y[..., <span class="dv">1</span>::<span class="dv">2</span>] <span class="op">=</span>  x[..., ::<span class="dv">2</span>]  <span class="co"># odd positions get even</span></span>
+<span id="cb5-5"><a href="#cb5-5"></a>    <span class="cf">return</span> y</span>
+<span id="cb5-6"><a href="#cb5-6"></a></span>
+<span id="cb5-7"><a href="#cb5-7"></a><span class="op">&gt;&gt;&gt;</span> x3 <span class="op">=</span> rotate_half_v3(x)</span>
+<span id="cb5-8"><a href="#cb5-8"></a><span class="op">&gt;&gt;&gt;</span> x3</span>
+<span id="cb5-9"><a href="#cb5-9"></a>tensor([[ <span class="op">-</span><span class="dv">1</span>,   <span class="dv">0</span>,  <span class="op">-</span><span class="dv">3</span>,   <span class="dv">2</span>,  <span class="op">-</span><span class="dv">5</span>,   <span class="dv">4</span>,  <span class="op">-</span><span class="dv">7</span>,   <span class="dv">6</span>],</span>
+<span id="cb5-10"><a href="#cb5-10"></a>        [ <span class="op">-</span><span class="dv">9</span>,   <span class="dv">8</span>, <span class="op">-</span><span class="dv">11</span>,  <span class="dv">10</span>, <span class="op">-</span><span class="dv">13</span>,  <span class="dv">12</span>, <span class="op">-</span><span class="dv">15</span>,  <span class="dv">14</span>],</span>
+<span id="cb5-11"><a href="#cb5-11"></a>        [<span class="op">-</span><span class="dv">17</span>,  <span class="dv">16</span>, <span class="op">-</span><span class="dv">19</span>,  <span class="dv">18</span>, <span class="op">-</span><span class="dv">21</span>,  <span class="dv">20</span>, <span class="op">-</span><span class="dv">23</span>,  <span class="dv">22</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<p>The other implementation of the RoPE is reply on the complex number. We can treat 2D vector <span class="math inline">\((x, y)\)</span> as a complex number <span class="math inline">\(z = x + iy\)</span>, and the rotation can be done by multiplying with a complex exponential:</p>
+<p><span class="math display">\[
+z' = z \cdot e^{i\theta} = (x + iy) \cdot (\cos \theta + i \sin \theta) = (x \cos \theta - y \sin \theta) + i (x \sin \theta + y \cos \theta)
+\]</span></p>
+<p>Code adapted from <a href="https://github.com/meta-llama/llama/blob/main/llama/model.py#L132">LLaMA model</a></p>
+</section>
+<section id="alibi" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="alibi"><span class="header-section-number">2.5</span> ALIBI</h2>
+<p><span class="citation" data-cites="TrainShortTest2022press">(<a href="#ref-TrainShortTest2022press" role="doc-biblioref">Press, Smith, and Lewis 2022</a>)</span></p>
+<div id="fig-alibi" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-alibi-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/alibi-position-encoding.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-alibi-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4
+</figcaption>
+</figure>
+</div>
+<p>AliBi: simple, monotonic bias → strong extrapolation, lower overhead.</p>
+<p>So far, for the position embedding, we modify the Q, K to add the position information for attention to calculate. However, is it possible to directly modify the attention score? To notify them the position information? This is exactly what ALIBI does. The ALIBI (Attention with Linear Biases) method introduces a linear bias to the attention scores based on the distance between tokens. The bias is added directly to the attention score before applying the softmax function. Mathematically:</p>
+<p><span class="math display">\[
+\operatorname{softmax}\!\Big( q_i k_j^\top \;+\; m \cdot (-(i-j)) \Big)
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(q_i \in \mathbb{R}^d\)</span>: query vector at position <span class="math inline">\(i\)</span></li>
+<li><span class="math inline">\(k_j \in \mathbb{R}^d\)</span>: key vector at position <span class="math inline">\(j\)</span></li>
+<li><span class="math inline">\(m \in \mathbb{R}\)</span>: slop (head-dependent constant)</li>
+<li><span class="math inline">\((i - j) \geq 0\)</span>: relative distance</li>
+</ul>
+<p>For example, for query <span class="math inline">\(i\)</span>, the logits against all keys <span class="math inline">\([0, 1, \dots, i ]\)</span> become: <span class="math display">\[
+\ell_i \;=\;
+\Big[\, q_i k_0^\top - m(i-0),\;
+       q_i k_1^\top - m(i-1),\;
+       \ldots,\;
+       q_i k_{i-1}^\top - m(1),\;
+       q_i k_i^\top \,\Big]
+\]</span></p>
+</section>
+<section id="extend-to-longer-context" class="level2" data-number="2.6">
+<h2 data-number="2.6" class="anchored" data-anchor-id="extend-to-longer-context"><span class="header-section-number">2.6</span> Extend to longer context</h2>
+<p>So far, for all the position encoding we discussed, it has one main drawback: it fixed maximum context length during training.</p>
+<div id="fig-inference-longer" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-inference-longer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/inference_length_longer.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-inference-longer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: (Image Source <a href="https://www.youtube.com/watch?v=dc4chADushM">Video: Long-Context LLM Extension</a>)
+</figcaption>
+</figure>
+</div>
+<p>When we are training on the fixed context length, the model learns to attend to the positions within that context. However, during inference, we may want to extend the context length beyond what the model was trained on. This is where the challenge lies. One way is to train a longer context length model from the beginning. However this requires more computational resources and may not be feasible for all applications. So, we need to find a way to adapt the model to longer contexts without retraining it from scratch.</p>
+<p>There are several approaches to address this issue. Let’s discuss a few of them.</p>
+<section id="linear-position-interpolation" class="level3" data-number="2.6.1">
+<h3 data-number="2.6.1" class="anchored" data-anchor-id="linear-position-interpolation"><span class="header-section-number">2.6.1</span> Linear Position Interpolation</h3>
+<div id="fig-linear-position-interpolation" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-linear-position-interpolation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/extend_context_length.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-linear-position-interpolation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6
+</figcaption>
+</figure>
+</div>
+<p>decreases the frequencies of the basis functions so that more tokens fit within each period. The position interpolation <span class="citation" data-cites="ExtendingContextWindow2023chen">(<a href="#ref-ExtendingContextWindow2023chen" role="doc-biblioref">Chen et al. 2023</a>)</span> mentioned that we can just linearly interpolate the position embeddings for the extended context. This allows the model to generate position embeddings for longer sequences without requiring additional training. It just rescale the <span class="math inline">\(m\)</span> base in the RoPE by: <span class="math display">\[
+f'(\mathbf{x}, m) = f(\mathbf{x}, m\frac{L}{L'})
+\]</span> where <span class="math inline">\(L\)</span> is the original context length and <span class="math inline">\(L'\)</span> is the new context length.</p>
+</section>
+<section id="ntk-aware-position-interpolation" class="level3" data-number="2.6.2">
+<h3 data-number="2.6.2" class="anchored" data-anchor-id="ntk-aware-position-interpolation"><span class="header-section-number">2.6.2</span> NTK-Aware Position Interpolation</h3>
+<p>The Linear Position Interpolation, if it was possible to pick the correct scale parameter dynamically based on the sequence length rather than having to settle for the fixed tradeoff of maximum sequence length vs.&nbsp;performance on shorter sequences. The NTK-Aware Position Interpolation method leverages the Neural Tangent Kernel (NTK) framework to adaptively adjust the position embeddings during inference. By analyzing the model’s behavior in the NTK regime, we can identify the optimal scaling factors for different sequence lengths, allowing for more effective extrapolation of position information.</p>
+<p><span class="math display">\[
+\alpha^{\text{NTK-RoPE}}_{j} = \kappa^{-\frac{2j}{d_k}}
+\]</span></p>
+<div class="callout callout-style-default callout-note callout-titled" title="Neural Tangent Kernel (NTK)">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Neural Tangent Kernel (NTK)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+
+</div>
+</div>
+</section>
+<section id="yarn" class="level3" data-number="2.6.3">
+<h3 data-number="2.6.3" class="anchored" data-anchor-id="yarn"><span class="header-section-number">2.6.3</span> YaRN</h3>
+<p>another RoPE extension method, uses “NTK-by-parts” interpolation strategies across different dimensions of the embedding space and introduces a temperature factor to adjust the attention distribution for long inputs. But RoPE cannot extrapolate well to sequences longer than training (e.g., a model trained on 2K tokens struggles at 8K).</p>
+<p><span class="math display">\[
+\alpha^{\mathrm{YaRN}}_{j}
+= \frac{(1-\gamma_j)\,\tfrac{1}{t} + \gamma_j}{\sqrt{T}} \,.
+\]</span></p>
+<p>YaRN modifies RoPE to support longer context windows while preserving model stability. <span class="citation" data-cites="YaRNEfficientContext2023peng">(<a href="#ref-YaRNEfficientContext2023peng" role="doc-biblioref">Peng et al. 2023</a>)</span></p>
+</section>
+</section>
+</section>
+<section id="normalization" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Normalization</h1>
+<section id="layer-normalization-vs.-rms-normalization" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="layer-normalization-vs.-rms-normalization"><span class="header-section-number">3.1</span> Layer Normalization vs.&nbsp;RMS Normalization</h2>
+<p>The <strong>Layer Normalization</strong> <span class="citation" data-cites="LayerNormalization2016ba">(<a href="#ref-LayerNormalization2016ba" role="doc-biblioref">Ba, Kiros, and Hinton 2016</a>)</span> is a technique to normalize the inputs across the features for each training example. It is defined as:</p>
+<p><span id="eq-layer-normalization"><span class="math display">\[
+\text{LayerNorm}(x) = \frac{x - \mu}{\sigma + \epsilon} \cdot \gamma + \beta
+\tag{4}\]</span></span> where:</p>
+<ul>
+<li><span class="math inline">\(\mu(x)\)</span>: the mean of the input features.</li>
+<li><span class="math inline">\(\sigma(x)\)</span>: the standard deviation of the input features.</li>
+<li><span class="math inline">\(\gamma\)</span>: a learnable scale parameter.</li>
+<li><span class="math inline">\(\beta\)</span>: a learnable shift parameter.</li>
+</ul>
+<p>There are two learnable parameters in Layer Normalization: <span class="math inline">\(\gamma\)</span> and <span class="math inline">\(\beta\)</span>, which have the same shape as the input features <span class="math inline">\(d_{\text{model}}\)</span>.</p>
+<p>However, in the <strong>Root Mean Square(RMS) Normalization</strong>, proposed in <span class="citation" data-cites="RootMeanSquare2019zhang">(<a href="#ref-RootMeanSquare2019zhang" role="doc-biblioref">Zhang and Sennrich 2019</a>)</span>, that we remove the mean from the normalization process. The RMS Normalization is defined as:</p>
+<p><span id="eq-rms-normalization"><span class="math display">\[
+\text{RMSNorm}(x) = \frac{x}{\sqrt{\frac{1}{d} \sum_{i=1}^{d} x_i^2 + \epsilon}} \cdot \gamma
+\tag{5}\]</span></span> where:</p>
+<ul>
+<li><span class="math inline">\(\epsilon\)</span>: a small constant to prevent division by zero.</li>
+<li><span class="math inline">\(\gamma\)</span>: a learnable scale parameter, which has the same shape as the input features <span class="math inline">\(d_{\text{model}}\)</span>.</li>
+</ul>
+<p>As we can see, the main difference between Layer Normalization and RMS Normalization is the removal of the mean from the normalization process, and remove the learnable shift parameter <span class="math inline">\(\beta\)</span>. There are several advantage of that:</p>
+<ol type="1">
+<li>Simplicity: RMS Normalization is simpler and requires fewer parameters, making it easier to implement and faster to compute. For model with <span class="math inline">\(d_{\text{model}} = 512\)</span>, 8 layers, each layer has 2 normalization. Than the reduction number of parameter is up to <span class="math inline">\(512 \times 8 \times 2 = 8192\)</span> parameters.</li>
+<li>Fewer operations: no mean subtraction, no bias addition.</li>
+<li>Saves memory bandwidth, which is often the bottleneck in GPUs (not FLOPs).</li>
+<li>While reduce the number of parameters, it also maintains similar performance.</li>
+</ol>
+</section>
+<section id="pre-layer-normalization-vs.-post-layer-normalization" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="pre-layer-normalization-vs.-post-layer-normalization"><span class="header-section-number">3.2</span> Pre-Layer Normalization vs.&nbsp;Post-Layer Normalization</h2>
+<div id="fig-normalization-3-positions" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-normalization-3-positions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/normalization-3-positions.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-normalization-3-positions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: The figure illustrates the three different position of the normalization layer in the transformer architecture.
+</figcaption>
+</figure>
+</div>
+<p>One main good reason why Pre-Layer Normalization is perform bettern than the Post-Layer Normalization is that, according to <span class="citation" data-cites="LayerNormalizationTransformer2020xiong">(<a href="#ref-LayerNormalizationTransformer2020xiong" role="doc-biblioref">Xiong et al. 2020</a>)</span>, the help the gradient flow back through the network without disrupting the residual connections. When using the Pre-Layer Normalization, it tends to converge faster and more stably. And the initlization methods is become less sensitive to the scale of the inputs.</p>
+<p>There are third type of the normalization position by <span class="citation" data-cites="CogViewMasteringTexttoImage2021ding">(<a href="#ref-CogViewMasteringTexttoImage2021ding" role="doc-biblioref">Ding et al. 2021</a>)</span> called sandwiched normalization, which is a combination of pre-layer and post-layer normalization. Is is proposed to improve the training for the text-image pair.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Gradient Flow">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Gradient Flow
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>One generalizable lesson is that we should keep residual connections “clean” identity paths.</p>
+</div>
+</div>
+</section>
+<section id="qk-norm" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="qk-norm"><span class="header-section-number">3.3</span> QK Norm</h2>
+<p>There is another normalization method called Query-Key Normalization (QK Norm), which is designed to improve the attention mechanism by normalizing the query and key vectors before computing the attention scores.</p>
+</section>
+</section>
+<section id="attention-mechanism" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Attention Mechanism</h1>
+<p>Now, we have arrive the most important component of the transformer architecture: the attention mechanism. There are many efforts and research directions aimed at improving the attention mechanism. we first discuss the standard multi-headed attention, proposed in <span class="citation" data-cites="AttentionAllYou2023vaswani">(<a href="#ref-AttentionAllYou2023vaswani" role="doc-biblioref">Vaswani et al. 2023</a>)</span>. And than analysis the time complexity of the the algorithm. Layer see different improvements through change algorithm or better utilize the hardware.</p>
+<section id="multi-headed-attention" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="multi-headed-attention"><span class="header-section-number">4.1</span> Multi Headed Attention</h2>
+<p>The standard multi headed attention is defined as:</p>
+<p><span id="eq-multi-head-attention"><span class="math display">\[
+\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h)W^O
+\tag{6}\]</span></span></p>
+<p>where each head is computed as:</p>
+<p><span id="eq-mha-head"><span class="math display">\[
+\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)
+\tag{7}\]</span></span> with <span class="math inline">\(W_i^Q\)</span>, <span class="math inline">\(W_i^K\)</span>, and <span class="math inline">\(W_i^V\)</span> being learned projection matrices.</p>
+<p>And the attention function, usually is scaled dot-product attention, is defined as: <span id="eq-scaled-dot-product-attention"><span class="math display">\[
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+\tag{8}\]</span></span></p>
+<p>where <span class="math inline">\(d_k\)</span> is the dimension of the keys. The reason for the scaling factor <span class="math inline">\(\sqrt{d_k}\)</span> is to counteract the effect of large dot-product values by the large dimension of <span class="math inline">\(K\)</span>, which can push the softmax function into regions with very small gradients.</p>
+<section id="time-complexity-of-scaled-dot-product-attention" class="level3" data-number="4.1.1">
+<h3 data-number="4.1.1" class="anchored" data-anchor-id="time-complexity-of-scaled-dot-product-attention"><span class="header-section-number">4.1.1</span> Time Complexity of Scaled Dot-Product Attention</h3>
+<p>The time complexity of the scaled dot-product attention mechanism can be analyzed as follows:</p>
+<ol type="1">
+<li><strong>Query-Key Dot Product</strong>: The computation of the dot product between the query and key matrices has a time complexity of <span class="math inline">\(O(n^2 d_k)\)</span>, where <span class="math inline">\(n\)</span> is the sequence length and <span class="math inline">\(d_k\)</span> is the dimension of the keys.</li>
+<li><strong>Softmax Computation</strong>: The softmax function is applied to the dot product results, which has a time complexity of <span class="math inline">\(O(n^2)\)</span>.</li>
+<li><strong>Value Weighting</strong>: The final step involves multiplying the softmax output with the value matrix, which has a time complexity of <span class="math inline">\(O(n^2 d_v)\)</span>, where <span class="math inline">\(d_v\)</span> is the dimension of the values.</li>
+</ol>
+<p>Overall, the time complexity of the scaled dot-product attention is dominated by the query-key dot product and can be expressed as:</p>
+<p><span id="eq-time-complexity-of-scaled-dot-product-attention"><span class="math display">\[
+O(n^2 (d_k + d_v))
+\tag{9}\]</span></span></p>
+<p>As we can see, the time complexity is <em>quadratic in the sequence length</em>, which can be a bottleneck for long sequences / contexts. Let’s see how we can improve it.</p>
+</section>
+</section>
+<section id="grouped-query-attention-multi-query-attention" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="grouped-query-attention-multi-query-attention"><span class="header-section-number">4.2</span> Grouped Query Attention / Multi Query Attention</h2>
+<div id="fig-grouped-query-attention" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-grouped-query-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/group-query-attention.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-grouped-query-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: Overview of Grouped Query Attention &amp; Multi Query Attention (Image Source: <span class="citation" data-cites="GQATrainingGeneralized2023ainslie">(<a href="#ref-GQATrainingGeneralized2023ainslie" role="doc-biblioref">Ainslie et al. 2023</a>)</span>)
+</figcaption>
+</figure>
+</div>
+<p>Proposed by the <span class="citation" data-cites="GQATrainingGeneralized2023ainslie">(<a href="#ref-GQATrainingGeneralized2023ainslie" role="doc-biblioref">Ainslie et al. 2023</a>)</span>, Grouped Query Attention (GQA) and Multi Query Attention (MQA) are designed to reduce the computational burden of the attention mechanism by grouping queries and sharing keys and values across multiple queries.</p>
+</section>
+<section id="sparse-attention" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="sparse-attention"><span class="header-section-number">4.3</span> Sparse Attention</h2>
+<ul>
+<li>Fixed Pattern Attention: for example, sliding window attention</li>
+<li>Strided Attention: for example, dilated attention, every m-th token</li>
+<li>Block Sparse Attention: for example, BigBird <span class="citation" data-cites="BigBirdSparseAttention2020zaheer">(<a href="#ref-BigBirdSparseAttention2020zaheer" role="doc-biblioref"><strong>BigBirdSparseAttention2020zaheer?</strong></a>)</span>, Longformer <span class="citation" data-cites="LongformerLongDocumentTransformer2020beltagy">(<a href="#ref-LongformerLongDocumentTransformer2020beltagy" role="doc-biblioref">Beltagy, Peters, and Cohan 2020</a>)</span></li>
+<li>Global Attention:</li>
+<li>Learned / Dynamic Spare Attention</li>
+</ul>
+<section id="sliding-window-attention" class="level3" data-number="4.3.1">
+<h3 data-number="4.3.1" class="anchored" data-anchor-id="sliding-window-attention"><span class="header-section-number">4.3.1</span> Sliding window attention</h3>
+<div id="fig-sliding-window-attention" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-sliding-window-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/sliding-window-attention.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-sliding-window-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9
+</figcaption>
+</figure>
+</div>
+<p><span class="citation" data-cites="LongformerLongDocumentTransformer2020beltagy">(<a href="#ref-LongformerLongDocumentTransformer2020beltagy" role="doc-biblioref">Beltagy, Peters, and Cohan 2020</a>)</span></p>
+</section>
+<section id="dilated-attention" class="level3" data-number="4.3.2">
+<h3 data-number="4.3.2" class="anchored" data-anchor-id="dilated-attention"><span class="header-section-number">4.3.2</span> Dilated Attention</h3>
+<div id="fig-sparse-attention" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-sparse-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/attention-sparse.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-sparse-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: The illustration of Sparse Attention. (Image Source: <a href="https://arxiv.org/pdf/1904.10509">Generating Long Sequences with Sparse Transformers</a>)
+</figcaption>
+</figure>
+</div>
+<p><span class="citation" data-cites="GeneratingLongSequences2019child">(<a href="#ref-GeneratingLongSequences2019child" role="doc-biblioref">Child et al. 2019</a>)</span></p>
+</section>
+</section>
+<section id="multi-latent-attention" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="multi-latent-attention"><span class="header-section-number">4.4</span> Multi Latent Attention</h2>
+<div id="fig-multi-latent-attention" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-multi-latent-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/attention_mla.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-multi-latent-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11: Compare between MHA, Grouped Query Attention, Multi Query Attention and Multi Latent Attention.
+</figcaption>
+</figure>
+</div>
+<p>Multi Latent Attention (MLA), proposed in <span class="citation" data-cites="DeepSeekV2StrongEconomical2024deepseek-ai">(<a href="#ref-DeepSeekV2StrongEconomical2024deepseek-ai" role="doc-biblioref">DeepSeek-AI et al. 2024</a>)</span> is a proposed extension to the attention mechanism that aims to capture more complex relationships within the input data by introducing multiple latent spaces. Each latent space can learn different aspects of the data, allowing for a more nuanced understanding of the input.</p>
+<div id="fig-multi-latent-attention-detail" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-multi-latent-attention-detail-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/attention_mla_detail.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-multi-latent-attention-detail-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;12: The detail of Multi Latent Attention (MLA).
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="flash-attention" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="flash-attention"><span class="header-section-number">4.5</span> Flash Attention</h2>
+<p>So far, we see different attention mechanisms that aim to improve the efficiency and effectiveness of the standard attention mechanism. However, all aforementioned methods improve the attention mechanism by approximating the attention calculation. On the other hand, Flash Attention, proposed in <span class="citation" data-cites="FlashAttention2FasterAttention2023dao">(<a href="#ref-FlashAttention2FasterAttention2023dao" role="doc-biblioref">Dao 2023</a>)</span>, takes a different approach by optimizing the attention computation itself.</p>
+<div id="fig-flash-attention" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-flash-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/attention_flash.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-flash-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13: The illustration of Flash Attention
+</figcaption>
+</figure>
+</div>
+<section id="flash-attention-v1-vs.-v2-vs.-v3" class="level3" data-number="4.5.1">
+<h3 data-number="4.5.1" class="anchored" data-anchor-id="flash-attention-v1-vs.-v2-vs.-v3"><span class="header-section-number">4.5.1</span> Flash Attention V1 vs.&nbsp;V2 vs.&nbsp;V3</h3>
+</section>
+</section>
+<section id="native-sparse-attention" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="native-sparse-attention"><span class="header-section-number">4.6</span> Native Sparse Attention</h2>
+<div id="fig-native-sparse-attention" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-native-sparse-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/attention_native_sparse_attention.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-native-sparse-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14: Illustration of Native Sparse Attention (Image Source: <a href="https://arxiv.org/pdf/2502.11089">Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention</a>)
+</figcaption>
+</figure>
+</div>
+<p>Proposed in <span class="citation" data-cites="NativeSparseAttention2025yuan">(<a href="#ref-NativeSparseAttention2025yuan" role="doc-biblioref">Yuan et al. 2025</a>)</span>, this is a novel approach to sparse attention that aligns with hardware capabilities and allows for efficient training of sparse attention mechanisms.</p>
+</section>
+<section id="attention-sink" class="level2" data-number="4.7">
+<h2 data-number="4.7" class="anchored" data-anchor-id="attention-sink"><span class="header-section-number">4.7</span> Attention Sink</h2>
+</section>
+</section>
+<section id="activations" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Activations</h1>
+<section id="swish" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="swish"><span class="header-section-number">5.1</span> Swish</h2>
+</section>
+<section id="gated-linear-unit-glu" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="gated-linear-unit-glu"><span class="header-section-number">5.2</span> Gated Linear Unit (GLU)</h2>
+</section>
+</section>
+<section id="feed-forward-network-mixture-of-experts" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Feed Forward Network &amp; Mixture of Experts</h1>
+<section id="multi-layer-perceptron-mlp" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="multi-layer-perceptron-mlp"><span class="header-section-number">6.1</span> Multi Layer Perceptron (MLP)</h2>
+</section>
+<section id="gated-linear-unit-glu-1" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="gated-linear-unit-glu-1"><span class="header-section-number">6.2</span> Gated Linear Unit (GLU)</h2>
+</section>
+<section id="mixture-of-experts-moe" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="mixture-of-experts-moe"><span class="header-section-number">6.3</span> Mixture of Experts (MoE)</h2>
+</section>
+</section>
+<section id="model-initialization" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Model Initialization</h1>
+<section id="weight-initialization" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="weight-initialization"><span class="header-section-number">7.1</span> Weight Initialization</h2>
+</section>
+<section id="layer-initialization" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="layer-initialization"><span class="header-section-number">7.2</span> Layer Initialization</h2>
+</section>
+</section>
+<section id="case-study" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Case Study</h1>
+<p>Finally, we will examine some state-of-the-art LLM architectures and how they implement the techniques discussed in this blog.</p>
+<section id="llama" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="llama"><span class="header-section-number">8.1</span> LLaMA</h2>
+</section>
+<section id="qwen" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="qwen"><span class="header-section-number">8.2</span> Qwen</h2>
+</section>
+<section id="deepseek" class="level2" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="deepseek"><span class="header-section-number">8.3</span> DeepSeek</h2>
+</section>
+<section id="gpt-oss" class="level2" data-number="8.4">
+<h2 data-number="8.4" class="anchored" data-anchor-id="gpt-oss"><span class="header-section-number">8.4</span> GPT-Oss</h2>
+</section>
+</section>
+<section id="other-architectures" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Other Architectures</h1>
+<p>Right now, we just see all above model are transformer based architecture. But are they are the best solution? In the following, we will explore some alternative architectures that have been proposed.</p>
+<section id="diffusion-language-models" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="diffusion-language-models"><span class="header-section-number">9.1</span> Diffusion Language Models</h2>
+<div id="fig-diffusion-language-models" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-diffusion-language-models-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-video"><video id="video_shortcode_videojs_video1" class="video-js vjs-default-skin vjs-fluid" controls="" preload="auto" data-setup="{}" title="What is the CERN"><source src="https://framerusercontent.com/assets/YURlGaqdh4MqvUPfSmGIcaoIFc.mp4"></video></div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-diffusion-language-models-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15: Illustration of Diffusion Language Model. (Video Source: <a href="https://www.inceptionlabs.ai/introducing-mercury">Inception Lab</a>)
+</figcaption>
+</figure>
+</div>
+<p>LLaDA <span class="citation" data-cites="LargeLanguageDiffusion2025nie">(<a href="#ref-LargeLanguageDiffusion2025nie" role="doc-biblioref">Nie et al. 2025</a>)</span> is a diffusion-based language model that leverages the principles of diffusion models to generate text. By modeling the text generation process as a diffusion process, LLaDA aims to improve the quality and diversity of generated text.</p>
+<div id="fig-diffusion-llada" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-diffusion-llada-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/diff_normal_150ms.gif" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-diffusion-llada-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;16: Example of LLaDA generation process. Prompt: <u>“Explain what artificial intelligence is.”</u> (Image Source: <a href="https://ml-gsai.github.io/LLaDA-demo/">LLaDA demo</a>)
+</figcaption>
+</figure>
+</div>
+<div id="fig-llada" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-llada-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="assets/llada.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-llada-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;17: The training process and sampling process of LLaDA. (Image Source: <a href="https://arxiv.org/pdf/2502.09992">LLaDA</a>)
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="state-space-model-ssm" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="state-space-model-ssm"><span class="header-section-number">9.2</span> State Space Model (SSM)</h2>
+</section>
+</section>
+<section id="conclusion" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Conclusion</h1>
+<p>This is conclusion</p>
+
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-GQATrainingGeneralized2023ainslie" class="csl-entry" role="listitem">
+Ainslie, Joshua, James Lee-Thorp, Michiel de Jong, Yury Zemlyanskiy, Federico Lebrón, and Sumit Sanghai. 2023. <span>“<span>GQA</span>: <span>Training Generalized Multi-Query Transformer Models</span> from <span>Multi-Head Checkpoints</span>.”</span> December 23, 2023. <a href="https://doi.org/10.48550/arXiv.2305.13245">https://doi.org/10.48550/arXiv.2305.13245</a>.
+</div>
+<div id="ref-LayerNormalization2016ba" class="csl-entry" role="listitem">
+Ba, Jimmy Lei, Jamie Ryan Kiros, and Geoffrey E. Hinton. 2016. <span>“Layer <span>Normalization</span>.”</span> July 21, 2016. <a href="https://doi.org/10.48550/arXiv.1607.06450">https://doi.org/10.48550/arXiv.1607.06450</a>.
+</div>
+<div id="ref-LongformerLongDocumentTransformer2020beltagy" class="csl-entry" role="listitem">
+Beltagy, Iz, Matthew E. Peters, and Arman Cohan. 2020. <span>“Longformer: <span>The Long-Document Transformer</span>.”</span> December 2, 2020. <a href="https://doi.org/10.48550/arXiv.2004.05150">https://doi.org/10.48550/arXiv.2004.05150</a>.
+</div>
+<div id="ref-ExtendingContextWindow2023chen" class="csl-entry" role="listitem">
+Chen, Shouyuan, Sherman Wong, Liangjian Chen, and Yuandong Tian. 2023. <span>“Extending <span>Context Window</span> of <span>Large Language Models</span> via <span>Positional Interpolation</span>.”</span> June 28, 2023. <a href="https://doi.org/10.48550/arXiv.2306.15595">https://doi.org/10.48550/arXiv.2306.15595</a>.
+</div>
+<div id="ref-GeneratingLongSequences2019child" class="csl-entry" role="listitem">
+Child, Rewon, Scott Gray, Alec Radford, and Ilya Sutskever. 2019. <span>“Generating <span>Long Sequences</span> with <span>Sparse Transformers</span>.”</span> April 23, 2019. <a href="https://doi.org/10.48550/arXiv.1904.10509">https://doi.org/10.48550/arXiv.1904.10509</a>.
+</div>
+<div id="ref-TransformerXLAttentiveLanguage2019dai" class="csl-entry" role="listitem">
+Dai, Zihang, Zhilin Yang, Yiming Yang, Jaime Carbonell, Quoc V. Le, and Ruslan Salakhutdinov. 2019. <span>“Transformer-<span>XL</span>: <span>Attentive Language Models Beyond</span> a <span>Fixed-Length Context</span>.”</span> June 2, 2019. <a href="https://doi.org/10.48550/arXiv.1901.02860">https://doi.org/10.48550/arXiv.1901.02860</a>.
+</div>
+<div id="ref-FlashAttention2FasterAttention2023dao" class="csl-entry" role="listitem">
+Dao, Tri. 2023. <span>“<span>FlashAttention-2</span>: <span>Faster Attention</span> with <span>Better Parallelism</span> and <span>Work Partitioning</span>.”</span> July 17, 2023. <a href="https://doi.org/10.48550/arXiv.2307.08691">https://doi.org/10.48550/arXiv.2307.08691</a>.
+</div>
+<div id="ref-DeepSeekV2StrongEconomical2024deepseek-ai" class="csl-entry" role="listitem">
+DeepSeek-AI, Aixin Liu, Bei Feng, Bin Wang, Bingxuan Wang, Bo Liu, Chenggang Zhao, et al. 2024. <span>“<span>DeepSeek-V2</span>: <span>A Strong</span>, <span>Economical</span>, and <span class="nocase">Efficient Mixture-of-Experts Language Model</span>.”</span> June 19, 2024. <a href="https://doi.org/10.48550/arXiv.2405.04434">https://doi.org/10.48550/arXiv.2405.04434</a>.
+</div>
+<div id="ref-CogViewMasteringTexttoImage2021ding" class="csl-entry" role="listitem">
+Ding, Ming, Zhuoyi Yang, Wenyi Hong, Wendi Zheng, Chang Zhou, Da Yin, Junyang Lin, et al. 2021. <span>“<span>CogView</span>: <span class="nocase">Mastering Text-to-Image Generation</span> via <span>Transformers</span>.”</span> November 5, 2021. <a href="https://doi.org/10.48550/arXiv.2105.13290">https://doi.org/10.48550/arXiv.2105.13290</a>.
+</div>
+<div id="ref-ImageWorth16x162021dosovitskiy" class="csl-entry" role="listitem">
+Dosovitskiy, Alexey, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, et al. 2021. <span>“An <span>Image</span> Is <span>Worth</span> 16x16 <span>Words</span>: <span>Transformers</span> for <span>Image Recognition</span> at <span>Scale</span>.”</span> June 3, 2021. <a href="https://doi.org/10.48550/arXiv.2010.11929">https://doi.org/10.48550/arXiv.2010.11929</a>.
+</div>
+<div id="ref-LargeLanguageDiffusion2025nie" class="csl-entry" role="listitem">
+Nie, Shen, Fengqi Zhu, Zebin You, Xiaolu Zhang, Jingyang Ou, Jun Hu, Jun Zhou, Yankai Lin, Ji-Rong Wen, and Chongxuan Li. 2025. <span>“Large <span>Language Diffusion Models</span>.”</span> February 18, 2025. <a href="https://doi.org/10.48550/arXiv.2502.09992">https://doi.org/10.48550/arXiv.2502.09992</a>.
+</div>
+<div id="ref-YaRNEfficientContext2023peng" class="csl-entry" role="listitem">
+Peng, Bowen, Jeffrey Quesnelle, Honglu Fan, and Enrico Shippole. 2023. <span>“<span>YaRN</span>: <span>Efficient Context Window Extension</span> of <span>Large Language Models</span>.”</span> November 1, 2023. <a href="https://doi.org/10.48550/arXiv.2309.00071">https://doi.org/10.48550/arXiv.2309.00071</a>.
+</div>
+<div id="ref-TrainShortTest2022press" class="csl-entry" role="listitem">
+Press, Ofir, Noah A. Smith, and Mike Lewis. 2022. <span>“Train <span>Short</span>, <span>Test Long</span>: <span>Attention</span> with <span>Linear Biases Enables Input Length Extrapolation</span>.”</span> April 22, 2022. <a href="https://doi.org/10.48550/arXiv.2108.12409">https://doi.org/10.48550/arXiv.2108.12409</a>.
+</div>
+<div id="ref-RoFormerEnhancedTransformer2023su" class="csl-entry" role="listitem">
+Su, Jianlin, Yu Lu, Shengfeng Pan, Ahmed Murtadha, Bo Wen, and Yunfeng Liu. 2023. <span>“<span>RoFormer</span>: <span>Enhanced Transformer</span> with <span>Rotary Position Embedding</span>.”</span> November 8, 2023. <a href="https://doi.org/10.48550/arXiv.2104.09864">https://doi.org/10.48550/arXiv.2104.09864</a>.
+</div>
+<div id="ref-AttentionAllYou2023vaswani" class="csl-entry" role="listitem">
+Vaswani, Ashish, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, and Illia Polosukhin. 2023. <span>“Attention <span>Is All You Need</span>.”</span> August 2, 2023. <a href="https://doi.org/10.48550/arXiv.1706.03762">https://doi.org/10.48550/arXiv.1706.03762</a>.
+</div>
+<div id="ref-LayerNormalizationTransformer2020xiong" class="csl-entry" role="listitem">
+Xiong, Ruibin, Yunchang Yang, Di He, Kai Zheng, Shuxin Zheng, Chen Xing, Huishuai Zhang, Yanyan Lan, Liwei Wang, and Tie-Yan Liu. 2020. <span>“On <span>Layer Normalization</span> in the <span>Transformer Architecture</span>.”</span> June 29, 2020. <a href="https://doi.org/10.48550/arXiv.2002.04745">https://doi.org/10.48550/arXiv.2002.04745</a>.
+</div>
+<div id="ref-NativeSparseAttention2025yuan" class="csl-entry" role="listitem">
+Yuan, Jingyang, Huazuo Gao, Damai Dai, Junyu Luo, Liang Zhao, Zhengyan Zhang, Zhenda Xie, et al. 2025. <span>“Native <span>Sparse Attention</span>: <span>Hardware-Aligned</span> and <span>Natively Trainable Sparse Attention</span>.”</span> February 27, 2025. <a href="https://doi.org/10.48550/arXiv.2502.11089">https://doi.org/10.48550/arXiv.2502.11089</a>.
+</div>
+<div id="ref-RootMeanSquare2019zhang" class="csl-entry" role="listitem">
+Zhang, Biao, and Rico Sennrich. 2019. <span>“Root <span>Mean Square Layer Normalization</span>.”</span> October 16, 2019. <a href="https://doi.org/10.48550/arXiv.1910.07467">https://doi.org/10.48550/arXiv.1910.07467</a>.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© CC-By Yuyang, 2025</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>This page is built with ❤️ and <a href="https://quarto.org/">Quarto</a>.</p>
+</div>
+  </div>
+</footer>
+<script>videojs(video_shortcode_videojs_video1);</script>
+
+
+
+
+<script src="../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.js" defer="true"></script>
+</body></html>
