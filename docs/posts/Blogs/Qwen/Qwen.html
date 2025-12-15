@@ -370,11 +370,11 @@ window.Quarto = {
     </a>
     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-learning-notes">    
         <li>
-    <a class="dropdown-item" href="../../../posts/LearningNotes/DLFaC_index.html">
+    <a class="dropdown-item" href="../../.././posts/LearningNotes/DLFaC_index.qmd">
  <span class="dropdown-text">Deep Learning Foundations and Concepts</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../../../posts/LearningNotes/CS336_index.html">
+    <a class="dropdown-item" href="../../.././posts/LearningNotes/CS336/CS336.qmd">
  <span class="dropdown-text">Stanford CS336: LLM from Scratch</span></a>
   </li>  
     </ul>
@@ -415,44 +415,60 @@ window.Quarto = {
   <ul>
   <li><a href="#preliminary" id="toc-preliminary" class="nav-link active" data-scroll-target="#preliminary"><span class="header-section-number">1</span> Preliminary</a></li>
   <li><a href="#qwen1" id="toc-qwen1" class="nav-link" data-scroll-target="#qwen1"><span class="header-section-number">2</span> Qwen1</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#tokenization" id="toc-tokenization" class="nav-link" data-scroll-target="#tokenization"><span class="header-section-number">2.1</span> Tokenization</a></li>
   <li><a href="#architecture" id="toc-architecture" class="nav-link" data-scroll-target="#architecture"><span class="header-section-number">2.2</span> Architecture</a></li>
   <li><a href="#pre-training" id="toc-pre-training" class="nav-link" data-scroll-target="#pre-training"><span class="header-section-number">2.3</span> Pre-Training</a></li>
   <li><a href="#extend-context-length" id="toc-extend-context-length" class="nav-link" data-scroll-target="#extend-context-length"><span class="header-section-number">2.4</span> Extend Context Length</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#ntk-aware-interpolation" id="toc-ntk-aware-interpolation" class="nav-link" data-scroll-target="#ntk-aware-interpolation"><span class="header-section-number">2.4.1</span> NTK-aware Interpolation</a></li>
   <li><a href="#attention" id="toc-attention" class="nav-link" data-scroll-target="#attention"><span class="header-section-number">2.4.2</span> Attention</a></li>
   </ul></li>
   <li><a href="#alignment" id="toc-alignment" class="nav-link" data-scroll-target="#alignment"><span class="header-section-number">2.5</span> Alignment</a>
+  <ul>
+  <li><a href="#supervised-fine-tuning" id="toc-supervised-fine-tuning" class="nav-link" data-scroll-target="#supervised-fine-tuning"><span class="header-section-number">2.5.1</span> Supervised Fine-Tuning</a>
   <ul class="collapse">
-  <li><a href="#supervised-fine-tuning" id="toc-supervised-fine-tuning" class="nav-link" data-scroll-target="#supervised-fine-tuning"><span class="header-section-number">2.5.1</span> Supervised Fine-Tuning</a></li>
-  <li><a href="#rlhf" id="toc-rlhf" class="nav-link" data-scroll-target="#rlhf"><span class="header-section-number">2.5.2</span> RLHF</a></li>
+  <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data"><span class="header-section-number">2.5.1.1</span> Data</a></li>
+  <li><a href="#training" id="toc-training" class="nav-link" data-scroll-target="#training"><span class="header-section-number">2.5.1.2</span> Training</a></li>
+  </ul></li>
+  <li><a href="#rlhf" id="toc-rlhf" class="nav-link" data-scroll-target="#rlhf"><span class="header-section-number">2.5.2</span> RLHF</a>
+  <ul class="collapse">
+  <li><a href="#reward-model-training" id="toc-reward-model-training" class="nav-link" data-scroll-target="#reward-model-training"><span class="header-section-number">2.5.2.1</span> Reward Model Training</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#code-qwen" id="toc-code-qwen" class="nav-link" data-scroll-target="#code-qwen"><span class="header-section-number">2.6</span> Code Qwen</a></li>
   <li><a href="#math-qwen" id="toc-math-qwen" class="nav-link" data-scroll-target="#math-qwen"><span class="header-section-number">2.7</span> Math Qwen</a></li>
   <li><a href="#qwen-1-summary" id="toc-qwen-1-summary" class="nav-link" data-scroll-target="#qwen-1-summary"><span class="header-section-number">2.8</span> Qwen 1 Summary</a></li>
   </ul></li>
   <li><a href="#qwen1-vl" id="toc-qwen1-vl" class="nav-link" data-scroll-target="#qwen1-vl"><span class="header-section-number">3</span> Qwen1-VL</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#model-architecture" id="toc-model-architecture" class="nav-link" data-scroll-target="#model-architecture"><span class="header-section-number">3.1</span> Model Architecture</a></li>
-  <li><a href="#training-1" id="toc-training-1" class="nav-link" data-scroll-target="#training-1"><span class="header-section-number">3.2</span> Training</a></li>
+  <li><a href="#training-1" id="toc-training-1" class="nav-link" data-scroll-target="#training-1"><span class="header-section-number">3.2</span> Training</a>
+  <ul>
+  <li><a href="#pre-training-1" id="toc-pre-training-1" class="nav-link" data-scroll-target="#pre-training-1"><span class="header-section-number">3.2.0.1</span> Pre-Training</a></li>
+  <li><a href="#multi-task-pre-training" id="toc-multi-task-pre-training" class="nav-link" data-scroll-target="#multi-task-pre-training"><span class="header-section-number">3.2.0.2</span> Multi-Task Pre-Training</a></li>
+  <li><a href="#supervised-finetuning" id="toc-supervised-finetuning" class="nav-link" data-scroll-target="#supervised-finetuning"><span class="header-section-number">3.2.0.3</span> Supervised Finetuning</a></li>
+  </ul></li>
   <li><a href="#qwen1-vl-sumary" id="toc-qwen1-vl-sumary" class="nav-link" data-scroll-target="#qwen1-vl-sumary"><span class="header-section-number">3.3</span> Qwen1-VL Sumary</a></li>
   </ul></li>
   <li><a href="#qwen1.5-moe" id="toc-qwen1.5-moe" class="nav-link" data-scroll-target="#qwen1.5-moe"><span class="header-section-number">4</span> Qwen1.5-MoE</a></li>
   <li><a href="#qwen2" id="toc-qwen2" class="nav-link" data-scroll-target="#qwen2"><span class="header-section-number">5</span> Qwen2</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#tokenizer" id="toc-tokenizer" class="nav-link" data-scroll-target="#tokenizer"><span class="header-section-number">5.1</span> Tokenizer</a></li>
   <li><a href="#architecture-1" id="toc-architecture-1" class="nav-link" data-scroll-target="#architecture-1"><span class="header-section-number">5.2</span> Architecture</a>
+  <ul>
+  <li><a href="#dense-model" id="toc-dense-model" class="nav-link" data-scroll-target="#dense-model"><span class="header-section-number">5.2.1</span> Dense Model</a>
   <ul class="collapse">
-  <li><a href="#dense-model" id="toc-dense-model" class="nav-link" data-scroll-target="#dense-model"><span class="header-section-number">5.2.1</span> Dense Model</a></li>
+  <li><a href="#gouged-query-attention" id="toc-gouged-query-attention" class="nav-link" data-scroll-target="#gouged-query-attention"><span class="header-section-number">5.2.1.1</span> Gouged Query Attention</a></li>
+  <li><a href="#dual-chunk-attention-with-yarn" id="toc-dual-chunk-attention-with-yarn" class="nav-link" data-scroll-target="#dual-chunk-attention-with-yarn"><span class="header-section-number">5.2.1.2</span> Dual Chunk Attention with YARN</a></li>
+  </ul></li>
   <li><a href="#mixture-of-expert-model" id="toc-mixture-of-expert-model" class="nav-link" data-scroll-target="#mixture-of-expert-model"><span class="header-section-number">5.2.2</span> Mixture-Of-Expert Model</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#qwen2-vl" id="toc-qwen2-vl" class="nav-link" data-scroll-target="#qwen2-vl"><span class="header-section-number">6</span> Qwen2-VL</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#architecture-2" id="toc-architecture-2" class="nav-link" data-scroll-target="#architecture-2"><span class="header-section-number">6.1</span> Architecture</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#naive-dynamic-resolution" id="toc-naive-dynamic-resolution" class="nav-link" data-scroll-target="#naive-dynamic-resolution"><span class="header-section-number">6.1.1</span> Naive Dynamic Resolution</a></li>
   <li><a href="#multi-modal-rotary-position-embedding-m-rope" id="toc-multi-modal-rotary-position-embedding-m-rope" class="nav-link" data-scroll-target="#multi-modal-rotary-position-embedding-m-rope"><span class="header-section-number">6.1.2</span> Multi-Modal Rotary Position Embedding (M-RoPE)</a></li>
   </ul></li>
@@ -523,8 +539,15 @@ window.Quarto = {
   </ul></li>
   <li><a href="#alignment" id="toc-alignment"><span class="header-section-number">2.5</span> Alignment</a>
   <ul>
-  <li><a href="#supervised-fine-tuning" id="toc-supervised-fine-tuning"><span class="header-section-number">2.5.1</span> Supervised Fine-Tuning</a></li>
-  <li><a href="#rlhf" id="toc-rlhf"><span class="header-section-number">2.5.2</span> RLHF</a></li>
+  <li><a href="#supervised-fine-tuning" id="toc-supervised-fine-tuning"><span class="header-section-number">2.5.1</span> Supervised Fine-Tuning</a>
+  <ul>
+  <li><a href="#data" id="toc-data"><span class="header-section-number">2.5.1.1</span> Data</a></li>
+  <li><a href="#training" id="toc-training"><span class="header-section-number">2.5.1.2</span> Training</a></li>
+  </ul></li>
+  <li><a href="#rlhf" id="toc-rlhf"><span class="header-section-number">2.5.2</span> RLHF</a>
+  <ul>
+  <li><a href="#reward-model-training" id="toc-reward-model-training"><span class="header-section-number">2.5.2.1</span> Reward Model Training</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#code-qwen" id="toc-code-qwen"><span class="header-section-number">2.6</span> Code Qwen</a></li>
   <li><a href="#math-qwen" id="toc-math-qwen"><span class="header-section-number">2.7</span> Math Qwen</a></li>
@@ -533,7 +556,12 @@ window.Quarto = {
   <li><a href="#qwen1-vl" id="toc-qwen1-vl"><span class="header-section-number">3</span> Qwen1-VL</a>
   <ul>
   <li><a href="#model-architecture" id="toc-model-architecture"><span class="header-section-number">3.1</span> Model Architecture</a></li>
-  <li><a href="#training-1" id="toc-training-1"><span class="header-section-number">3.2</span> Training</a></li>
+  <li><a href="#training-1" id="toc-training-1"><span class="header-section-number">3.2</span> Training</a>
+  <ul>
+  <li><a href="#pre-training-1" id="toc-pre-training-1"><span class="header-section-number">3.2.0.1</span> Pre-Training</a></li>
+  <li><a href="#multi-task-pre-training" id="toc-multi-task-pre-training"><span class="header-section-number">3.2.0.2</span> Multi-Task Pre-Training</a></li>
+  <li><a href="#supervised-finetuning" id="toc-supervised-finetuning"><span class="header-section-number">3.2.0.3</span> Supervised Finetuning</a></li>
+  </ul></li>
   <li><a href="#qwen1-vl-sumary" id="toc-qwen1-vl-sumary"><span class="header-section-number">3.3</span> Qwen1-VL Sumary</a></li>
   </ul></li>
   <li><a href="#qwen1.5-moe" id="toc-qwen1.5-moe"><span class="header-section-number">4</span> Qwen1.5-MoE</a></li>
@@ -542,7 +570,11 @@ window.Quarto = {
   <li><a href="#tokenizer" id="toc-tokenizer"><span class="header-section-number">5.1</span> Tokenizer</a></li>
   <li><a href="#architecture-1" id="toc-architecture-1"><span class="header-section-number">5.2</span> Architecture</a>
   <ul>
-  <li><a href="#dense-model" id="toc-dense-model"><span class="header-section-number">5.2.1</span> Dense Model</a></li>
+  <li><a href="#dense-model" id="toc-dense-model"><span class="header-section-number">5.2.1</span> Dense Model</a>
+  <ul>
+  <li><a href="#gouged-query-attention" id="toc-gouged-query-attention"><span class="header-section-number">5.2.1.1</span> Gouged Query Attention</a></li>
+  <li><a href="#dual-chunk-attention-with-yarn" id="toc-dual-chunk-attention-with-yarn"><span class="header-section-number">5.2.1.2</span> Dual Chunk Attention with YARN</a></li>
+  </ul></li>
   <li><a href="#mixture-of-expert-model" id="toc-mixture-of-expert-model"><span class="header-section-number">5.2.2</span> Mixture-Of-Expert Model</a></li>
   </ul></li>
   </ul></li>

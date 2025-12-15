@@ -9,7 +9,7 @@
 <meta name="author" content="Yuyang Zhang">
 <meta name="description" content="Vision Transformer (ViT) 通过将图像切分为 patch 并直接应用标准 Transformer，实现了在大规模数据下超越 CNN 的图像分类性能。">
 
-<title>02 An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale(ViT)</title>
+<title>Vision-Transformer</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -165,9 +165,9 @@ window.Quarto = {
 
 <link rel="stylesheet" href="../../../style/styles.css">
 <link rel="stylesheet" href="../../../style/callout.css">
-<meta property="og:title" content="02 An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale(ViT)">
+<meta property="og:title" content="Vision-Transformer">
 <meta property="og:description" content="Vision Transformer (ViT) 通过将图像切分为 patch 并直接应用标准 Transformer，实现了在大规模数据下超越 CNN 的图像分类性能。">
-<meta property="og:image" content="assets/cover.gif">
+<meta property="og:image" content="./assets/cover.png">
 </head>
 
 <body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
@@ -370,11 +370,11 @@ window.Quarto = {
     </a>
     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-learning-notes">    
         <li>
-    <a class="dropdown-item" href="../../../posts/LearningNotes/DLFaC_index.html">
+    <a class="dropdown-item" href="../../.././posts/LearningNotes/DLFaC_index.qmd">
  <span class="dropdown-text">Deep Learning Foundations and Concepts</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../../../posts/LearningNotes/CS336_index.html">
+    <a class="dropdown-item" href="../../.././posts/LearningNotes/CS336/CS336.qmd">
  <span class="dropdown-text">Stanford CS336: LLM from Scratch</span></a>
   </li>  
     </ul>
@@ -400,7 +400,7 @@ window.Quarto = {
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
         <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-          <h1 class="quarto-secondary-nav-title">02 An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale(<strong>ViT</strong>)</h1>
+          <h1 class="quarto-secondary-nav-title"><tag style="color:blue">Vision-Transformer</tag></h1>
         </a>     
     </div>
   </nav>
@@ -413,28 +413,39 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#vision-transformer-model" id="toc-vision-transformer-model" class="nav-link active" data-scroll-target="#vision-transformer-model"><span class="header-section-number">1</span> Vision Transformer Model</a>
-  <ul class="collapse">
-  <li><a href="#patch-embedding" id="toc-patch-embedding" class="nav-link" data-scroll-target="#patch-embedding"><span class="header-section-number">1.1</span> Patch Embedding</a></li>
-  <li><a href="#position-encoding" id="toc-position-encoding" class="nav-link" data-scroll-target="#position-encoding"><span class="header-section-number">1.2</span> Position Encoding</a>
-  <ul class="collapse">
-  <li><a href="#extending-position-encoding" id="toc-extending-position-encoding" class="nav-link" data-scroll-target="#extending-position-encoding"><span class="header-section-number">1.2.1</span> Extending Position Encoding</a></li>
+  <li><a href="#preliminary" id="toc-preliminary" class="nav-link active" data-scroll-target="#preliminary"><span class="header-section-number">1</span> Preliminary</a></li>
+  <li><a href="#vision-transformer" id="toc-vision-transformer" class="nav-link" data-scroll-target="#vision-transformer"><span class="header-section-number">2</span> Vision-Transformer</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">3</span> Summary</a></li>
+  <li><a href="#key-concepts" id="toc-key-concepts" class="nav-link" data-scroll-target="#key-concepts"><span class="header-section-number">4</span> Key Concepts</a></li>
+  <li><a href="#q-a" id="toc-q-a" class="nav-link" data-scroll-target="#q-a"><span class="header-section-number">5</span> Q &amp; A</a></li>
+  <li><a href="#related-resource-further-reading" id="toc-related-resource-further-reading" class="nav-link" data-scroll-target="#related-resource-further-reading"><span class="header-section-number">6</span> Related resource &amp; Further Reading</a></li>
+  <li><a href="#preliminary-1" id="toc-preliminary-1" class="nav-link" data-scroll-target="#preliminary-1"><span class="header-section-number">7</span> Preliminary</a></li>
+  <li><a href="#vision-transformer-1" id="toc-vision-transformer-1" class="nav-link" data-scroll-target="#vision-transformer-1"><span class="header-section-number">8</span> Vision-Transformer</a>
+  <ul>
+  <li><a href="#patch-embedding" id="toc-patch-embedding" class="nav-link" data-scroll-target="#patch-embedding"><span class="header-section-number">8.1</span> Patch Embedding</a></li>
+  <li><a href="#position-encoding" id="toc-position-encoding" class="nav-link" data-scroll-target="#position-encoding"><span class="header-section-number">8.2</span> Position Encoding</a>
+  <ul>
+  <li><a href="#extending-position-encoding" id="toc-extending-position-encoding" class="nav-link" data-scroll-target="#extending-position-encoding"><span class="header-section-number">8.2.1</span> Extending Position Encoding</a></li>
   </ul></li>
-  <li><a href="#cls-tokens-mlp-head" id="toc-cls-tokens-mlp-head" class="nav-link" data-scroll-target="#cls-tokens-mlp-head"><span class="header-section-number">1.3</span> <code>[CLS]</code> Tokens &amp; MLP Head</a></li>
-  <li><a href="#transformer-encoder-block" id="toc-transformer-encoder-block" class="nav-link" data-scroll-target="#transformer-encoder-block"><span class="header-section-number">1.4</span> Transformer Encoder Block</a></li>
-  <li><a href="#cnn-vs.-vit-inductive-bias" id="toc-cnn-vs.-vit-inductive-bias" class="nav-link" data-scroll-target="#cnn-vs.-vit-inductive-bias"><span class="header-section-number">1.5</span> CNN vs.&nbsp;ViT： Inductive bias</a></li>
-  <li><a href="#vit-model-variants" id="toc-vit-model-variants" class="nav-link" data-scroll-target="#vit-model-variants"><span class="header-section-number">1.6</span> ViT Model Variants</a></li>
+  <li><a href="#cls-tokens-mlp-head" id="toc-cls-tokens-mlp-head" class="nav-link" data-scroll-target="#cls-tokens-mlp-head"><span class="header-section-number">8.3</span> <code>[CLS]</code> Tokens &amp; MLP Head</a></li>
+  <li><a href="#transformer-encoder-block" id="toc-transformer-encoder-block" class="nav-link" data-scroll-target="#transformer-encoder-block"><span class="header-section-number">8.4</span> Transformer Encoder Block</a></li>
+  <li><a href="#cnn-vs.-vit-inductive-bias" id="toc-cnn-vs.-vit-inductive-bias" class="nav-link" data-scroll-target="#cnn-vs.-vit-inductive-bias"><span class="header-section-number">8.5</span> CNN vs.&nbsp;ViT： Inductive bias</a></li>
+  <li><a href="#vit-model-variants" id="toc-vit-model-variants" class="nav-link" data-scroll-target="#vit-model-variants"><span class="header-section-number">8.6</span> ViT Model Variants</a></li>
   </ul></li>
-  <li><a href="#qa" id="toc-qa" class="nav-link" data-scroll-target="#qa"><span class="header-section-number">2</span> Q&amp;A</a></li>
-  <li><a href="#扩展" id="toc-扩展" class="nav-link" data-scroll-target="#扩展"><span class="header-section-number">3</span> 扩展</a>
-  <ul class="collapse">
-  <li><a href="#减少tokens" id="toc-减少tokens" class="nav-link" data-scroll-target="#减少tokens"><span class="header-section-number">3.1</span> 减少Tokens</a></li>
-  <li><a href="#vision-language-model" id="toc-vision-language-model" class="nav-link" data-scroll-target="#vision-language-model"><span class="header-section-number">3.2</span> Vision Language Model</a></li>
+  <li><a href="#qa" id="toc-qa" class="nav-link" data-scroll-target="#qa"><span class="header-section-number">9</span> Q&amp;A</a></li>
+  <li><a href="#扩展" id="toc-扩展" class="nav-link" data-scroll-target="#扩展"><span class="header-section-number">10</span> 扩展</a>
+  <ul>
+  <li><a href="#减少tokens" id="toc-减少tokens" class="nav-link" data-scroll-target="#减少tokens"><span class="header-section-number">10.1</span> 减少Tokens</a></li>
+  <li><a href="#vision-language-model" id="toc-vision-language-model" class="nav-link" data-scroll-target="#vision-language-model"><span class="header-section-number">10.2</span> Vision Language Model</a></li>
   </ul></li>
-  <li><a href="#appendix" id="toc-appendix" class="nav-link" data-scroll-target="#appendix"><span class="header-section-number">4</span> Appendix</a>
-  <ul class="collapse">
-  <li><a href="#axial-attention轴向注意力" id="toc-axial-attention轴向注意力" class="nav-link" data-scroll-target="#axial-attention轴向注意力"><span class="header-section-number">4.1</span> Axial Attention（轴向注意力）</a></li>
+  <li><a href="#appendix" id="toc-appendix" class="nav-link" data-scroll-target="#appendix"><span class="header-section-number">11</span> Appendix</a>
+  <ul>
+  <li><a href="#axial-attention轴向注意力" id="toc-axial-attention轴向注意力" class="nav-link" data-scroll-target="#axial-attention轴向注意力"><span class="header-section-number">11.1</span> Axial Attention（轴向注意力）</a></li>
   </ul></li>
+  <li><a href="#summary-1" id="toc-summary-1" class="nav-link" data-scroll-target="#summary-1"><span class="header-section-number">12</span> Summary</a></li>
+  <li><a href="#key-concepts-1" id="toc-key-concepts-1" class="nav-link" data-scroll-target="#key-concepts-1"><span class="header-section-number">13</span> Key Concepts</a></li>
+  <li><a href="#q-a-1" id="toc-q-a-1" class="nav-link" data-scroll-target="#q-a-1"><span class="header-section-number">14</span> Q &amp; A</a></li>
+  <li><a href="#related-resource-further-reading-1" id="toc-related-resource-further-reading-1" class="nav-link" data-scroll-target="#related-resource-further-reading-1"><span class="header-section-number">15</span> Related resource &amp; Further Reading</a></li>
   </ul>
 </nav>
 </nav>
@@ -448,10 +459,9 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block">02 An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale(<strong>ViT</strong>)</h1>
+<h1 class="title d-none d-lg-block"><tag style="color:blue">Vision-Transformer</tag></h1>
   <div class="quarto-categories">
-    <div class="quarto-category">MustReadPaper</div>
-    <div class="quarto-category">Computer-Vision</div>
+    <div class="quarto-category">Computer Vision</div>
     <div class="quarto-category">Transformer</div>
   </div>
   </div>
@@ -484,33 +494,65 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#vision-transformer-model" id="toc-vision-transformer-model"><span class="header-section-number">1</span> Vision Transformer Model</a>
+  <li><a href="#preliminary" id="toc-preliminary"><span class="header-section-number">1</span> Preliminary</a></li>
+  <li><a href="#vision-transformer" id="toc-vision-transformer"><span class="header-section-number">2</span> Vision-Transformer</a></li>
+  <li><a href="#summary" id="toc-summary"><span class="header-section-number">3</span> Summary</a></li>
+  <li><a href="#key-concepts" id="toc-key-concepts"><span class="header-section-number">4</span> Key Concepts</a></li>
+  <li><a href="#q-a" id="toc-q-a"><span class="header-section-number">5</span> Q &amp; A</a></li>
+  <li><a href="#related-resource-further-reading" id="toc-related-resource-further-reading"><span class="header-section-number">6</span> Related resource &amp; Further Reading</a></li>
+  <li><a href="#preliminary-1" id="toc-preliminary-1"><span class="header-section-number">7</span> Preliminary</a></li>
+  <li><a href="#vision-transformer-1" id="toc-vision-transformer-1"><span class="header-section-number">8</span> Vision-Transformer</a>
   <ul>
-  <li><a href="#patch-embedding" id="toc-patch-embedding"><span class="header-section-number">1.1</span> Patch Embedding</a></li>
-  <li><a href="#position-encoding" id="toc-position-encoding"><span class="header-section-number">1.2</span> Position Encoding</a>
+  <li><a href="#patch-embedding" id="toc-patch-embedding"><span class="header-section-number">8.1</span> Patch Embedding</a></li>
+  <li><a href="#position-encoding" id="toc-position-encoding"><span class="header-section-number">8.2</span> Position Encoding</a>
   <ul>
-  <li><a href="#extending-position-encoding" id="toc-extending-position-encoding"><span class="header-section-number">1.2.1</span> Extending Position Encoding</a></li>
+  <li><a href="#extending-position-encoding" id="toc-extending-position-encoding"><span class="header-section-number">8.2.1</span> Extending Position Encoding</a></li>
   </ul></li>
-  <li><a href="#cls-tokens-mlp-head" id="toc-cls-tokens-mlp-head"><span class="header-section-number">1.3</span> <code>[CLS]</code> Tokens &amp; MLP Head</a></li>
-  <li><a href="#transformer-encoder-block" id="toc-transformer-encoder-block"><span class="header-section-number">1.4</span> Transformer Encoder Block</a></li>
-  <li><a href="#cnn-vs.-vit-inductive-bias" id="toc-cnn-vs.-vit-inductive-bias"><span class="header-section-number">1.5</span> CNN vs.&nbsp;ViT： Inductive bias</a></li>
-  <li><a href="#vit-model-variants" id="toc-vit-model-variants"><span class="header-section-number">1.6</span> ViT Model Variants</a></li>
+  <li><a href="#cls-tokens-mlp-head" id="toc-cls-tokens-mlp-head"><span class="header-section-number">8.3</span> <code>[CLS]</code> Tokens &amp; MLP Head</a></li>
+  <li><a href="#transformer-encoder-block" id="toc-transformer-encoder-block"><span class="header-section-number">8.4</span> Transformer Encoder Block</a></li>
+  <li><a href="#cnn-vs.-vit-inductive-bias" id="toc-cnn-vs.-vit-inductive-bias"><span class="header-section-number">8.5</span> CNN vs.&nbsp;ViT： Inductive bias</a></li>
+  <li><a href="#vit-model-variants" id="toc-vit-model-variants"><span class="header-section-number">8.6</span> ViT Model Variants</a></li>
   </ul></li>
-  <li><a href="#qa" id="toc-qa"><span class="header-section-number">2</span> Q&amp;A</a></li>
-  <li><a href="#扩展" id="toc-扩展"><span class="header-section-number">3</span> 扩展</a>
+  <li><a href="#qa" id="toc-qa"><span class="header-section-number">9</span> Q&amp;A</a></li>
+  <li><a href="#扩展" id="toc-扩展"><span class="header-section-number">10</span> 扩展</a>
   <ul>
-  <li><a href="#减少tokens" id="toc-减少tokens"><span class="header-section-number">3.1</span> 减少Tokens</a></li>
-  <li><a href="#vision-language-model" id="toc-vision-language-model"><span class="header-section-number">3.2</span> Vision Language Model</a></li>
+  <li><a href="#减少tokens" id="toc-减少tokens"><span class="header-section-number">10.1</span> 减少Tokens</a></li>
+  <li><a href="#vision-language-model" id="toc-vision-language-model"><span class="header-section-number">10.2</span> Vision Language Model</a></li>
   </ul></li>
-  <li><a href="#appendix" id="toc-appendix"><span class="header-section-number">4</span> Appendix</a>
+  <li><a href="#appendix" id="toc-appendix"><span class="header-section-number">11</span> Appendix</a>
   <ul>
-  <li><a href="#axial-attention轴向注意力" id="toc-axial-attention轴向注意力"><span class="header-section-number">4.1</span> Axial Attention（轴向注意力）</a></li>
+  <li><a href="#axial-attention轴向注意力" id="toc-axial-attention轴向注意力"><span class="header-section-number">11.1</span> Axial Attention（轴向注意力）</a></li>
   </ul></li>
+  <li><a href="#summary-1" id="toc-summary-1"><span class="header-section-number">12</span> Summary</a></li>
+  <li><a href="#key-concepts-1" id="toc-key-concepts-1"><span class="header-section-number">13</span> Key Concepts</a></li>
+  <li><a href="#q-a-1" id="toc-q-a-1"><span class="header-section-number">14</span> Q &amp; A</a></li>
+  <li><a href="#related-resource-further-reading-1" id="toc-related-resource-further-reading-1"><span class="header-section-number">15</span> Related resource &amp; Further Reading</a></li>
   </ul>
 </nav>
+<section id="preliminary" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Preliminary</h1>
+</section>
+<section id="vision-transformer" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Vision-Transformer</h1>
+</section>
+<section id="summary" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Summary</h1>
+</section>
+<section id="key-concepts" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Key Concepts</h1>
+</section>
+<section id="q-a" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Q &amp; A</h1>
+</section>
+<section id="related-resource-further-reading" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Related resource &amp; Further Reading</h1>
+</section>
+<section id="preliminary-1" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Preliminary</h1>
 <p>在了解了什么是<a href="../../../posts/PapersWithCode/01-transformer/Transformer.html">Transformer</a>之后，我们来看看如何将Transformer应用于Computer Vision。Vision Transformer（ViT）<span class="citation" data-cites="ImageWorth16x162021dosovitskiy">(<a href="#ref-ImageWorth16x162021dosovitskiy" role="doc-biblioref">Dosovitskiy et al. 2021</a>)</span> 是一个将Transformer架构应用于图像分类的模型。它的核心思想是<u>将图像划分为小块（patches），然后将这些小块视为序列数据，类似于处理文本数据</u>。</p>
-<section id="vision-transformer-model" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Vision Transformer Model</h1>
+</section>
+<section id="vision-transformer-1" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Vision-Transformer</h1>
 <div id="fig-vit-gif" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-vit-gif-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -522,14 +564,14 @@ Figure&nbsp;1: Vision Transformer Architecture (Image Source: lucidrains)
 </figure>
 </div>
 <p>Vision Transformer 的工作流程（如上图所示）： 1. 图像切分（Patchify）： 将输入图像划分为若干大小相同的小块（Patch），并展开为一维序列。 2. 线性映射： 使用线性层将每个 Patch 映射为固定维度的隐藏向量（Hidden Embedding）。 3. 加入 <code>[CLS]</code> 标记： 在序列开头添加一个特殊的 <code>[CLS]</code> token，用于表示整张图像的全局语义。 4. 位置编码： 为每个向量添加可学习的位置嵌入（Position Embedding），保留空间位置信息。 5. Transformer 编码器： 将上述序列输入 Transformer Encoder，以捕捉全局依赖关系。 6. 分类头（MLP Head）： 最终通过一个多层感知机（MLP）分类头输出图像所属的类别。</p>
-<p>对于 <a href="../01-Transformer/Transformer.qmd">Transformer</a> ，Vision Transformer (ViT) 的主要区别在于： 1. 增加了一个 Patchify 步骤，将图像划分为若干小块并转化为序列输入； 2. 将原本的 正余弦位置编码（sinusoidal position embedding） 替换为 可学习的位置嵌入（learned position embedding）； 3. 在最后额外添加了一个 分类头（classification head），用于完成图像分类任务。</p>
-<p>我们之前已经学习过了什么是 <a href="../01-Transformer/Transformer.md">Transformer</a> . 建议忘记了的同学再去回顾一下，我们就不多重复了。 我们首先来看如何进行Patch Embedding</p>
-<section id="patch-embedding" class="level2" data-number="1.1">
-<h2 data-number="1.1" class="anchored" data-anchor-id="patch-embedding"><span class="header-section-number">1.1</span> Patch Embedding</h2>
+<p>对于 <a href="../../../posts/PapersWithCode/01-transformer/Transformer.html">Transformer</a> ，Vision Transformer (ViT) 的主要区别在于： 1. 增加了一个 Patchify 步骤，将图像划分为若干小块并转化为序列输入； 2. 将原本的 正余弦位置编码（sinusoidal position embedding） 替换为 可学习的位置嵌入（learned position embedding）； 3. 在最后额外添加了一个 分类头（classification head），用于完成图像分类任务。</p>
+<p>我们之前已经学习过了什么是 <a href="../01-transformer/Transformer.md">Transformer</a> . 建议忘记了的同学再去回顾一下，我们就不多重复了。 我们首先来看如何进行Patch Embedding</p>
+<section id="patch-embedding" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="patch-embedding"><span class="header-section-number">8.1</span> Patch Embedding</h2>
 <blockquote class="blockquote">
 <p>The standard Transformer receives as input a 1D sequence of token embeddings. To handle 2D images, we reshape the image <span class="math inline">\(x \in \mathbb{R}^{H \times W \times C}\)</span> into a sequence of flattened 2D patches<span class="math inline">\(x \in \mathbb{R}^{N \times (P^{2} \times C)}\)</span>, where (<span class="math inline">\(H, W\)</span>) is the resolution of the original image, <span class="math inline">\(C\)</span> is the number of channels, (<span class="math inline">\(P, P\)</span>) is the resolution of each image patch, and <span class="math inline">\(N = HW/P^{2}\)</span> is the resulting number of patches, which also serves as the effective input sequence length for the Transformer. <u>The Transformer uses constant latent vector size <span class="math inline">\(D\)</span> through all of its layers, so we flatten the patches and map to <span class="math inline">\(D\)</span> dimensions with a trainable linear projection</u>. We refer to the output of this projection as the <strong>patch embeddings</strong>. <cite> An Image is Worth 16x16 Words- Transformers for Image Recognition at Scale, p.3 </cite></p>
 </blockquote>
-<p>在<a href="../01-Transformer/Transformer.qmd">Transformer</a> 这一篇，我们了解到，它是作用于Sequence Modeling的，很显然，Image 不是 Sequence的。很直观的第一种想法就是，将图片直接展开，从二维 (<span class="math inline">\(3, H, W\)</span>) 展开成一维的 (<span class="math inline">\(3, H \times W\)</span>). 这样我们就得到的图片的Sequence Model。如下图@fig-flat-image所示</p>
+<p>在<a href="../../../posts/PapersWithCode/01-transformer/Transformer.html">Transformer</a> 这一篇，我们了解到，它是作用于Sequence Modeling的，很显然，Image 不是 Sequence的。很直观的第一种想法就是，将图片直接展开，从二维 (<span class="math inline">\(3, H, W\)</span>) 展开成一维的 (<span class="math inline">\(3, H \times W\)</span>). 这样我们就得到的图片的Sequence Model。如下图@fig-flat-image所示</p>
 <div id="fig-flat-image" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-flat-image-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -609,20 +651,9 @@ Tip
 <span id="cb3-25"><a href="#cb3-25"></a>        x <span class="op">=</span> x.transpose(<span class="dv">1</span>, <span class="dv">2</span>)</span>
 <span id="cb3-26"><a href="#cb3-26"></a>        <span class="cf">return</span> x</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>用卷积的好处，除了可以更高效的实现Patch Embedding，代码更加简洁之外，我们还可以通过改变 <code>stride</code> 来使一些Patch overlapping，获得一个多尺度的结构，</p>
-<p>The image is convert along this process: <span id="eq-patchify"><span class="math display">\[
-\boxed{
-\mathbf{x} \in \mathbb{R}^{C \times H \times W}
-\quad \xrightarrow{\text{Patchify}} \quad
-\{ x_i \in \mathbb{R}^{C \times P \times P} \}{i=1}^N
-\quad \xrightarrow{\text{Flatten}} \quad
-\{ x_i \in \mathbb{R}^{(C \cdot P \cdot P)} \}_{i=1}^N
-\quad \xrightarrow{\text{Linear } W \in \mathbb{R}^{(C \cdot P \cdot P) \times D}} \quad
-\{ z_i \in \mathbb{R}^{D} \}_{i=1}^N
-}
-\tag{1}\]</span></span></p>
 </section>
-<section id="position-encoding" class="level2" data-number="1.2">
-<h2 data-number="1.2" class="anchored" data-anchor-id="position-encoding"><span class="header-section-number">1.2</span> Position Encoding</h2>
+<section id="position-encoding" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="position-encoding"><span class="header-section-number">8.2</span> Position Encoding</h2>
 <p>将图片转化为 Transformer 的输入之后，接下来Transformer中的另一个组件就是传入 Position Information。我们知道在<a href="../01-Transformer/Transformer.qmd">Transformer</a> 中，他们用的是 sine-cosine position embedding，在那篇文章中，我们也提到了，还存在其他不同的Position Encoding的办法，ViT 用的就是另一种办法，Learned Position Embedding。Learned Position Embedding的方法很简单，也很好理解，对于每一个位置，我们给他一个index，将这个index传入一个 Embedding Matrix， 我们就得到一个Position Embedding。不过与Token Embedding不同的是，我们会用到所有的Position，也整个matrix， 所以我们不用定index，直接定义整个Embedding，然后将它传入Transformer中。</p>
 <div class="sourceCode" id="cb4" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw">class</span> PositionalEncoding(nn.Module):</span>
 <span id="cb4-2"><a href="#cb4-2"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, config: ModelConfig):</span>
@@ -684,8 +715,8 @@ Figure&nbsp;4
 </figcaption>
 </figure>
 </div>
-<section id="extending-position-encoding" class="level3" data-number="1.2.1">
-<h3 data-number="1.2.1" class="anchored" data-anchor-id="extending-position-encoding"><span class="header-section-number">1.2.1</span> Extending Position Encoding</h3>
+<section id="extending-position-encoding" class="level3" data-number="8.2.1">
+<h3 data-number="8.2.1" class="anchored" data-anchor-id="extending-position-encoding"><span class="header-section-number">8.2.1</span> Extending Position Encoding</h3>
 <p>当我们有了一个Pre-Training的模型，我们想用它Fine-Tuning到一个不同图片大小的数据库，我们改怎么做呢，第一个方法当然是，Resize 我们的图片，到ViT Pre-training的图片大小，但是，这个能导致较大的图片，失去很多细节。如果我们想保持图片的大小不变，同时让模型训练，我们就需要Extend Position Encoding，因为当Patch Size不变，图片大小变了的话，产生的Number of Patches 也是会改变的，这样，就是损失一些信息。我们需要做的是，找到一种方法，增大或者减小Position的数量。 这就是所谓的Position Interpolation。</p>
 <p>2D interpolation of the pre-trained position embeddings • ViT 在预训练时，通常用固定输入分辨率（比如 224×224） → 生成固定数量的 patch（比如 16×16 patch → 196 个 patch）。 • 但在 fine-tuning 时，输入图片可能大小不一样，比如 384×384，这时 patch 数量就变了。 • 这会导致原本的 位置编码 (position embeddings) 和新的 patch 数量对不上。 • 解决办法：对预训练好的位置编码做 二维插值 (2D interpolation)，根据 patch 在原图中的空间位置，把位置编码拉伸/缩放到新的分辨率。</p>
 <blockquote class="blockquote">
@@ -716,8 +747,8 @@ Figure&nbsp;4
 <span id="cb5-23"><a href="#cb5-23"></a>    <span class="cf">return</span> torch.cat((class_pos_embed.unsqueeze(<span class="dv">0</span>), patch_pos_embed), dim<span class="op">=</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 </section>
-<section id="cls-tokens-mlp-head" class="level2" data-number="1.3">
-<h2 data-number="1.3" class="anchored" data-anchor-id="cls-tokens-mlp-head"><span class="header-section-number">1.3</span> <code>[CLS]</code> Tokens &amp; MLP Head</h2>
+<section id="cls-tokens-mlp-head" class="level2" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="cls-tokens-mlp-head"><span class="header-section-number">8.3</span> <code>[CLS]</code> Tokens &amp; MLP Head</h2>
 <p>在 <a href="../01-Transformer/Transformer.qmd">Transformer</a> 这一节，我们了解到：每输入一个token，Transformer会输出对应的token。这就是说，对于每个patch，Transformer会输出对应的Tokens，那么，我们应该选择哪一个token作为我们图片的表示呢。 BERT <span class="citation" data-cites="BERTPretrainingDeep2019devlin">(<a href="#ref-BERTPretrainingDeep2019devlin" role="doc-biblioref">Devlin et al. 2019</a>)</span>， 用了一个 <code>[CLS]</code>, 来表示一个句子。同理，我们也可以添加一个 <code>[CLS]</code> token, 来表示一张图片。同时，对于 <code>[CLS]</code> token, 我们也要在给他一个表示位置的信息。这就是为什么在Position Encoding上，我们有 <code>(config.image_size // config.patch_size) ** 2 + 1,</code> 位置信息，其中 <code>+1</code> 就是 <code>[CLS]</code> 的位置信息。 总结一下 <code>[CLS]</code> token 的作用就是用来聚合所有的Patch的消息，然后用来Image 的Representation。</p>
 <p>我们想一下，除了加一个 <code>[CLS]</code> token，之外，我们还有其他办法来表示图片吗。有一种很自然的方法就是，将所有的patch的消息收集起来，然后去一个平均值来表示这个图片。类似于传统的ConvNet(e.g.&nbsp;ResNet) 我们可以通过 <code>AvgPooling</code> 来实现。 不过论文中提到， 对于两种不同的Image Representation，需要有不同的Learning Rate 来训练这个网络。</p>
 <p>Other content <img src="assets/gap-vs-cls-learning-rate.png" id="fig-gap-vs-cls-lr" class="img-fluid"></p>
@@ -750,8 +781,8 @@ Figure&nbsp;4
 <span id="cb6-20"><a href="#cb6-20"></a></span>
 <span id="cb6-21"><a href="#cb6-21"></a>        <span class="cf">return</span> x</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="transformer-encoder-block" class="level2" data-number="1.4">
-<h2 data-number="1.4" class="anchored" data-anchor-id="transformer-encoder-block"><span class="header-section-number">1.4</span> Transformer Encoder Block</h2>
+<section id="transformer-encoder-block" class="level2" data-number="8.4">
+<h2 data-number="8.4" class="anchored" data-anchor-id="transformer-encoder-block"><span class="header-section-number">8.4</span> Transformer Encoder Block</h2>
 <p>至此，我们已经讲完了ViT与<a href="../01-Transformer/Transformer.qmd">Transformer</a>的主要不同之处。接下来，就是Transformer的Encoder。 <img src="assets/ViT-Encoder.png" id="fig-vit-encoder" class="img-fluid"></p>
 <p>这部分，和Transformer原本的Encoder很类似，只不过有几处不同：</p>
 <ul>
@@ -786,8 +817,8 @@ Figure&nbsp;4
 <span id="cb7-25"><a href="#cb7-25"></a></span>
 <span id="cb7-26"><a href="#cb7-26"></a>        <span class="cf">return</span> x</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="cnn-vs.-vit-inductive-bias" class="level2" data-number="1.5">
-<h2 data-number="1.5" class="anchored" data-anchor-id="cnn-vs.-vit-inductive-bias"><span class="header-section-number">1.5</span> CNN vs.&nbsp;ViT： Inductive bias</h2>
+<section id="cnn-vs.-vit-inductive-bias" class="level2" data-number="8.5">
+<h2 data-number="8.5" class="anchored" data-anchor-id="cnn-vs.-vit-inductive-bias"><span class="header-section-number">8.5</span> CNN vs.&nbsp;ViT： Inductive bias</h2>
 <p>至此，我们已经介绍完了Vision Transformer，我们来从Inductive Bias 的方面，看看 CNN 和 ViT 有什么不同</p>
 <div class="callout callout-style-default callout-note callout-titled" title="什么是Inductive Bias">
 <div class="callout-header d-flex align-content-center">
@@ -810,36 +841,41 @@ Figure&nbsp;4
 </ul>
 <p>🔹 2. CNN 的结构怎么体现这些偏置？ 1. 局部性 (Locality) • 卷积核（例如 3×3）只和局部像素打交道，而不是全图。 • 这意味着模型“相信”图像的重要特征来自局部邻域，而不是遥远区域。 2. 二维邻域结构 (2D structure) • 卷积操作是沿着 图像的二维网格进行的，天然利用了图像的行列结构。 • 这和文本（序列 1D）不一样，CNN 明确知道输入是 2D 排列的。 3. 平移等变性 (Translation equivariance) • 卷积核的参数在整张图共享。 • 所以猫在左上角还是右下角，卷积核都能检测到“猫耳朵”。 • 这让 CNN 自动具有“识别位置无关”的能力。</p>
 <p>这些性质不是模型通过训练学出来的，而是因为 卷积操作本身的数学结构就带来的： • kernel 的局部连接 → 局部性 • kernel 滑动覆盖全图 → 平移等变性 • 操作在二维空间定义 → 邻域结构 • 所以，哪怕你不给 CNN 喂太多数据，它也会利用这些偏置去学习特征。</p>
-<p>而对于 ViT 来说： ViT 的归纳偏置非常弱，几乎完全依赖数据和训练来学习。 1. Patch 切分 (Patchification) • ViT 唯一的“图像先验”之一就是把输入图片切成 patch。 • 这一操作隐含了：图像是一个二维结构，可以被分块处理。 2. 位置编码 (Positional Embeddings) • Transformer 本身只处理序列，没有空间结构的概念。 • ViT 通过加位置编码告诉模型 patch 在图像中的相对位置。 • 在输入分辨率变化时，会做 二维插值 (2D interpolation) 来适配，这也是一种人工引入的 2D 先验。 3. 其他部分 • 除了以上两点，ViT 的注意力机制是 全局的 (global)，没有局部性约束。 • 没有像 CNN 那样内置的平移等变性或局部邻域结构。</p>
+<p>而对于 ViT 来说： ViT 的归纳偏置非常弱，几乎完全依赖数据和训练来学习。</p>
+<ol type="1">
+<li>Patch 切分 (Patchification) • ViT 唯一的“图像先验”之一就是把输入图片切成 patch。 • 这一操作隐含了：图像是一个二维结构，可以被分块处理。</li>
+<li>位置编码 (Positional Embeddings) • Transformer 本身只处理序列，没有空间结构的概念。 • ViT 通过加位置编码告诉模型 patch 在图像中的相对位置。 • 在输入分辨率变化时，会做 二维插值 (2D interpolation) 来适配，这也是一种人工引入的 2D 先验。</li>
+<li>其他部分 • 除了以上两点，ViT 的注意力机制是 全局的 (global)，没有局部性约束。 • 没有像 CNN 那样内置的平移等变性或局部邻域结构。</li>
+</ol>
 <p>这样就是为什么ViT需要更多数据和计算才能学到同样的空间归纳规律。</p>
 </section>
-<section id="vit-model-variants" class="level2" data-number="1.6">
-<h2 data-number="1.6" class="anchored" data-anchor-id="vit-model-variants"><span class="header-section-number">1.6</span> ViT Model Variants</h2>
+<section id="vit-model-variants" class="level2" data-number="8.6">
+<h2 data-number="8.6" class="anchored" data-anchor-id="vit-model-variants"><span class="header-section-number">8.6</span> ViT Model Variants</h2>
 <p>ViT 有3种不同的基本变形， 如下图所示 <img src="assets/vit-variances.png" class="img-fluid"></p>
 <p>ViT的名字通常表示为: ViT-L/16: 意思是，ViT-Large，然后用的16 Patch Size。 需要注意的是，Patch Size越大，我们得到的tokens就越少，也就是需要更少的训练时实现。</p>
 </section>
 </section>
-<section id="qa" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> Q&amp;A</h1>
+<section id="qa" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Q&amp;A</h1>
 </section>
-<section id="扩展" class="level1" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> 扩展</h1>
-<section id="减少tokens" class="level2" data-number="3.1">
-<h2 data-number="3.1" class="anchored" data-anchor-id="减少tokens"><span class="header-section-number">3.1</span> 减少Tokens</h2>
+<section id="扩展" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> 扩展</h1>
+<section id="减少tokens" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="减少tokens"><span class="header-section-number">10.1</span> 减少Tokens</h2>
 <ul>
 <li>Patch Merge</li>
 <li>Patch Shuffle</li>
 </ul>
 </section>
-<section id="vision-language-model" class="level2" data-number="3.2">
-<h2 data-number="3.2" class="anchored" data-anchor-id="vision-language-model"><span class="header-section-number">3.2</span> Vision Language Model</h2>
+<section id="vision-language-model" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="vision-language-model"><span class="header-section-number">10.2</span> Vision Language Model</h2>
 <p>我们以及学习了ViT for computer Vision， <a href="../01-Transformer/Transformer.qmd">Transformer</a> for NLP， 接下来有什么办法让这两种模型结合起来呢？ CLIP (2021): 将 ViT 融合到 vision-language 预训练中。</p>
 </section>
 </section>
-<section id="appendix" class="level1" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Appendix</h1>
-<section id="axial-attention轴向注意力" class="level2" data-number="4.1">
-<h2 data-number="4.1" class="anchored" data-anchor-id="axial-attention轴向注意力"><span class="header-section-number">4.1</span> Axial Attention（轴向注意力）</h2>
+<section id="appendix" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> Appendix</h1>
+<section id="axial-attention轴向注意力" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="axial-attention轴向注意力"><span class="header-section-number">11.1</span> Axial Attention（轴向注意力）</h2>
 <p>在处理 图像或视频 这类高维输入时，如果直接对所有像素做 全局 self-attention，复杂度是 <span class="math inline">\(\mathcal{O}(H^2 W^2)\)</span> （<span class="math inline">\(H, W\)</span> 是高和宽）。当图像很大时，这个代价太高。 核心想法：把二维 attention 拆成两次一维 attention（沿着图像的两个“轴”分别做）。 1. Row-wise Attention（行注意力） • 沿着水平方向（宽度轴 W）做注意力，每一行的像素互相关注。 • 复杂度：<span class="math inline">\(\mathcal{O}(H \cdot W^2)\)</span>。 2. Column-wise Attention（列注意力） • 沿着垂直方向（高度轴 H）做注意力，每一列的像素互相关注。 • 复杂度： <span class="math inline">\(\mathcal{O}(W \cdot H^2)\)</span>。</p>
 <p>组合起来，相当于在 H 和 W 两个轴上都做了全局依赖建模。</p>
 <div id="fig-axial-attention" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -852,10 +888,23 @@ Figure&nbsp;5
 </figcaption>
 </figure>
 </div>
-
-
-
 </section>
+</section>
+<section id="summary-1" class="level1" data-number="12">
+<h1 data-number="12"><span class="header-section-number">12</span> Summary</h1>
+</section>
+<section id="key-concepts-1" class="level1" data-number="13">
+<h1 data-number="13"><span class="header-section-number">13</span> Key Concepts</h1>
+</section>
+<section id="q-a-1" class="level1" data-number="14">
+<h1 data-number="14"><span class="header-section-number">14</span> Q &amp; A</h1>
+</section>
+<section id="related-resource-further-reading-1" class="level1" data-number="15">
+<h1 data-number="15"><span class="header-section-number">15</span> Related resource &amp; Further Reading</h1>
+<p><a href="https://arxiv.org/pdf/2106.10270">How to train your ViT? Data, Augmentation, and Regularization in Vision Transformers</a></p>
+
+
+
 </section>
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">

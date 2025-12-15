@@ -371,11 +371,11 @@ window.Quarto = {
     </a>
     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-learning-notes">    
         <li>
-    <a class="dropdown-item" href="../../../posts/LearningNotes/DLFaC_index.html">
+    <a class="dropdown-item" href="../../.././posts/LearningNotes/DLFaC_index.qmd">
  <span class="dropdown-text">Deep Learning Foundations and Concepts</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../../../posts/LearningNotes/CS336_index.html">
+    <a class="dropdown-item" href="../../.././posts/LearningNotes/CS336/CS336.qmd">
  <span class="dropdown-text">Stanford CS336: LLM from Scratch</span></a>
   </li>  
     </ul>
@@ -415,9 +415,9 @@ window.Quarto = {
    
   <ul>
   <li><a href="#preliminary" id="toc-preliminary" class="nav-link active" data-scroll-target="#preliminary"><span class="header-section-number">1</span> Preliminary</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#multivariate-gaussian-distribution" id="toc-multivariate-gaussian-distribution" class="nav-link" data-scroll-target="#multivariate-gaussian-distribution"><span class="header-section-number">1.1</span> Multivariate Gaussian Distribution</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#linear-gaussian" id="toc-linear-gaussian" class="nav-link" data-scroll-target="#linear-gaussian"><span class="header-section-number">1.1.1</span> Linear Gaussian</a></li>
   </ul></li>
   <li><a href="#kl-divergence-fisher-divergence" id="toc-kl-divergence-fisher-divergence" class="nav-link" data-scroll-target="#kl-divergence-fisher-divergence"><span class="header-section-number">1.2</span> KL-Divergence &amp; Fisher Divergence</a></li>
@@ -425,7 +425,7 @@ window.Quarto = {
   <li><a href="#score-function-langevin-dynamics" id="toc-score-function-langevin-dynamics" class="nav-link" data-scroll-target="#score-function-langevin-dynamics"><span class="header-section-number">1.4</span> Score function &amp; Langevin Dynamics</a></li>
   </ul></li>
   <li><a href="#ddpm" id="toc-ddpm" class="nav-link" data-scroll-target="#ddpm"><span class="header-section-number">2</span> DDPM</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#forward-and-backward-diffusion-process" id="toc-forward-and-backward-diffusion-process" class="nav-link" data-scroll-target="#forward-and-backward-diffusion-process"><span class="header-section-number">2.1</span> Forward and Backward Diffusion Process</a></li>
   <li><a href="#loss-function" id="toc-loss-function" class="nav-link" data-scroll-target="#loss-function"><span class="header-section-number">2.2</span> Loss Function</a></li>
   <li><a href="#sampling-from-ddpm" id="toc-sampling-from-ddpm" class="nav-link" data-scroll-target="#sampling-from-ddpm"><span class="header-section-number">2.3</span> Sampling from DDPM</a></li>
@@ -434,12 +434,12 @@ window.Quarto = {
   </ul></li>
   <li><a href="#score-matching" id="toc-score-matching" class="nav-link" data-scroll-target="#score-matching"><span class="header-section-number">3</span> Score Matching</a></li>
   <li><a href="#conditioned-generation" id="toc-conditioned-generation" class="nav-link" data-scroll-target="#conditioned-generation"><span class="header-section-number">4</span> Conditioned Generation</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#classifier-generation" id="toc-classifier-generation" class="nav-link" data-scroll-target="#classifier-generation"><span class="header-section-number">4.1</span> Classifier Generation</a></li>
   <li><a href="#classifier-free-generation" id="toc-classifier-free-generation" class="nav-link" data-scroll-target="#classifier-free-generation"><span class="header-section-number">4.2</span> Classifier-Free Generation</a></li>
   </ul></li>
   <li><a href="#speed-up-diffusion-models" id="toc-speed-up-diffusion-models" class="nav-link" data-scroll-target="#speed-up-diffusion-models"><span class="header-section-number">5</span> Speed Up Diffusion Models</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#ddim" id="toc-ddim" class="nav-link" data-scroll-target="#ddim"><span class="header-section-number">5.1</span> DDIM</a></li>
   <li><a href="#progressive-distillation" id="toc-progressive-distillation" class="nav-link" data-scroll-target="#progressive-distillation"><span class="header-section-number">5.2</span> Progressive Distillation</a></li>
   <li><a href="#consistency-models" id="toc-consistency-models" class="nav-link" data-scroll-target="#consistency-models"><span class="header-section-number">5.3</span> Consistency Models</a></li>
@@ -447,30 +447,30 @@ window.Quarto = {
   <li><a href="#score-matching-1" id="toc-score-matching-1" class="nav-link" data-scroll-target="#score-matching-1"><span class="header-section-number">5.5</span> Score Matching</a></li>
   </ul></li>
   <li><a href="#from-ode-and-sde-view-point" id="toc-from-ode-and-sde-view-point" class="nav-link" data-scroll-target="#from-ode-and-sde-view-point"><span class="header-section-number">6</span> From ODE and SDE view point</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#ode-vs.-sde" id="toc-ode-vs.-sde" class="nav-link" data-scroll-target="#ode-vs.-sde"><span class="header-section-number">6.1</span> ODE vs.&nbsp;SDE</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#vector-field" id="toc-vector-field" class="nav-link" data-scroll-target="#vector-field"><span class="header-section-number">6.1.1</span> Vector Field</a></li>
   </ul></li>
   <li><a href="#conditional-vector-field-marginal-vector-field" id="toc-conditional-vector-field-marginal-vector-field" class="nav-link" data-scroll-target="#conditional-vector-field-marginal-vector-field"><span class="header-section-number">6.2</span> Conditional Vector Field &amp; Marginal Vector Field</a></li>
   <li><a href="#mean-flow" id="toc-mean-flow" class="nav-link" data-scroll-target="#mean-flow"><span class="header-section-number">6.3</span> Mean Flow</a></li>
   </ul></li>
   <li><a href="#model-architecture" id="toc-model-architecture" class="nav-link" data-scroll-target="#model-architecture"><span class="header-section-number">7</span> Model Architecture</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#u-net" id="toc-u-net" class="nav-link" data-scroll-target="#u-net"><span class="header-section-number">7.1</span> U-Net</a></li>
   <li><a href="#control-net" id="toc-control-net" class="nav-link" data-scroll-target="#control-net"><span class="header-section-number">7.2</span> Control Net</a></li>
   <li><a href="#diffusion-transformer-dit" id="toc-diffusion-transformer-dit" class="nav-link" data-scroll-target="#diffusion-transformer-dit"><span class="header-section-number">7.3</span> Diffusion Transformer (DiT)</a></li>
   </ul></li>
   <li><a href="#applications" id="toc-applications" class="nav-link" data-scroll-target="#applications"><span class="header-section-number">8</span> Applications</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#text-image-generation" id="toc-text-image-generation" class="nav-link" data-scroll-target="#text-image-generation"><span class="header-section-number">8.1</span> Text-Image Generation</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#imagen" id="toc-imagen" class="nav-link" data-scroll-target="#imagen"><span class="header-section-number">8.1.1</span> Imagen</a></li>
   <li><a href="#dalle" id="toc-dalle" class="nav-link" data-scroll-target="#dalle"><span class="header-section-number">8.1.2</span> DALL·E</a></li>
   <li><a href="#stable-diffusion" id="toc-stable-diffusion" class="nav-link" data-scroll-target="#stable-diffusion"><span class="header-section-number">8.1.3</span> Stable Diffusion</a></li>
   </ul></li>
   <li><a href="#text-video-generation" id="toc-text-video-generation" class="nav-link" data-scroll-target="#text-video-generation"><span class="header-section-number">8.2</span> Text-Video Generation</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#meta-movie-gen-video" id="toc-meta-movie-gen-video" class="nav-link" data-scroll-target="#meta-movie-gen-video"><span class="header-section-number">8.2.1</span> Meta Movie Gen Video</a></li>
   <li><a href="#veo" id="toc-veo" class="nav-link" data-scroll-target="#veo"><span class="header-section-number">8.2.2</span> Veo</a></li>
   </ul></li>

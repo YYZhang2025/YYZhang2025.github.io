@@ -143,7 +143,7 @@ window.Quarto = {
 <link rel="stylesheet" href="../../style/callout.css">
 <meta property="og:title" content="100 Papers with Code">
 <meta property="og:description" content="Hi, this is a (planned) collection of 100 influential research papers in AI field each paired with my implementation of the corresponding code. The goal of this project is to provide researchers, practitioners, and enthusiasts with accessible summaries of seminal works, along with practical code resources that make it easier to understand, reproduce, and apply the core ideas behind these papers. By bridging the gap between theory and practice, I hope to foster a deeper understanding of key AI concepts and facilitate innovation in the field.">
-<meta property="og:image" content="../../posts/PapersWithCode/02-vision-transformer/assets/cover.gif">
+<meta property="og:image" content="../../posts/PapersWithCode/04-clip/assets/cover.png">
 </head>
 
 <body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
@@ -346,11 +346,11 @@ window.Quarto = {
     </a>
     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-learning-notes">    
         <li>
-    <a class="dropdown-item" href="../../posts/LearningNotes/DLFaC_index.html">
+    <a class="dropdown-item" href="../.././posts/LearningNotes/DLFaC_index.qmd">
  <span class="dropdown-text">Deep Learning Foundations and Concepts</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../../posts/LearningNotes/CS336_index.html">
+    <a class="dropdown-item" href="../.././posts/LearningNotes/CS336/CS336.qmd">
  <span class="dropdown-text">Stanford CS336: LLM from Scratch</span></a>
   </li>  
     </ul>
@@ -409,7 +409,7 @@ window.Quarto = {
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-cloud"><div class="category" data-category="QXR0ZW50aW9u"><span class="quarto-category-count category-cloud-2">Attention</span></div><div class="category" data-category="Q29tcHV0ZXItVmlzaW9u"><span class="quarto-category-count category-cloud-3">Computer-Vision</span></div><div class="category" data-category="R2VuZXJhdGl2ZS1Nb2RlbA=="><span class="quarto-category-count category-cloud-2">Generative-Model</span></div><div class="category" data-category="TExN"><span class="quarto-category-count category-cloud-2">LLM</span></div><div class="category" data-category="TXVsdGktTW9kYWxpdHk="><span class="quarto-category-count category-cloud-2">Multi-Modality</span></div><div class="category" data-category="TXVzdFJlYWRQYXBlcg=="><span class="quarto-category-count category-cloud-3">MustReadPaper</span></div><div class="category" data-category="TkxQ"><span class="quarto-category-count category-cloud-2">NLP</span></div><div class="category" data-category="UmVwcmVzZW50YXRpb24tTGVhcm5pbmc="><span class="quarto-category-count category-cloud-3">Representation-Learning</span></div><div class="category" data-category="U2VsZi1TdXBlcnZpc2VkLUxlYXJuaW5n"><span class="quarto-category-count category-cloud-3">Self-Supervised-Learning</span></div><div class="category" data-category="VHJhbnNmb3JtZXI="><span class="quarto-category-count category-cloud-3">Transformer</span></div></div></div>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-cloud"><div class="category" data-category="QXR0ZW50aW9u"><span class="quarto-category-count category-cloud-2">Attention</span></div><div class="category" data-category="Q29tcHV0ZXIlMjBWaXNpb24="><span class="quarto-category-count category-cloud-2">Computer Vision</span></div><div class="category" data-category="Q29tcHV0ZXItVmlzaW9u"><span class="quarto-category-count category-cloud-2">Computer-Vision</span></div><div class="category" data-category="R2VuZXJhdGl2ZS1Nb2RlbA=="><span class="quarto-category-count category-cloud-2">Generative-Model</span></div><div class="category" data-category="TExN"><span class="quarto-category-count category-cloud-2">LLM</span></div><div class="category" data-category="TXVsdGktTW9kYWxpdHk="><span class="quarto-category-count category-cloud-2">Multi-Modality</span></div><div class="category" data-category="TXVzdFJlYWRQYXBlcg=="><span class="quarto-category-count category-cloud-2">MustReadPaper</span></div><div class="category" data-category="TkxQ"><span class="quarto-category-count category-cloud-2">NLP</span></div><div class="category" data-category="UmVwcmVzZW50YXRpb24tTGVhcm5pbmc="><span class="quarto-category-count category-cloud-3">Representation-Learning</span></div><div class="category" data-category="U2VsZi1TdXBlcnZpc2VkLUxlYXJuaW5n"><span class="quarto-category-count category-cloud-3">Self-Supervised-Learning</span></div><div class="category" data-category="VHJhbnNmb3JtZXI="><span class="quarto-category-count category-cloud-3">Transformer</span></div></div></div>
 <!-- main -->
 <main class="content quarto-banner-title-block column-page-left" id="quarto-document-content">
 
@@ -438,38 +438,7 @@ Note
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="TXVzdFJlYWRQYXBlciUyQ0NvbXB1dGVyLVZpc2lvbiUyQ1RyYW5zZm9ybWVy" data-listing-file-modified-sort="1765226850083" data-listing-reading-time-sort="10" data-listing-word-count-sort="1887">
-<div class="thumbnail"><a href="../../posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html" class="no-external">
-
-<img loading="lazy" src="../../posts/PapersWithCode/02-vision-transformer/assets/cover.gif" class="thumbnail-image">
-
-</a></div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="../../posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html" class="no-external">02 An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale(<strong>ViT</strong>)</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('TXVzdFJlYWRQYXBlcg=='); return false;">MustReadPaper</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('Q29tcHV0ZXItVmlzaW9u'); return false;">Computer-Vision</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('VHJhbnNmb3JtZXI='); return false;">Transformer</div>
-
-</div>
-<div class="delink listing-description"><a href="../../posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html" class="no-external">
-<p>Vision Transformer (ViT) 通过将图像切分为 patch 并直接应用标准 Transformer，实现了在大规模数据下超越 CNN 的图像分类性能。</p>
-</a></div>
-</div>
-<div class="metadata">
-<a href="../../posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html" class="no-external">
-<div class="listing-author">
-Yuyang Zhang
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="1" data-categories="Q29tcHV0ZXItVmlzaW9u" data-listing-file-modified-sort="1765226623879" data-listing-reading-time-sort="12" data-listing-word-count-sort="2366">
+<div class="quarto-post image-right" data-index="0" data-categories="Q29tcHV0ZXItVmlzaW9u" data-listing-file-modified-sort="1765226623879" data-listing-reading-time-sort="12" data-listing-word-count-sort="2366">
 <div class="thumbnail"><a href="../../posts/PapersWithCode/03-swin-transformer/Swin-Transformer.html" class="no-external">
 
 <p class="card-img-top"><img src="03-swin-transformer/assets/swin-transformer-arch.jpg"  class="thumbnail-image card-img"/></p>
@@ -496,7 +465,7 @@ Yuyang Zhang
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TXVsdGktTW9kYWxpdHklMkNNdXN0UmVhZFBhcGVy" data-listing-file-modified-sort="1765228996665" data-listing-reading-time-sort="1" data-listing-word-count-sort="48">
+<div class="quarto-post image-right" data-index="1" data-categories="TXVsdGktTW9kYWxpdHklMkNNdXN0UmVhZFBhcGVy" data-listing-file-modified-sort="1765228996665" data-listing-reading-time-sort="1" data-listing-word-count-sort="48">
 <div class="thumbnail"><a href="../../posts/PapersWithCode/04-clip/CLIP.html" class="no-external">
 
 <img loading="lazy" src="../../posts/PapersWithCode/04-clip/assets/cover.png" class="thumbnail-image">
@@ -525,7 +494,7 @@ Yuyang Zhang
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="U2VsZi1TdXBlcnZpc2VkLUxlYXJuaW5nJTJDUmVwcmVzZW50YXRpb24tTGVhcm5pbmc=" data-listing-file-modified-sort="1765226635988" data-listing-reading-time-sort="3" data-listing-word-count-sort="530">
+<div class="quarto-post image-right" data-index="2" data-categories="U2VsZi1TdXBlcnZpc2VkLUxlYXJuaW5nJTJDUmVwcmVzZW50YXRpb24tTGVhcm5pbmc=" data-listing-file-modified-sort="1765226635988" data-listing-reading-time-sort="3" data-listing-word-count-sort="530">
 <div class="thumbnail"><a href="../../posts/PapersWithCode/05-dino/DINO.html" class="no-external">
 
 <p class="card-img-top"><img src="05-dino/assets/DINO-illustration.gif"  class="thumbnail-image card-img"/></p>
@@ -554,7 +523,7 @@ Yuyang Zhang
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="U2VsZi1TdXBlcnZpc2VkLUxlYXJuaW5nJTJDR2VuZXJhdGl2ZS1Nb2RlbCUyQ1JlcHJlc2VudGF0aW9uLUxlYXJuaW5n" data-listing-file-modified-sort="1765226645203" data-listing-reading-time-sort="7" data-listing-word-count-sort="1389">
+<div class="quarto-post image-right" data-index="3" data-categories="U2VsZi1TdXBlcnZpc2VkLUxlYXJuaW5nJTJDR2VuZXJhdGl2ZS1Nb2RlbCUyQ1JlcHJlc2VudGF0aW9uLUxlYXJuaW5n" data-listing-file-modified-sort="1765226645203" data-listing-reading-time-sort="7" data-listing-word-count-sort="1389">
 <div class="thumbnail"><a href="../../posts/PapersWithCode/06-vae/VAE.html" class="no-external">
 
 <p class="card-img-top"><img src="06-vae/assets/VAE-latent-variable-models-face.png"  class="thumbnail-image card-img"/></p>
@@ -585,7 +554,7 @@ Yuyang Zhang
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-listing-date-sort="1758988800000" data-listing-file-modified-sort="1765226657234" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="1" data-listing-word-count-sort="14">
+<div class="quarto-post image-right" data-index="4" data-listing-date-sort="1758988800000" data-listing-file-modified-sort="1765226657234" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="1" data-listing-word-count-sort="14">
 <div class="thumbnail"><a href="../../posts/PapersWithCode/07-ddpm/DDPM.html" class="no-external">
 
 <div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
@@ -607,7 +576,7 @@ Yuyang Zhang
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-listing-file-modified-sort="1765229097313" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="5" data-listing-file-modified-sort="1765229097313" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="thumbnail"><a href="../../posts/PapersWithCode/08-dit/DiT.html" class="no-external">
 
 <img loading="lazy" src="../../posts/PapersWithCode/08-dit/assets/cover.png" class="thumbnail-image">
@@ -629,7 +598,36 @@ Yuyang Zhang
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="VHJhbnNmb3JtZXIlMkNMTE0lMkNOTFAlMkNBdHRlbnRpb24=" data-listing-file-modified-sort="1765229644582" data-listing-reading-time-sort="1" data-listing-word-count-sort="163">
+<div class="quarto-post image-right" data-index="6" data-categories="Q29tcHV0ZXIlMjBWaXNpb24lMkNUcmFuc2Zvcm1lcg==" data-listing-file-modified-sort="1765232988337" data-listing-reading-time-sort="10" data-listing-word-count-sort="1878">
+<div class="thumbnail"><a href="../../posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html" class="no-external">
+
+<img loading="lazy" src="../../posts/PapersWithCode/02-vision-transformer/assets/cover.png" class="thumbnail-image">
+
+</a></div>
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="../../posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html" class="no-external"><tag style="color:blue">Vision-Transformer</tag></a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q29tcHV0ZXIlMjBWaXNpb24='); return false;">Computer Vision</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('VHJhbnNmb3JtZXI='); return false;">Transformer</div>
+
+</div>
+<div class="delink listing-description"><a href="../../posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html" class="no-external">
+<p>Vision Transformer (ViT) 通过将图像切分为 patch 并直接应用标准 Transformer，实现了在大规模数据下超越 CNN 的图像分类性能。</p>
+</a></div>
+</div>
+<div class="metadata">
+<a href="../../posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html" class="no-external">
+<div class="listing-author">
+Yuyang Zhang
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="7" data-categories="VHJhbnNmb3JtZXIlMkNMTE0lMkNOTFAlMkNBdHRlbnRpb24=" data-listing-file-modified-sort="1765229919949" data-listing-reading-time-sort="1" data-listing-word-count-sort="125">
 <div class="thumbnail"><a href="../../posts/PapersWithCode/01-transformer/Transformer.html" class="no-external">
 
 <p class="card-img-top"><img src="01-transformer/assets/time-complexity-of-self-attention.png"  class="thumbnail-image card-img"/></p>
@@ -637,7 +635,7 @@ Yuyang Zhang
 </a></div>
 <div class="body">
 <h3 class="no-anchor listing-title">
-<a href="../../posts/PapersWithCode/01-transformer/Transformer.html" class="no-external">Attention is All You Need( <tag style="color:green">Transformer</tag>)</a>
+<a href="../../posts/PapersWithCode/01-transformer/Transformer.html" class="no-external">Attention is All You Need(<strong>Transformer</strong>)</a>
 </h3>
 <div class="listing-categories">
 
@@ -656,6 +654,28 @@ Yuyang Zhang
 </div>
 <div class="metadata">
 <a href="../../posts/PapersWithCode/01-transformer/Transformer.html" class="no-external">
+<div class="listing-author">
+Yuyang Zhang
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1765237922366" data-listing-reading-time-sort="2" data-listing-word-count-sort="250">
+<div class="thumbnail"><a href="../../posts/PapersWithCode/17 VQ-VAE/VQ_VAE.html" class="no-external">
+
+<p class="card-img-top"><img src="17 VQ-VAE/assets/VQ_VAE-Overview.png"  class="thumbnail-image card-img"/></p>
+
+</a></div>
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="../../posts/PapersWithCode/17 VQ-VAE/VQ_VAE.html" class="no-external">VQ-VAE</a>
+</h3>
+<div class="delink listing-description"><a href="../../posts/PapersWithCode/17 VQ-VAE/VQ_VAE.html" class="no-external">
+This is the Link to the Qwen3-VL And Link to the Blog LLM-Architecture
+</a></div>
+</div>
+<div class="metadata">
+<a href="../../posts/PapersWithCode/17 VQ-VAE/VQ_VAE.html" class="no-external">
 <div class="listing-author">
 Yuyang Zhang
 </div>

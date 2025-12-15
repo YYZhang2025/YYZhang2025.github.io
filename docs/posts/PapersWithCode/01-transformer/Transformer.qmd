@@ -10,12 +10,14 @@ categories: [Transformer, LLM, NLP, Attention]
 - My Implementation: [GitHub Repository](https://github.com/YYZhang2025/100-AI-Code)
 
 ---
-我们开始第一篇论文的学习： 《Attention is All You Need》 [@AttentionAllYou2023vaswani]，也就是Transformer模型。Transformer 模型的提出，彻底改变了自然语言处理（NLP）以及更广泛的领域。该架构完全基于注意力机制，不再依赖循环（RNN）或卷积（CNN），因此在训练时更易并行化、效率更高。如今，Transformer 已成为众多前沿模型的基础，不仅在 NLP 中表现突出，也扩展到计算机视觉等领域。比如 ChatGPT、DeepSeek 等大语言模型（LLM）都以 Transformer 为核心架构。所以我们自然就把它当作我们第一篇文章的首选。 
+我们开始第一篇论文的学习： 《Attention is All You Need》 [@AttentionAllYou2023vaswani]，也就是Transformer模型。Transformer 模型的提出，彻底改变了自然语言处理（NLP）以及更广泛的领域。该架构完全基于注意力机制，不再依赖循环（RNN）或卷积（CNN），因此在训练时更易并行化、效率更高。如今，Transformer 已成为众多前沿模型的基础，不仅在 NLP 中表现突<span style="color:rgb(255, 0, 0)">出，也扩展到计算机</span>视觉等领域。比如 ChatGPT、DeepSeek 等大语言模型（LLM）都以 Transformer 为核心架构。所以我们自然就把它当作我们第一篇文章的首选。 
 
 
-[Vision-Transformer](../02-vision-transformer/Vision-Transformer.qmd)
+::: {.callout-tldr}
+<span style="color:rgb(255, 0, 0)">TAKEAWAWY</span>
 
-
+This
+:::
 它的提出，主要是为了解决几个问题：
 
 - 序列建模(Sequence Modeling)的效率问题:
@@ -28,7 +30,7 @@ categories: [Transformer, LLM, NLP, Attention]
 
 
 > This <u>inherently sequential nature precludes parallelization</u> within training examples, which becomes critical at longer sequence lengths, as memory constraints limit batching across examples. ... In these models, <u>the number of operations required to relate signals from two arbitrary input or output positions grows in the distance between positions</u>, linearly for ConvS2S and logarithmically for ByteNet. This makes it more difficult to learn dependencies between distant positions
-> <cite> Attention is all you need, p. </cite>
+> <cite> Attention is all you need, p.2 </cite>
 
 
 
