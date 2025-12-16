@@ -109,3 +109,25 @@ code,
   font-size: 0.95em;
 }
 
+
+
+/* ✅ highlighted line background */
+pre code .highlighted,
+pre code .line-highlight,
+pre code .code-line-highlight {
+  background: rgba(158, 247, 247, 0.18);  /* 你 dark palette 的 inline code 背景风格 */
+  display: block;                          /* 让背景铺满整行 */
+  margin: 0 -1em;                          /* 向两侧撑开，覆盖 code padding */
+  padding: 0 1em;
+  border-left: 3px solid rgba(158, 247, 247, 0.55);
+}
+
+/* 如果 JS 是按 “每行 span[data-code-line]” 包裹，并加 class */
+pre code span[data-code-line].highlighted,
+pre code span[data-code-line].line-highlight {
+  background: rgba(158, 247, 247, 0.18);
+  display: block;
+  margin: 0 -1em;
+  padding: 0 1em;
+  border-left: 3px solid rgba(158, 247, 247, 0.55);
+}

@@ -1,7 +1,16 @@
 [
   {
+    "listing": "/posts/LearningNotes/CS336/index.html",
+    "items": [
+      "/posts/LearningNotes/CS336/Lectures/Lecture01/lec01.html",
+      "/posts/LearningNotes/CS336/Lectures/Lecture02/lec02.html",
+      "/posts/LearningNotes/CS336/Assignments/Ass01/ass01.html"
+    ]
+  },
+  {
     "listing": "/posts/PapersWithCode/100_Papers_index.html",
     "items": [
+      "/posts/PapersWithCode/01-transformer/Transformer.html",
       "/posts/PapersWithCode/03-swin-transformer/Swin-Transformer.html",
       "/posts/PapersWithCode/04-clip/CLIP.html",
       "/posts/PapersWithCode/05-dino/DINO.html",
@@ -9,7 +18,6 @@
       "/posts/PapersWithCode/07-ddpm/DDPM.html",
       "/posts/PapersWithCode/08-dit/DiT.html",
       "/posts/PapersWithCode/02-vision-transformer/Vision-Transformer.html",
-      "/posts/PapersWithCode/01-transformer/Transformer.html",
       "/posts/PapersWithCode/17 VQ-VAE/VQ_VAE.html"
     ]
   },

@@ -35,11 +35,109 @@
     "text": "Technical Skills\n\n  \n    Python Development\n    Algorithm Design\n    Deep Learning\n    Machine Learning\n    Computer Vision\n    Natural Language Processing\n    Deep Reinforcement Learning\n    Graph Neural Networks\n    Large Language Model\n    Model Compression\n    Convex Optimization\n    Probabilistic Graph Model\n    Meta Learning\n    Deep Generative Model"
   },
   {
+    "objectID": "posts/LearningNotes/CS336/Lectures/Lecture01/lec01.html",
+    "href": "posts/LearningNotes/CS336/Lectures/Lecture01/lec01.html",
+    "title": "Lecture 01: Introduction & Tokenization",
+    "section": "",
+    "text": "1 Introduction\nLecture 01 的前半段介绍了什么是LLM以及课程的大纲安排。总体来说，课程的基本的内容会由如下的几个部分组成：\n\n\n\n\n\n\nFigure 1: 课程的5大块内容\n\n\n\n这些部分会在后续的Lecture中逐步展开介绍。在这里，我们不做过多赘述，在这里我们重点介绍课程的后半部分内容，即Tokenization。学习完本章节后，我们可以开始尝试Assignment01的第一部分，即BPE-Tokenization的实现。\n\n\n\n\n\n\nWarning\n\n\n\n个人感觉BPE的部分是整个课程中最难理解的部分，建议多花时间理解清楚。同时这部分也可能是在Assignment中花费时间最多的部分（可能是因为我个人对这部分理解不够透彻的原因）。 总之，遇到困难不要气馁，慢慢来，大家都是这样过来的！！\n\n\n\n\n2 Tokenization\nTokenization是Language Modeling的第一步。它的作用是将文本转换为模型可以理解和处理的形式。Tokenization的过程就是将文本拆分成更小的单位（称为tokens），并为每个token分配一个唯一的整数ID。\nTokenization的过程如下图所示：\n\n\n\n\n\n\nFigure 2: Tokenization的过程示意图，主要由两个步骤组成: encode和decode。\n\n\n\n\n\n\n\n\n\nFigure 3: Tokenization 示例. 访问这个链接可以在线体验不同的tokenizer的效果。\n\n\n\n\n\nfrom transformers import GPT2Tokenizer\ntokenizer = GPT2Tokenizer.from_pretrained(\"gpt2\")\ntext = \"Hello, world!\" \ntokens = tokenizer.encode(text)\nprint(tokens)  # 输出: [15496, 11, 995]\n\n\n\n\n Back to top"
+  },
+  {
+    "objectID": "posts/LearningNotes/CS336/index.html",
+    "href": "posts/LearningNotes/CS336/index.html",
+    "title": "CS336: LLM from Scratch Lecture Notes and Assignments",
+    "section": "",
+    "text": "Note\n\n\n\n Due to the time constraint, these notes may contain errors or omissions. And to speed up the writing process, I only wrote the notes in CHINESES. If you are interested in collaborating to improve these notes,or transalting to different languages, please feel free to contact me. \n\n\n\n\n\nRelated Resources:\n\nLecture Website: CS336 LLM from Scratch\nLecture Recordings: YouTube Playlist\nMy Solution Repo: GitHub\n\n\n\nAbout this Course:\n\nThis course has 17 Lectures and 5 Assignments in total.\nIt might take around 200 hours to finish all the lectures and assignments.\n\n\n\n\n\n\nLecture Notes for CS336\n\n\n\n\n\n\n\n\n\n\nLecture 01: Introduction & Tokenization\n\n\nLecture01介绍了课程的大纲以及LLM的现状和基本概念。在课程的后半段介绍了Language Modeling的第一步，即Tokenization的基本概念和常用方法。着重介绍了Byte Pair Encoding (BPE)算法的原理和实现。在学习完Lecture 01后，我们可以开始尝试Assignment 01的第一部分，即BPE-Tokenization的实现\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\nLecture 02: PyTorch Basics & Resource Accounts\n\n\nLecture02 介绍了PyTorch的基本概念和使用方法。可以将这节课当作一个review，复习一下之前学过的PyTorch知识点。同时，课程中介绍了一个 einops 的库，可以简化张量操作的代码编写。在课程的后半段介绍了不同数据类型（如FP32, FP16, BF16等）在深度学习中的应用和优缺点。并且通过计算这些数据类型在内存中的占用，帮助我们理解为什么有些数据类型更适合在有限资源下进行训练, 并且在什么情况下需要应用混合精度训练（Mixed Precision Training），什么情况下需要用高精度的数据类型。在课程的最后，还介绍了不同的Optimizer（如SGD, Adam等）的基本原理和使用场景\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\nNo matching items\n\n\n\nAssignments\n\n\n\n\n\n\n\n\n\n\nAssignment 01: Tokenization & Language Modeling\n\n\nAssignment 01 要求我们实现一个简单的语言模型训练流程，涵盖数据预处理、模型定义、训练和评估等步骤。通过这个作业，我们将巩固对自然语言处理基础概念的理解，并掌握使用PyTorch进行深度学习模型开发的基本技能\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\nNo matching items\n\n\n\n\n\n\n Back to top"
+  },
+  {
     "objectID": "posts/PapersWithCode/01-transformer/Transformer.html",
     "href": "posts/PapersWithCode/01-transformer/Transformer.html",
-    "title": "Attention is All You Need(Transformer)",
+    "title": "01: Attention is all you need (Transformer)",
     "section": "",
-    "text": "Original Paper: Attention is All You Need\nMy Implementation: GitHub Repository\n\n\n我们开始第一篇论文的学习： 《Attention is All You Need》 (Vaswani et al. 2023)，也就是Transformer模型。Transformer 模型的提出，彻底改变了自然语言处理（NLP）以及更广泛的领域。该架构完全基于注意力机制，不再依赖循环（RNN）或卷积（CNN），因此在训练时更易并行化、效率更高。如今，Transformer 已成为众多前沿模型的基础，不仅在 NLP 中表现突出，也扩展到计算机视觉等领域。比如 ChatGPT、DeepSeek 等大语言模型（LLM）都以 Transformer 为核心架构。所以我们自然就把它当作我们第一篇文章的首选。\n\nTAKEAWAWY\nThis\n\n它的提出，主要是为了解决几个问题：\n\n序列建模(Sequence Modeling)的效率问题:\n\n在 Transformer 出现之前，主流方法是 RNN（循环神经网络）和 CNN（卷积神经网络）。\nRNN 需要按顺序逐步处理序列，无法并行化，训练和推理效率低下。\nCNN 虽然有一定的并行性，但捕捉长距离依赖需要堆叠很多层，计算开销大。\n\n长距离依赖建模问题:\n\nRNN 在捕捉长距离依赖时容易出现梯度消失(Gradient Vanish) 或梯度爆炸(Gradient Explosion)，导致模型难以学习远距离的信息。\n\n\n\nThis inherently sequential nature precludes parallelization within training examples, which becomes critical at longer sequence lengths, as memory constraints limit batching across examples. … In these models, the number of operations required to relate signals from two arbitrary input or output positions grows in the distance between positions, linearly for ConvS2S and logarithmically for ByteNet. This makes it more difficult to learn dependencies between distant positions  Attention is all you need, p.2 \n\n\n\n\n\n\n Back to topReferences\n\nVaswani, Ashish, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, and Illia Polosukhin. 2023. “Attention Is All You Need.” August 2, 2023. https://doi.org/10.48550/arXiv.1706.03762."
+    "text": "1 Preliminary\n  \n  1.1 Softmax Function\n  1.2 Vector Similarity\n  1.3 Word Embedding Layer\n  1.4 Position Embedding Layer\n  1.5 Attention Layer\n  \n  1.5.1 Self-Attention Layer\n  1.5.2 Cross Attention Layer\n  \n  1.6 Normalization Layer\n  1.7 Feed Forward Layer\n  1.8 Residual Connection\n  1.9 Output Layer\n  1.10 Others\n  1.11 Experiment\n  1.12 Weight Initialization\n  \n  1.12.1 Optimizer\n  \n  \n  2 Summary\n  3 Key Concepts\n  4 Q & A\n  5 Related resource & Further Reading\n我们开始第一篇论文的学习： 《Attention is All You Need》 (Vaswani et al. 2023)，也就是传说中的Transformer模型。Transformer模型的提出，彻底改变了自然语言处理（NLP）以及更广泛的领域。该架构完全基于注意力机制(Attention)，不再依赖循环（RNN）或卷积（CNN），因此在训练时更易并行化、效率更高。Transformer 已成为众多前沿模型的基础，不仅在 NLP 中表现突出，也扩展到计算机视觉等领域。比如 ChatGPT、DeepSeek 等大语言模型（LLM）都以 Transformer 为核心架构。所以我们自然就把它当作我们第一篇文章的首选。"
+  },
+  {
+    "objectID": "posts/PapersWithCode/01-transformer/Transformer.html#softmax-function",
+    "href": "posts/PapersWithCode/01-transformer/Transformer.html#softmax-function",
+    "title": "01: Attention is all you need (Transformer)",
+    "section": "1.1 Softmax Function",
+    "text": "1.1 Softmax Function"
+  },
+  {
+    "objectID": "posts/PapersWithCode/01-transformer/Transformer.html#vector-similarity",
+    "href": "posts/PapersWithCode/01-transformer/Transformer.html#vector-similarity",
+    "title": "01: Attention is all you need (Transformer)",
+    "section": "1.2 Vector Similarity",
+    "text": "1.2 Vector Similarity\n简单回顾了一下这些数学知识，接下来，让我们来看看Transformer到底是个什么东西。 # Transformer Transformer 是 Google 在2017年提出的新的神经网络架构，它的提出主要是为了解决，\n\n序列建模(Sequence Modeling)的效率问题:\n\n在 Transformer 出现之前，主流方法是 RNN（循环神经网络）和 CNN（卷积神经网络）。\nRNN 需要按顺序逐步处理序列，无法并行化，训练和推理效率低下。\nCNN 虽然有一定的并行性，但捕捉长距离依赖需要堆叠很多层，计算开销大。\n\n长距离依赖建模问题:\n\nRNN 在捕捉长距离依赖时容易出现梯度消失(Gradient Vanish) 或梯度爆炸(Gradient Explosion)，导致模型难以学习远距离的信息。\n\n\n\nThis inherently sequential nature precludes parallelization within training examples, which becomes critical at longer sequence lengths, as memory constraints limit batching across examples. … In these models, the number of operations required to relate signals from two arbitrary input or output positions grows in the distance between positions, linearly for ConvS2S and logarithmically for ByteNet. This makes it more difficult to learn dependencies between distant positions  Attention is all you need, p. \n\n模型的基本架构如下图所示：\n\n用代码显示就是:\nclass Transformer(nn.Module):\n    def __init__(self, config: ModelConfig):\n        super().__init__()\n\n        self.encoder = Encoder(config)\n        self.decoder = Decoder(config)\n        self.output_layer = nn.Linear(config.d_model, config.tgt_vocab_size)\n        ...\n    \n    def forward(self, original, target):\n        ...\n接下来让我们从下至上，来深度解刨Transformer的模型结构分别是: 1. Word Embedding Layer 2. Position Embedding Layer 3. Attention Layer: 1. Self-Attention Layer 2. Cross-Attention Layer 4. Normalization Layer 5. Feed Forward Layer 6. Output Layer"
+  },
+  {
+    "objectID": "posts/PapersWithCode/01-transformer/Transformer.html#word-embedding-layer",
+    "href": "posts/PapersWithCode/01-transformer/Transformer.html#word-embedding-layer",
+    "title": "01: Attention is all you need (Transformer)",
+    "section": "1.3 Word Embedding Layer",
+    "text": "1.3 Word Embedding Layer\nWord Embedding 基本是所有语言模型的第一步，"
+  },
+  {
+    "objectID": "posts/PapersWithCode/01-transformer/Transformer.html#position-embedding-layer",
+    "href": "posts/PapersWithCode/01-transformer/Transformer.html#position-embedding-layer",
+    "title": "01: Attention is all you need (Transformer)",
+    "section": "1.4 Position Embedding Layer",
+    "text": "1.4 Position Embedding Layer\n\\[\n\\begin{split}\nPE_{(pos, 2i)} & = \\sin (pos / 10,000^{2i / d_{model}}) \\\\\nPE_{(pos, 2i+1)} & = \\cos (pos / 10,000^{2i+1 / d_{model}})\n\\end{split}\n\\]"
+  },
+  {
+    "objectID": "posts/PapersWithCode/01-transformer/Transformer.html#attention-layer",
+    "href": "posts/PapersWithCode/01-transformer/Transformer.html#attention-layer",
+    "title": "01: Attention is all you need (Transformer)",
+    "section": "1.5 Attention Layer",
+    "text": "1.5 Attention Layer\n\n1.5.1 Self-Attention Layer\n\n\n1.5.2 Cross Attention Layer\n\\[\n\\begin{array}{|l|l|}\n\\hline\n\\textbf{Step} & \\textbf{Time Complexity} \\\\\n\\hline\nQK^\\top & \\mathcal{O}(n^2 d) \\\\\n\\text{softmax}(QK^\\top) & \\mathcal{O}(n^2) \\\\\n\\text{attention} \\times V & \\mathcal{O}(n^2 d) \\\\\n\\hline\n\\textbf{Total} & \\mathcal{O}(n^2 d) \\\\\n\\hline\n\\end{array}\n\\]"
+  },
+  {
+    "objectID": "posts/PapersWithCode/01-transformer/Transformer.html#normalization-layer",
+    "href": "posts/PapersWithCode/01-transformer/Transformer.html#normalization-layer",
+    "title": "01: Attention is all you need (Transformer)",
+    "section": "1.6 Normalization Layer",
+    "text": "1.6 Normalization Layer\nLayer Normalization"
+  },
+  {
+    "objectID": "posts/PapersWithCode/01-transformer/Transformer.html#feed-forward-layer",
+    "href": "posts/PapersWithCode/01-transformer/Transformer.html#feed-forward-layer",
+    "title": "01: Attention is all you need (Transformer)",
+    "section": "1.7 Feed Forward Layer",
+    "text": "1.7 Feed Forward Layer\n\\[\n\\text{FFN}(\\mathrm{x}) = \\underset{}{\\max} (0, \\mathrm{x} W_{1} + b_{1}) W_{2} + b_{2}\n\\]"
+  },
+  {
+    "objectID": "posts/PapersWithCode/01-transformer/Transformer.html#residual-connection",
+    "href": "posts/PapersWithCode/01-transformer/Transformer.html#residual-connection",
+    "title": "01: Attention is all you need (Transformer)",
+    "section": "1.8 Residual Connection",
+    "text": "1.8 Residual Connection\n\\[\n\\mathbf{y} = \\text{LayerNorm}(\\mathbf{x} + \\mathrm{Sublayer}(\\mathbf{x}))\n\\]\n\\[\n\\begin{split}\n\\frac{\\partial \\mathcal{L}}{\\partial \\mathbf{x}}\n&= \\frac{\\partial \\mathcal{L}}{\\partial \\mathbf{y}} \\cdot \\frac{\\partial \\mathbf{y}}{\\partial \\mathbf{x}} \\\\\n&= \\frac{\\partial \\mathcal{L}}{\\partial \\mathbf{y}} \\cdot \\left( \\mathbf{I} + \\frac{\\partial \\mathrm{Sublayer}(\\mathbf{x})}{\\partial \\mathbf{x}} \\right) \\\\\n&= \\underbrace{\\frac{\\partial \\mathcal{L}}{\\partial \\mathbf{y}}}_{\\text{straight path}} +\n\\underbrace{\\frac{\\partial \\mathcal{L}}{\\partial \\mathbf{y}} \\cdot\n\\frac{\\partial\\,\\mathrm{Sublayer}(\\mathbf{x})}{\\partial \\mathbf{x}}}_{\\text{through the sub-layer}}\n\\end{split}\n\\]"
+  },
+  {
+    "objectID": "posts/PapersWithCode/01-transformer/Transformer.html#output-layer",
+    "href": "posts/PapersWithCode/01-transformer/Transformer.html#output-layer",
+    "title": "01: Attention is all you need (Transformer)",
+    "section": "1.9 Output Layer",
+    "text": "1.9 Output Layer"
+  },
+  {
+    "objectID": "posts/PapersWithCode/01-transformer/Transformer.html#others",
+    "href": "posts/PapersWithCode/01-transformer/Transformer.html#others",
+    "title": "01: Attention is all you need (Transformer)",
+    "section": "1.10 Others",
+    "text": "1.10 Others\n当然，除了以上的一个部分，Transformer中还有几个值得一提的部分，不过处于篇幅的关系，在这里就不过多的赘述了，其中包括Tokenization等。"
+  },
+  {
+    "objectID": "posts/PapersWithCode/01-transformer/Transformer.html#experiment",
+    "href": "posts/PapersWithCode/01-transformer/Transformer.html#experiment",
+    "title": "01: Attention is all you need (Transformer)",
+    "section": "1.11 Experiment",
+    "text": "1.11 Experiment"
+  },
+  {
+    "objectID": "posts/PapersWithCode/01-transformer/Transformer.html#weight-initialization",
+    "href": "posts/PapersWithCode/01-transformer/Transformer.html#weight-initialization",
+    "title": "01: Attention is all you need (Transformer)",
+    "section": "1.12 Weight Initialization",
+    "text": "1.12 Weight Initialization\n\n1.12.1 Optimizer\nTransformer的论文中，用的是Adam Optimizer,\n\n\n\n\n\n\nNote\n\n\n\n对于不了的Adam的同学，也不用太担心，之后我们会有一系列的文章，专门介绍这些优化器的，包括Adam，AdamW，以及最近比较火的Moun"
   },
   {
     "objectID": "posts/PapersWithCode/08-dit/DiT.html",
@@ -67,7 +165,7 @@
     "href": "posts/PapersWithCode/100_Papers_index.html",
     "title": "100 Papers with Code",
     "section": "",
-    "text": "Note\n\n\n\n Due to the large number of papers included in this series. I will mainly write in Chinese to speed up the writing process. If you have any questions or suggestions, please feel free to contact me. Or if you would like to contribute translations of any of the articles into English or other languages, please let me know! \n\n\n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n03: Swin Transformer: Hierarchical Vision Transformer using Shifted Windows(Swin Transformer)\n\n\n\nComputer-Vision\n\n\n\nSwin Transformer 是一种使用层次化结构和滑动窗口自注意力机制的ViT模型，既保留了局部建模的高效性，又通过窗口偏移实现跨区域信息交互，可作为通用视觉骨干网络，适用于图像分类、目标检测和语义分割等多种视觉任务。\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\n04: Learning Transferable Visual Models From Natural Language Supervision(CLIP)\n\n\n\nMulti-Modality\n\nMustReadPaper\n\n\n\nCLIP（对比语言-图像预训练模型）是 一个视觉-语言模型，通过在数亿对图文数据上进行对比学习，学得联合表征，从而能够在零样本条件下完成多种视觉任务。\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\n05: Emerging Properties in Self-Supervised Vision Transformers(DINO)\n\n\n\nSelf-Supervised-Learning\n\nRepresentation-Learning\n\n\n\nThis is the DINO article\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\n06: Auto-Encoding Variational Bayes(VAE)\n\n\n\nSelf-Supervised-Learning\n\nGenerative-Model\n\nRepresentation-Learning\n\n\n\nVAE（变分自动编码器）是一类结合概率图模型与神经网络的生成模型，它通过引入可参数化的近似后验 \\(q_\\phi(z|x)\\) 来摊销推断成本，并用最大化 ELBO 的方式同时学习数据的潜在表示与生成过程：其中重建项确保模型能从潜变量还原数据，KL 项则将潜空间约束为接近先验的连续结构。借助重参数化技巧，VAE 能在端到端训练中高效地学习一个平滑、可采样的潜空间，从而实现表示学习、插值、生成等功能，是现代深度生成模型的重要基础。\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\n07: Denoising Diffusion Probabilistic Models(DDPM)\n\n\nA comprehensive overview of Denoising Diffusion Probabilistic Models (DDPM) and their applications in generative modeling.\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\n08: Scalable Diffusion Models with Transformers (DiT)\n\n\nA comprehensive overview of the DiT model architecture and its applications in scalable diffusion processes.\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\nVision-Transformer\n\n\n\nComputer Vision\n\nTransformer\n\n\n\nVision Transformer (ViT) 通过将图像切分为 patch 并直接应用标准 Transformer，实现了在大规模数据下超越 CNN 的图像分类性能。\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\nAttention is All You Need(Transformer)\n\n\n\nTransformer\n\nLLM\n\nNLP\n\nAttention\n\n\n\nTransformer 是一种基于自注意力机制的深度学习架构，能够并行处理序列，在语言、视觉和多模态任务中表现出色，并且作为 GPT、BERT 等大型语言模型（LLM）的核心基础，推动了当今生成式人工智能的快速发展。\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\nVQ-VAE\n\n\n\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\nNo matching items\n Back to top"
+    "text": "Note\n\n\n\n Due to the large number of papers included in this series. I will mainly write in Chinese to speed up the writing process. If you have any questions or suggestions, please feel free to contact me. Or if you would like to contribute translations of any of the articles into English or other languages, please let me know! \n\n\n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n01: Attention is all you need (Transformer)\n\n\n\nTransformer\n\nAttention\n\nNLP\n\nArchitecture\n\n\n\nTransformer 是一种基于自注意力机制的深度学习架构，能够并行处理序列，在语言、视觉和多模态任务中表现出色，并且作为 GPT、BERT 等大型语言模型（LLM）的核心基础，推动了当今生成式人工智能的快速发展。\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\n03: Swin Transformer: Hierarchical Vision Transformer using Shifted Windows(Swin Transformer)\n\n\n\nComputer-Vision\n\n\n\nSwin Transformer 是一种使用层次化结构和滑动窗口自注意力机制的ViT模型，既保留了局部建模的高效性，又通过窗口偏移实现跨区域信息交互，可作为通用视觉骨干网络，适用于图像分类、目标检测和语义分割等多种视觉任务。\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\n04: Learning Transferable Visual Models From Natural Language Supervision(CLIP)\n\n\n\nMulti-Modality\n\nMustReadPaper\n\n\n\nCLIP（对比语言-图像预训练模型）是 一个视觉-语言模型，通过在数亿对图文数据上进行对比学习，学得联合表征，从而能够在零样本条件下完成多种视觉任务。\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\n05: Emerging Properties in Self-Supervised Vision Transformers(DINO)\n\n\n\nSelf-Supervised-Learning\n\nRepresentation-Learning\n\n\n\nThis is the DINO article\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\n06: Auto-Encoding Variational Bayes(VAE)\n\n\n\nSelf-Supervised-Learning\n\nGenerative-Model\n\nRepresentation-Learning\n\n\n\nVAE（变分自动编码器）是一类结合概率图模型与神经网络的生成模型，它通过引入可参数化的近似后验 \\(q_\\phi(z|x)\\) 来摊销推断成本，并用最大化 ELBO 的方式同时学习数据的潜在表示与生成过程：其中重建项确保模型能从潜变量还原数据，KL 项则将潜空间约束为接近先验的连续结构。借助重参数化技巧，VAE 能在端到端训练中高效地学习一个平滑、可采样的潜空间，从而实现表示学习、插值、生成等功能，是现代深度生成模型的重要基础。\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\n07: Denoising Diffusion Probabilistic Models(DDPM)\n\n\nA comprehensive overview of Denoising Diffusion Probabilistic Models (DDPM) and their applications in generative modeling.\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\n08: Scalable Diffusion Models with Transformers (DiT)\n\n\nA comprehensive overview of the DiT model architecture and its applications in scalable diffusion processes.\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\nVision-Transformer\n\n\n\nComputer Vision\n\nTransformer\n\n\n\nVision Transformer (ViT) 通过将图像切分为 patch 并直接应用标准 Transformer，实现了在大规模数据下超越 CNN 的图像分类性能。\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\n\n\n\n\n\n\n\nVQ-VAE\n\n\n\n\n\n\n\n\nYuyang Zhang\n\n\n\n\n\nNo matching items\n Back to top"
   },
   {
     "objectID": "posts/Projects/PaliGemma/pali-gemma.html",
@@ -1153,5 +1251,19 @@
     "title": "05: Emerging Properties in Self-Supervised Vision Transformers(DINO)",
     "section": "8.1 Safe-Softmax",
     "text": "8.1 Safe-Softmax\ndef softmax(x: torch.Tensor, temp):\n    max ="
+  },
+  {
+    "objectID": "posts/LearningNotes/CS336/Assignments/Ass01/ass01.html",
+    "href": "posts/LearningNotes/CS336/Assignments/Ass01/ass01.html",
+    "title": "Assignment 01: Tokenization & Language Modeling",
+    "section": "",
+    "text": "Back to top"
+  },
+  {
+    "objectID": "posts/LearningNotes/CS336/Lectures/Lecture02/lec02.html",
+    "href": "posts/LearningNotes/CS336/Lectures/Lecture02/lec02.html",
+    "title": "Lecture 02: PyTorch Basics & Resource Accounts",
+    "section": "",
+    "text": "1 Einops Library\n\n\n\n\n\n\n\nTip\n\n\n\n如果以上的内容比较难以理解的话，可以访问这个链接。 里面有非常详细的einops教程，包含了很多例子和可视化的图示。\n\n\n\n\n\n\n\n\nFigure 1: 如图所示，Pinned memory 可以作为设备(Device)到主机(Host)拷贝的中转区，直接在 pinned memory 中分配主机数组，就能避免 pageable 内存与 pinned 内存之间的额外拷贝开销，从而提升数据传输效率。\n\n\n\n这篇文章中介绍了4种常见的加速数据传输的方法：\n\n利用 Numpy Memmap 处理大数据集: 通过内存映射技术，只将数据集的一部分加载到内存中，减少内存使用，提高数据加载速度。\n多利用 torch.from_numpy 函数: 直接将 NumPy 数组转换为 PyTorch 张量，避免不必要的数据复制，提高数据传输效率。\n将 num_workers 设置为大于0: 通过多线程数据加载，提高数据预处理和加载的并行度，减少数据加载时间。\n使用 Pinned Memory 加速主机与设备之间的数据传输: 通过将数据存储在固定内存中，减少数据传输的延迟，提高\n\nfrom torch.utils.data import DataLoader\n\n# some code\n\nloader = DataLoader(your_dataset, ..., pin_memory=True)\ndata_iter = iter(loader)\n\nnext_batch = data_iter.next() # start loading the first batch\nnext_batch = [ _.cuda(non_blocking=True) for _ in next_batch ]  # with pin_memory=True and non_blocking=True, this will copy data to GPU non blockingly\n\nfor i in range(len(loader)):\n    batch = next_batch \n    if i + 2 != len(loader): \n        # start copying data of next batch\n        next_batch = data_iter.next()\n        next_batch = [ _.cuda(async=True) for _ in next_batch]\n这几个方法可以显著提升数据传输和加载的效率，尤其在处理大规模数据集时效果尤为明显。在我们完成Assignment 01时，会用到这些技巧来优化数据加载过程。\n\n\n\n\n Back to top"
   }
 ]

@@ -6,11 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="Yuyang Zhang">
-<meta name="dcterms.date" content="2025-09-28">
-<meta name="description" content="A comprehensive overview of Denoising Diffusion Probabilistic Models (DDPM) and their applications in generative modeling.">
+<meta name="author" content="">
 
-<title>07: Denoising Diffusion Probabilistic Models(DDPM)</title>
+<title>CS336: LLM from Scratch Lecture Notes and Assignments</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -34,6 +32,8 @@ ul.task-list li input[type="checkbox"] {
 <script src="../../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../../">
 <link href="../../.././style/icon.avif" rel="icon">
+<script src="../../../site_libs/quarto-listing/list.min.js"></script>
+<script src="../../../site_libs/quarto-listing/quarto-listing.js"></script>
 <script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../../../site_libs/quarto-html/popper.min.js"></script>
@@ -76,14 +76,99 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
+<script>
+
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    const listingTargetEl = window.document.querySelector('#listing-lectures .list');
+    if (!listingTargetEl) {
+      // No listing discovered, do not attach.
+      return; 
+    }
+
+    const options = {
+      valueNames: ['listing-title','listing-author','listing-image','listing-description',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
+      
+      searchColumns: ["listing-title","listing-author","listing-image","listing-description"],
+    };
+
+    window['quarto-listings'] = window['quarto-listings'] || {};
+    window['quarto-listings']['listing-lectures'] = new List('listing-lectures', options);
+
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  });
+
+  window.addEventListener('hashchange',() => {
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  })
+  
+
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    const listingTargetEl = window.document.querySelector('#listing-assignments .list');
+    if (!listingTargetEl) {
+      // No listing discovered, do not attach.
+      return; 
+    }
+
+    const options = {
+      valueNames: ['listing-title','listing-author','listing-image','listing-description',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
+      
+      searchColumns: ["listing-title","listing-author","listing-image","listing-description"],
+    };
+
+    window['quarto-listings'] = window['quarto-listings'] || {};
+    window['quarto-listings']['listing-assignments'] = new List('listing-assignments', options);
+
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  });
+
+  window.addEventListener('hashchange',() => {
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  })
+  </script>
 <link href="https://fonts.cdnfonts.com/css/cmu-sans-serif" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../../../style/styles.css">
 <link rel="stylesheet" href="../../../style/callout.css">
-<meta property="og:title" content="07: Denoising Diffusion Probabilistic Models(DDPM)">
-<meta property="og:description" content="A comprehensive overview of Denoising Diffusion Probabilistic Models (DDPM) and their applications in generative modeling.">
+<meta property="og:title" content="CS336: LLM from Scratch Lecture Notes and Assignments">
 </head>
 
 <body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
@@ -312,63 +397,32 @@ ul.task-list li input[type="checkbox"] {
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
         <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-          <h1 class="quarto-secondary-nav-title">07: Denoising Diffusion Probabilistic Models(DDPM)</h1>
+          <h1 class="quarto-secondary-nav-title">CS336: LLM from Scratch Lecture Notes and Assignments</h1>
         </a>     
     </div>
   </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
-    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#preliminary" id="toc-preliminary" class="nav-link active" data-scroll-target="#preliminary"><span class="header-section-number">1</span> Preliminary</a></li>
-  <li><a href="#ddpm" id="toc-ddpm" class="nav-link" data-scroll-target="#ddpm"><span class="header-section-number">2</span> DDPM</a></li>
-  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">3</span> Summary</a></li>
-  <li><a href="#key-concepts" id="toc-key-concepts" class="nav-link" data-scroll-target="#key-concepts"><span class="header-section-number">4</span> Key Concepts</a></li>
-  <li><a href="#q-a" id="toc-q-a" class="nav-link" data-scroll-target="#q-a"><span class="header-section-number">5</span> Q &amp; A</a></li>
-  <li><a href="#related-resource-further-reading" id="toc-related-resource-further-reading" class="nav-link" data-scroll-target="#related-resource-further-reading"><span class="header-section-number">6</span> Related resource &amp; Further Reading</a></li>
-  </ul>
-</nav>
-</nav>
+  
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-    </div>
+    
 <!-- main -->
-<main class="content" id="quarto-document-content">
+<main class="content column-page" id="quarto-document-content">
 
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block">07: Denoising Diffusion Probabilistic Models(DDPM)</h1>
-</div>
-
-<div>
-  <div class="description">
-    A comprehensive overview of Denoising Diffusion Probabilistic Models (DDPM) and their applications in generative modeling.
-  </div>
+<h1 class="title d-none d-lg-block">CS336: LLM from Scratch Lecture Notes and Assignments</h1>
 </div>
 
 
-<div class="quarto-title-meta">
 
-    <div>
-    <div class="quarto-title-meta-heading">Author</div>
-    <div class="quarto-title-meta-contents">
-             <p>Yuyang Zhang </p>
-          </div>
-  </div>
+<div class="quarto-title-meta column-page">
+
     
-    <div>
-    <div class="quarto-title-meta-heading">Published</div>
-    <div class="quarto-title-meta-contents">
-      <p class="date">2025-09-28</p>
-    </div>
-  </div>
   
     
   </div>
@@ -377,35 +431,122 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<nav id="TOC-body" role="doc-toc">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#preliminary" id="toc-preliminary"><span class="header-section-number">1</span> Preliminary</a></li>
-  <li><a href="#ddpm" id="toc-ddpm"><span class="header-section-number">2</span> DDPM</a></li>
-  <li><a href="#summary" id="toc-summary"><span class="header-section-number">3</span> Summary</a></li>
-  <li><a href="#key-concepts" id="toc-key-concepts"><span class="header-section-number">4</span> Key Concepts</a></li>
-  <li><a href="#q-a" id="toc-q-a"><span class="header-section-number">5</span> Q &amp; A</a></li>
-  <li><a href="#related-resource-further-reading" id="toc-related-resource-further-reading"><span class="header-section-number">6</span> Related resource &amp; Further Reading</a></li>
-  </ul>
-</nav>
-<section id="preliminary" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Preliminary</h1>
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><tag style="font-size:25px; "> Due to the time constraint, these notes may contain errors or omissions. And to speed up the writing process, I only wrote the notes in <strong>CHINESES</strong>. If you are interested in collaborating to improve these notes,or transalting to different languages, please feel free to <a href="mailto:zhangyuyang1211@gmail.com">contact me</a>. </tag></p>
+</div>
+</div>
+<div class="columns quarto-layout-panel" data-layout-ncol="2">
+<div class="quarto-layout-row">
+<div class="column quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<p><u>Related Resources</u>:</p>
+<ul>
+<li>Lecture Website: <a href="https://stanford-cs336.github.io/spring2025/">CS336 LLM from Scratch</a></li>
+<li>Lecture Recordings: <a href="https://www.youtube.com/playlist?list=PLoROMvodv4rOY23Y0BoGoBGgQ1zmU_MT_">YouTube Playlist</a></li>
+<li>My Solution Repo: <a href="https://github.com/YYZhang2025/Stanford-CS336">GitHub</a></li>
+</ul>
+</div>
+<div class="column quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<p><u>About this Course</u>:</p>
+<ul>
+<li>This course has <tag style="color:orange">17 Lectures</tag> and <tag style="color:orange">5 Assignments</tag> in total.</li>
+<li>It might take around <tag style="color:red">200 hours</tag> to finish all the lectures and assignments.</li>
+</ul>
+</div>
+</div>
+</div>
+<hr>
+<section id="lecture-notes-for-cs336" class="level1">
+<h1>Lecture Notes for CS336</h1>
+<div id="listing-lectures" class="quarto-listing quarto-listing-container-default">
+<div class="list quarto-listing-default">
+<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1765921953611" data-listing-reading-time-sort="1" data-listing-word-count-sort="62">
+<div class="thumbnail"><a href="../../../posts/LearningNotes/CS336/Lectures/Lecture01/lec01.html" class="no-external">
+
+<p class="card-img-top"><img src="Lectures/Lecture01/assets/course-overview.png"  class="thumbnail-image card-img"/></p>
+
+</a></div>
+<div class="body">
+<h3 class="no-anchor listing-title" data-anchor-id="lecture-notes-for-cs336">
+<a href="../../../posts/LearningNotes/CS336/Lectures/Lecture01/lec01.html" class="no-external"><strong>Lecture 01: Introduction &amp; Tokenization</strong></a>
+</h3>
+<div class="delink listing-description"><a href="../../../posts/LearningNotes/CS336/Lectures/Lecture01/lec01.html" class="no-external">
+<p><em>Lecture01介绍了课程的大纲以及LLM的现状和基本概念。在课程的后半段介绍了Language Modeling的第一步，即Tokenization的基本概念和常用方法。着重介绍了<strong>Byte Pair Encoding (BPE)</strong>算法的原理和实现。在学习完Lecture 01后，我们可以开始尝试Assignment 01的第一部分，即BPE-Tokenization的实现</em></p>
+</a></div>
+</div>
+<div class="metadata">
+<a href="../../../posts/LearningNotes/CS336/Lectures/Lecture01/lec01.html" class="no-external">
+<div class="listing-author">
+Yuyang Zhang
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1765921879041" data-listing-reading-time-sort="1" data-listing-word-count-sort="155">
+<div class="thumbnail"><a href="../../../posts/LearningNotes/CS336/Lectures/Lecture02/lec02.html" class="no-external">
+
+<p class="card-img-top"><img src="Lectures/Lecture02/assets/pinned-memory.png"  class="thumbnail-image card-img"/></p>
+
+</a></div>
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="../../../posts/LearningNotes/CS336/Lectures/Lecture02/lec02.html" class="no-external"><strong>Lecture 02: PyTorch Basics &amp; Resource Accounts</strong></a>
+</h3>
+<div class="delink listing-description"><a href="../../../posts/LearningNotes/CS336/Lectures/Lecture02/lec02.html" class="no-external">
+<p><em>Lecture02 介绍了PyTorch的基本概念和使用方法。可以将这节课当作一个review，复习一下之前学过的PyTorch知识点。同时，课程中介绍了一个 <code>einops</code> 的库，可以简化张量操作的代码编写。在课程的后半段介绍了不同数据类型（如<code>FP32</code>, <code>FP16</code>, <code>BF16</code>等）在深度学习中的应用和优缺点。并且通过计算这些数据类型在内存中的占用，帮助我们理解为什么有些数据类型更适合在有限资源下进行训练, 并且在什么情况下需要应用混合精度训练（Mixed Precision Training），什么情况下需要用高精度的数据类型。在课程的最后，还介绍了不同的Optimizer（如SGD, Adam等）的基本原理和使用场景</em></p>
+</a></div>
+</div>
+<div class="metadata">
+<a href="../../../posts/LearningNotes/CS336/Lectures/Lecture02/lec02.html" class="no-external">
+<div class="listing-author">
+Yuyang Zhang
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="listing-no-matching d-none">No matching items</div>
+</div>
 </section>
-<section id="ddpm" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> DDPM</h1>
-</section>
-<section id="summary" class="level1" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> Summary</h1>
-</section>
-<section id="key-concepts" class="level1" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Key Concepts</h1>
-</section>
-<section id="q-a" class="level1" data-number="5">
-<h1 data-number="5"><span class="header-section-number">5</span> Q &amp; A</h1>
-</section>
-<section id="related-resource-further-reading" class="level1" data-number="6">
-<h1 data-number="6"><span class="header-section-number">6</span> Related resource &amp; Further Reading</h1>
+<section id="assignments" class="level1">
+<h1>Assignments</h1>
+<div id="listing-assignments" class="quarto-listing quarto-listing-container-default">
+<div class="list quarto-listing-default">
+<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1765919671603" data-listing-reading-time-sort="1" data-listing-word-count-sort="1">
+<div class="thumbnail"><a href="../../../posts/LearningNotes/CS336/Assignments/Ass01/ass01.html" class="no-external">
+
+<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
+
+</a></div>
+<div class="body">
+<h3 class="no-anchor listing-title" data-anchor-id="assignments">
+<a href="../../../posts/LearningNotes/CS336/Assignments/Ass01/ass01.html" class="no-external"><strong>Assignment 01: Tokenization &amp; Language Modeling</strong></a>
+</h3>
+<div class="delink listing-description"><a href="../../../posts/LearningNotes/CS336/Assignments/Ass01/ass01.html" class="no-external">
+<p><em>Assignment 01 要求我们实现一个简单的语言模型训练流程，涵盖数据预处理、模型定义、训练和评估等步骤。通过这个作业，我们将巩固对自然语言处理基础概念的理解，并掌握使用PyTorch进行深度学习模型开发的基本技能</em></p>
+</a></div>
+</div>
+<div class="metadata">
+<a href="../../../posts/LearningNotes/CS336/Assignments/Ass01/ass01.html" class="no-external">
+<div class="listing-author">
+Yuyang Zhang
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="listing-no-matching d-none">No matching items</div>
+</div>
+
 
 
 </section>

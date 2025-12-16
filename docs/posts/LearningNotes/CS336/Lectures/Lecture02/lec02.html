@@ -7,10 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Yuyang Zhang">
-<meta name="dcterms.date" content="2025-09-28">
-<meta name="description" content="A comprehensive overview of Denoising Diffusion Probabilistic Models (DDPM) and their applications in generative modeling.">
+<meta name="description" content="Lecture02 介绍了PyTorch的基本概念和使用方法。可以将这节课当作一个review，复习一下之前学过的PyTorch知识点。同时，课程中介绍了一个 einops 的库，可以简化张量操作的代码编写。在课程的后半段介绍了不同数据类型（如FP32, FP16, BF16等）在深度学习中的应用和优缺点。并且通过计算这些数据类型在内存中的占用，帮助我们理解为什么有些数据类型更适合在有限资源下进行训练, 并且在什么情况下需要应用混合精度训练（Mixed Precision Training），什么情况下需要用高精度的数据类型。在课程的最后，还介绍了不同的Optimizer（如SGD, Adam等）的基本原理和使用场景">
 
-<title>07: Denoising Diffusion Probabilistic Models(DDPM)</title>
+<title>Lecture 02: PyTorch Basics &amp; Resource Accounts</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,32 +22,69 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
-<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
-<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
-<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
-<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="../../../">
-<link href="../../.././style/icon.avif" rel="icon">
-<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="../../../site_libs/quarto-html/popper.min.js"></script>
-<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
-<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-0348920b7671f696dc9078d39bff215e.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
-<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-250da2873d24a44421c68a14153694c9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-691cf8fecc09a563af4b8b275f310845.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../../../site_libs/bootstrap/bootstrap-250da2873d24a44421c68a14153694c9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.css" rel="stylesheet">
+<script src="../../../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../../../">
+<link href="../../../../.././style/icon.avif" rel="icon">
+<script src="../../../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-0348920b7671f696dc9078d39bff215e.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../../../site_libs/bootstrap/bootstrap-250da2873d24a44421c68a14153694c9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-dark-691cf8fecc09a563af4b8b275f310845.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../../../../site_libs/bootstrap/bootstrap-250da2873d24a44421c68a14153694c9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.css" rel="stylesheet">
+<script src="../../../../../site_libs/quarto-contrib/videojs/video.min.js"></script>
+<link href="../../../../../site_libs/quarto-contrib/videojs/video-js.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -80,10 +116,11 @@ ul.task-list li input[type="checkbox"] {
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
 
-<link rel="stylesheet" href="../../../style/styles.css">
-<link rel="stylesheet" href="../../../style/callout.css">
-<meta property="og:title" content="07: Denoising Diffusion Probabilistic Models(DDPM)">
-<meta property="og:description" content="A comprehensive overview of Denoising Diffusion Probabilistic Models (DDPM) and their applications in generative modeling.">
+<link rel="stylesheet" href="../../../../../style/styles.css">
+<link rel="stylesheet" href="../../../../../style/callout.css">
+<meta property="og:title" content="Lecture 02: PyTorch Basics &amp; Resource Accounts">
+<meta property="og:description" content="Lecture02 介绍了PyTorch的基本概念和使用方法。可以将这节课当作一个review，复习一下之前学过的PyTorch知识点。同时，课程中介绍了一个 einops 的库，可以简化张量操作的代码编写。在课程的后半段介绍了不同数据类型（如FP32, FP16, BF16等）在深度学习中的应用和优缺点。并且通过计算这些数据类型在内存中的占用，帮助我们理解为什么有些数据类型更适合在有限资源下进行训练, 并且在什么情况下需要应用混合精度训练（Mixed Precision Training），什么情况下需要用高精度的数据类型。在课程的最后，还介绍了不同的Optimizer（如SGD, Adam等）的基本原理和使用场景">
+<meta property="og:image" content="./assets/pinned-memory.png">
 </head>
 
 <body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
@@ -261,7 +298,7 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../../../index.html"> 
+    <a class="nav-link" href="../../../../../index.html"> 
 <span class="menu-text">About Me</span></a>
   </li>  
   <li class="nav-item compact">
@@ -277,15 +314,15 @@ ul.task-list li input[type="checkbox"] {
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../../../posts/Blogs/blogs_index.html"> 
+    <a class="nav-link" href="../../../../../posts/Blogs/blogs_index.html"> 
 <span class="menu-text">Blogs</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../../../posts/Projects/projects_index.html"> 
+    <a class="nav-link" href="../../../../../posts/Projects/projects_index.html"> 
 <span class="menu-text">Projects</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../../../posts/PapersWithCode/100_Papers_index.html"> 
+    <a class="nav-link" href="../../../../../posts/PapersWithCode/100_Papers_index.html"> 
 <span class="menu-text">100 Papers with Code</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -294,7 +331,7 @@ ul.task-list li input[type="checkbox"] {
     </a>
     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-learning-notes">    
         <li>
-    <a class="dropdown-item" href="../../../posts/LearningNotes/CS336/index.html">
+    <a class="dropdown-item" href="../../../../../posts/LearningNotes/CS336/index.html">
  <span class="dropdown-text">Stanford CS336: LLM from Scratch</span></a>
   </li>  
     </ul>
@@ -312,7 +349,7 @@ ul.task-list li input[type="checkbox"] {
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
         <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-          <h1 class="quarto-secondary-nav-title">07: Denoising Diffusion Probabilistic Models(DDPM)</h1>
+          <h1 class="quarto-secondary-nav-title"><strong>Lecture 02: PyTorch Basics &amp; Resource Accounts</strong></h1>
         </a>     
     </div>
   </nav>
@@ -325,12 +362,7 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#preliminary" id="toc-preliminary" class="nav-link active" data-scroll-target="#preliminary"><span class="header-section-number">1</span> Preliminary</a></li>
-  <li><a href="#ddpm" id="toc-ddpm" class="nav-link" data-scroll-target="#ddpm"><span class="header-section-number">2</span> DDPM</a></li>
-  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">3</span> Summary</a></li>
-  <li><a href="#key-concepts" id="toc-key-concepts" class="nav-link" data-scroll-target="#key-concepts"><span class="header-section-number">4</span> Key Concepts</a></li>
-  <li><a href="#q-a" id="toc-q-a" class="nav-link" data-scroll-target="#q-a"><span class="header-section-number">5</span> Q &amp; A</a></li>
-  <li><a href="#related-resource-further-reading" id="toc-related-resource-further-reading" class="nav-link" data-scroll-target="#related-resource-further-reading"><span class="header-section-number">6</span> Related resource &amp; Further Reading</a></li>
+  <li><a href="#einops-library" id="toc-einops-library" class="nav-link active" data-scroll-target="#einops-library"><span class="header-section-number">1</span> <code>Einops</code> Library</a></li>
   </ul>
 </nav>
 </nav>
@@ -344,12 +376,12 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block">07: Denoising Diffusion Probabilistic Models(DDPM)</h1>
+<h1 class="title d-none d-lg-block"><strong>Lecture 02: PyTorch Basics &amp; Resource Accounts</strong></h1>
 </div>
 
 <div>
   <div class="description">
-    A comprehensive overview of Denoising Diffusion Probabilistic Models (DDPM) and their applications in generative modeling.
+    <em>Lecture02 介绍了PyTorch的基本概念和使用方法。可以将这节课当作一个review，复习一下之前学过的PyTorch知识点。同时，课程中介绍了一个 <code>einops</code> 的库，可以简化张量操作的代码编写。在课程的后半段介绍了不同数据类型（如<code>FP32</code>, <code>FP16</code>, <code>BF16</code>等）在深度学习中的应用和优缺点。并且通过计算这些数据类型在内存中的占用，帮助我们理解为什么有些数据类型更适合在有限资源下进行训练, 并且在什么情况下需要应用混合精度训练（Mixed Precision Training），什么情况下需要用高精度的数据类型。在课程的最后，还介绍了不同的Optimizer（如SGD, Adam等）的基本原理和使用场景</em>
   </div>
 </div>
 
@@ -363,12 +395,6 @@ ul.task-list li input[type="checkbox"] {
           </div>
   </div>
     
-    <div>
-    <div class="quarto-title-meta-heading">Published</div>
-    <div class="quarto-title-meta-contents">
-      <p class="date">2025-09-28</p>
-    </div>
-  </div>
   
     
   </div>
@@ -377,35 +403,59 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<nav id="TOC-body" role="doc-toc">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#preliminary" id="toc-preliminary"><span class="header-section-number">1</span> Preliminary</a></li>
-  <li><a href="#ddpm" id="toc-ddpm"><span class="header-section-number">2</span> DDPM</a></li>
-  <li><a href="#summary" id="toc-summary"><span class="header-section-number">3</span> Summary</a></li>
-  <li><a href="#key-concepts" id="toc-key-concepts"><span class="header-section-number">4</span> Key Concepts</a></li>
-  <li><a href="#q-a" id="toc-q-a"><span class="header-section-number">5</span> Q &amp; A</a></li>
-  <li><a href="#related-resource-further-reading" id="toc-related-resource-further-reading"><span class="header-section-number">6</span> Related resource &amp; Further Reading</a></li>
-  </ul>
-</nav>
-<section id="preliminary" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Preliminary</h1>
-</section>
-<section id="ddpm" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> DDPM</h1>
-</section>
-<section id="summary" class="level1" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> Summary</h1>
-</section>
-<section id="key-concepts" class="level1" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Key Concepts</h1>
-</section>
-<section id="q-a" class="level1" data-number="5">
-<h1 data-number="5"><span class="header-section-number">5</span> Q &amp; A</h1>
-</section>
-<section id="related-resource-further-reading" class="level1" data-number="6">
-<h1 data-number="6"><span class="header-section-number">6</span> Related resource &amp; Further Reading</h1>
+
+<iframe width="100%" height="600" src="https://www.youtube.com/embed/msHyYioAyNE?si=AedKnJdN7bHvetp3" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="">
+</iframe>
+<section id="einops-library" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> <code>Einops</code> Library</h1>
+<div class="quarto-video"><video id="video_shortcode_videojs_video1" class="video-js vjs-default-skin vjs-fluid" controls="" preload="auto" data-setup="{}" title=""><source src="./assets/einops-video.mp4"></video></div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>如果以上的内容比较难以理解的话，可以访问这个<a href="https://einops.rocks/1-einops-basics/">链接</a>。 里面有非常详细的<code>einops</code>教程，包含了很多例子和可视化的图示。</p>
+</div>
+</div>
+<div id="fig-pinned-memory" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pinned-memory-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/pinned-memory.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pinned-memory-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: 如图所示，Pinned memory 可以作为设备(Device)到主机(Host)拷贝的中转区，直接在 pinned memory 中分配主机数组，就能避免 pageable 内存与 pinned 内存之间的额外拷贝开销，从而提升数据传输效率。
+</figcaption>
+</figure>
+</div>
+<p>这篇<a href="https://gist.github.com/ZijiaLewisLu/eabdca955110833c0ce984d34eb7ff39?permalink_comment_id=3417135">文章</a>中介绍了4种常见的加速数据传输的方法：</p>
+<ol type="1">
+<li>利用 <code>Numpy Memmap</code> 处理大数据集: 通过内存映射技术，只将数据集的一部分加载到内存中，减少内存使用，提高数据加载速度。</li>
+<li>多利用 <code>torch.from_numpy</code> 函数: 直接将 NumPy 数组转换为 PyTorch 张量，避免不必要的数据复制，提高数据传输效率。</li>
+<li>将 <code>num_workers</code> 设置为大于0: 通过多线程数据加载，提高数据预处理和加载的并行度，减少数据加载时间。</li>
+<li>使用 <code>Pinned Memory</code> 加速主机与设备之间的数据传输: 通过将数据存储在固定内存中，减少数据传输的延迟，提高</li>
+</ol>
+<div class="sourceCode" id="cb1" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a><span class="im">from</span> torch.utils.data <span class="im">import</span> DataLoader</span>
+<span id="cb1-2"><a href="#cb1-2"></a></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="co"># some code</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a></span>
+<span id="cb1-5"><a href="#cb1-5"></a>loader <span class="op">=</span> DataLoader(your_dataset, ..., pin_memory<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-6"><a href="#cb1-6"></a>data_iter <span class="op">=</span> <span class="bu">iter</span>(loader)</span>
+<span id="cb1-7"><a href="#cb1-7"></a></span>
+<span id="cb1-8"><a href="#cb1-8"></a>next_batch <span class="op">=</span> data_iter.<span class="bu">next</span>() <span class="co"># start loading the first batch</span></span>
+<span id="cb1-9"><a href="#cb1-9"></a>next_batch <span class="op">=</span> [ _.cuda(non_blocking<span class="op">=</span><span class="va">True</span>) <span class="cf">for</span> _ <span class="kw">in</span> next_batch ]  <span class="co"># with pin_memory=True and non_blocking=True, this will copy data to GPU non blockingly</span></span>
+<span id="cb1-10"><a href="#cb1-10"></a></span>
+<span id="cb1-11"><a href="#cb1-11"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(loader)):</span>
+<span id="cb1-12"><a href="#cb1-12"></a>    batch <span class="op">=</span> next_batch </span>
+<span id="cb1-13"><a href="#cb1-13"></a>    <span class="cf">if</span> i <span class="op">+</span> <span class="dv">2</span> <span class="op">!=</span> <span class="bu">len</span>(loader): </span>
+<span id="cb1-14"><a href="#cb1-14"></a>        <span class="co"># start copying data of next batch</span></span>
+<span id="cb1-15"><a href="#cb1-15"></a>        next_batch <span class="op">=</span> data_iter.<span class="bu">next</span>()</span>
+<span id="cb1-16"><a href="#cb1-16"></a>        next_batch <span class="op">=</span> [ _.cuda(<span class="cf">async</span><span class="op">=</span><span class="va">True</span>) <span class="cf">for</span> _ <span class="kw">in</span> next_batch]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>这几个方法可以显著提升数据传输和加载的效率，尤其在处理大规模数据集时效果尤为明显。在我们完成Assignment 01时，会用到这些技巧来优化数据加载过程。</p>
 
 
 </section>
@@ -842,9 +892,10 @@ ul.task-list li input[type="checkbox"] {
 </div>
   </div>
 </footer>
+<script>videojs(video_shortcode_videojs_video1);</script>
 
 
 
 
-<script src="../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.js" defer="true"></script>
+<script src="../../../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.js" defer="true"></script>
 </body></html>
