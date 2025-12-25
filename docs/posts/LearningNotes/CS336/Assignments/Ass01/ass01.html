@@ -296,6 +296,14 @@ ul.task-list li input[type="checkbox"] {
     <a class="dropdown-item" href="../../../../../posts/LearningNotes/CS336/index.html">
  <span class="dropdown-text">Stanford CS336: LLM from Scratch</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../../../../../posts/LearningNotes/DLFaC/index.html">
+ <span class="dropdown-text">DLFaC</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../../../../posts/LearningNotes/LLM-Series/index.html">
+ <span class="dropdown-text">LLM Model Series</span></a>
+  </li>  
     </ul>
   </li>
 </ul>
@@ -320,7 +328,16 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
-    
+    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#part-01-byte-pair-encoding-bpe-implementation" id="toc-part-01-byte-pair-encoding-bpe-implementation" class="nav-link active" data-scroll-target="#part-01-byte-pair-encoding-bpe-implementation"><span class="header-section-number">1</span> Part 01: Byte Pair Encoding (BPE) Implementation</a>
+  <ul>
+  <li><a href="#bpe-algorithm-recap" id="toc-bpe-algorithm-recap" class="nav-link" data-scroll-target="#bpe-algorithm-recap"><span class="header-section-number">1.1</span> BPE Algorithm Recap</a></li>
+  </ul></li>
+  </ul>
+</nav>
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
@@ -360,8 +377,16 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<section id="part-01-byte-pair-encoding-bpe-implementation" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Part 01: Byte Pair Encoding (BPE) Implementation</h1>
+<p>在本部分中，我们将实现Byte Pair Encoding (BPE)算法，用于文本的tokenization。在<a href="https://yyzhang2025.github.io/posts/LearningNotes/CS336/Lectures/Lecture01/lec01.html">Lecture 01</a>中，我们已经介绍了BPE的基本原理和实现方法。现在，我们将通过代码来进一步的实现并且优化BPE算法。</p>
+<section id="bpe-algorithm-recap" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="bpe-algorithm-recap"><span class="header-section-number">1.1</span> BPE Algorithm Recap</h2>
+<p>回顾一下BPE算法的基本步骤： 1. <strong>Initialization</strong>: 将输入文本视为字节序列，每个字节作为一个token。初始化词汇表包含所有可能的字节（0-255）。 2. <strong>Count Pairs</strong>: 统计文本中所有相邻字节对的出现频率。 3. <strong>Merge Pairs</strong>: 找到出现频率最高的字节对，并将其合并为一个新的token，更新文本和词汇表。 4. <strong>Repeat</strong>: 重复步骤2和3，直到达到预定的合并次数</p>
 
 
+</section>
+</section>
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

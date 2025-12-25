@@ -8,6 +8,12 @@
     ]
   },
   {
+    "listing": "/posts/LearningNotes/LLM-Series/index.html",
+    "items": [
+      "/posts/LearningNotes/LLM-Series/Qwen/Qwen.html"
+    ]
+  },
+  {
     "listing": "/posts/PapersWithCode/100_Papers_index.html",
     "items": [
       "/posts/PapersWithCode/01-transformer/Transformer.html",
@@ -24,7 +30,6 @@
   {
     "listing": "/posts/Blogs/blogs_index.html",
     "items": [
-      "/posts/Blogs/Qwen/Qwen.html",
       "/posts/Blogs/KL-Divergence/post.html",
       "/posts/Blogs/Learnings-in-DeepLearning/post.html",
       "/posts/Blogs/Position-Embedding/post.html",
@@ -40,6 +45,12 @@
     "items": [
       "/posts/Projects/Qwen3-VL/Qwen3-VL.html",
       "/posts/Projects/PaliGemma/pali-gemma.html"
+    ]
+  },
+  {
+    "listing": "/posts/LearningNotes/DLFaC/index.html",
+    "items": [
+      "/posts/LearningNotes/DLFaC/Chapter01/Chapter01.html"
     ]
   }
 ]

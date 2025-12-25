@@ -57,7 +57,27 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../../../../../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -332,6 +352,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="../../../../../posts/LearningNotes/CS336/index.html">
  <span class="dropdown-text">Stanford CS336: LLM from Scratch</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../../../../../posts/LearningNotes/DLFaC/index.html">
+ <span class="dropdown-text">DLFaC</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../../../../posts/LearningNotes/LLM-Series/index.html">
+ <span class="dropdown-text">LLM Model Series</span></a>
+  </li>  
     </ul>
   </li>
 </ul>
@@ -361,7 +389,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
-  <li><a href="#tokenization" id="toc-tokenization" class="nav-link" data-scroll-target="#tokenization"><span class="header-section-number">2</span> Tokenization</a></li>
+  <li><a href="#tokenization" id="toc-tokenization" class="nav-link" data-scroll-target="#tokenization"><span class="header-section-number">2</span> Tokenization</a>
+  <ul>
+  <li><a href="#character-level-tokenization" id="toc-character-level-tokenization" class="nav-link" data-scroll-target="#character-level-tokenization"><span class="header-section-number">2.1</span> Character-level Tokenization</a></li>
+  <li><a href="#word-level-tokenization" id="toc-word-level-tokenization" class="nav-link" data-scroll-target="#word-level-tokenization"><span class="header-section-number">2.2</span> Word-level Tokenization</a></li>
+  <li><a href="#byte-based-tokenization" id="toc-byte-based-tokenization" class="nav-link" data-scroll-target="#byte-based-tokenization"><span class="header-section-number">2.3</span> Byte-Based Tokenization</a></li>
+  <li><a href="#byte-pair-encoding-bpe" id="toc-byte-pair-encoding-bpe" class="nav-link" data-scroll-target="#byte-pair-encoding-bpe"><span class="header-section-number">2.4</span> Byte Pair Encoding (BPE)</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">3</span> Summary</a></li>
   </ul>
 </nav>
 </nav>
@@ -370,7 +405,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
+<main class="content page-columns page-full" id="quarto-document-content">
 
 
 <header id="title-block-header" class="quarto-title-block default">
@@ -447,6 +482,17 @@ Figure&nbsp;2: Tokenization的过程示意图，主要由两个步骤组成: <co
 </figcaption>
 </figure>
 </div>
+<p>用代码显示就是</p>
+<div class="sourceCode" id="cb1" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">class</span> Tokenizer:</span>
+<span id="cb1-2"><a href="#cb1-2"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
+<span id="cb1-3"><a href="#cb1-3"></a>        <span class="cf">pass</span> </span>
+<span id="cb1-4"><a href="#cb1-4"></a></span>
+<span id="cb1-5"><a href="#cb1-5"></a>    <span class="kw">def</span> encode(<span class="va">self</span>, text: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">int</span>]:</span>
+<span id="cb1-6"><a href="#cb1-6"></a>        <span class="co">"""将文本转换为token ids的过程"""</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a>        <span class="cf">pass</span></span>
+<span id="cb1-8"><a href="#cb1-8"></a>    <span class="kw">def</span> decode(<span class="va">self</span>, token_ids: <span class="bu">list</span>[<span class="bu">int</span>]) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb1-9"><a href="#cb1-9"></a>        <span class="co">"""将token ids转换为文本的过程"""</span></span>
+<span id="cb1-10"><a href="#cb1-10"></a>        <span class="cf">pass</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div id="fig-tokenization-example" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-tokenization-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -457,18 +503,208 @@ Figure&nbsp;3: Tokenization 示例. 访问这个<a href="https://tiktokenizer.ve
 </figcaption>
 </figure>
 </div>
-<iframe width="100%" height="600" src="https://www.youtube.com/embed/zduSFxRajkE?si=M8MihCWa5cU7xJ88" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="">
-</iframe>
-<div class="sourceCode" id="cb1" data-code-line-numbers="3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a><span class="im">from</span> transformers <span class="im">import</span> GPT2Tokenizer</span>
-<span id="cb1-2"><a href="#cb1-2"></a>tokenizer <span class="op">=</span> GPT2Tokenizer.from_pretrained(<span class="st">"gpt2"</span>)</span>
-<span id="cb1-3"><a href="#cb1-3"></a>text <span class="op">=</span> <span class="st">"Hello, world!"</span> </span>
-<span id="cb1-4"><a href="#cb1-4"></a>tokens <span class="op">=</span> tokenizer.encode(text)</span>
-<span id="cb1-5"><a href="#cb1-5"></a><span class="bu">print</span>(tokens)  <span class="co"># 输出: [15496, 11, 995]</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>接下来，我们来看一下不同的 tokenization 之间的区别是什么，以及为什么我们需要不同的 tokenization 方法。 首先，我们来看一下常见的几种 tokenization 方法：</p>
+<ul>
+<li>Character-level Tokenization: 将文本拆分为单个字符。</li>
+<li>Word-level Tokenization: 将文本拆分为单词。</li>
+<li>Subword-level Tokenization: 将文本拆分为子词单元（如BPE, WordPiece, Unigram等）。</li>
+<li>Byte-level Tokenization: 将文本拆分为字节单元（如GPT-2的tokenizer）。</li>
+</ul>
+<p>我们由从不同的分词的例子来看一下不同的tokenization方法的区别， 首先介绍最简单的Character-level Tokenization：</p>
+<section id="character-level-tokenization" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="character-level-tokenization"><span class="header-section-number">2.1</span> Character-level Tokenization</h2>
+<p>Character-level Tokenization是将文本拆分为单个字符。 例如，句子 “Hello, world!” 会被拆分为以下tokens：</p>
+<div class="sourceCode" id="cb2" data-code-line-numbers=""><pre class="sourceCode numberSource {text} number-lines code-with-copy"><code class="sourceCode"><span id="cb2-1"><a href="#cb2-1"></a>['H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!']</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>需要知道的就是，每个Character就是一个token，利用Python，的<code>ord()</code>函数，我们可以将其转换为对应的整数ID：</p>
+<div class="sourceCode" id="cb3" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1"></a>text <span class="op">=</span> <span class="st">"Hello, world!"</span></span>
+<span id="cb3-2"><a href="#cb3-2"></a>tokens <span class="op">=</span> [char <span class="cf">for</span> char <span class="kw">in</span> text]</span>
+<span id="cb3-3"><a href="#cb3-3"></a>token_ids <span class="op">=</span> [<span class="bu">ord</span>(char) <span class="cf">for</span> char <span class="kw">in</span> tokens]</span>
+<span id="cb3-4"><a href="#cb3-4"></a><span class="bu">print</span>(tokens)</span>
+<span id="cb3-5"><a href="#cb3-5"></a><span class="bu">print</span>(token_ids)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>这种方式很简单，也很直观，但是它有一些明显的缺点：</p>
+<ol type="1">
+<li><em>Vocabulary Size</em>：对于所有可能的字符（包括字母、数字、标点符号和特殊字符），Vocabulary Size会非常大，导致模型参数量增加。（大约有150K 个不同的字符）</li>
+<li>150K个字符中，有很多字符是非常少见的，导致模型难以学习到这些字符的表示。</li>
+<li>语义信息缺失：单个字符无法捕捉到词语的语义信息，导致模型难以理解上下文。</li>
+</ol>
+</section>
+<section id="word-level-tokenization" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="word-level-tokenization"><span class="header-section-number">2.2</span> Word-level Tokenization</h2>
+<p>与Character-level Tokenization不同，Word-level Tokenization是将文本拆分为单词。 例如，句子 “Hello, world!” 会被拆分为以下tokens：</p>
+<div class="sourceCode" id="cb4" data-code-line-numbers=""><pre class="sourceCode numberSource {text} number-lines code-with-copy"><code class="sourceCode"><span id="cb4-1"><a href="#cb4-1"></a>['Hello,', 'world!']</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>每个单词就是一个token，同样地，我们可以通过一个简单的Python代码将单词转换为对应的整数ID：</p>
+<div class="sourceCode" id="cb5" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1"></a><span class="im">import</span> regex</span>
+<span id="cb5-2"><a href="#cb5-2"></a></span>
+<span id="cb5-3"><a href="#cb5-3"></a>text<span class="op">=</span> <span class="st">"Hello, world!"</span></span>
+<span id="cb5-4"><a href="#cb5-4"></a>tokens <span class="op">=</span> text.split()  <span class="co"># 简单的空格拆分</span></span>
+<span id="cb5-5"><a href="#cb5-5"></a>vocab <span class="op">=</span> {word: idx <span class="cf">for</span> idx, word <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="bu">set</span>(tokens))}</span>
+<span id="cb5-6"><a href="#cb5-6"></a>token_ids <span class="op">=</span> [vocab[word] <span class="cf">for</span> word <span class="kw">in</span> tokens]</span>
+<span id="cb5-7"><a href="#cb5-7"></a><span class="bu">print</span>(tokens)</span>
+<span id="cb5-8"><a href="#cb5-8"></a><span class="bu">print</span>(token_ids)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>除了简单的根据空格拆分单词的方法，我们还可以有稍微复杂一点的方法，比如使用正则表达式来处理标点符号等。举个例子，GPT-2的tokenizer就是使用了一种基于正则表达式的方法来进行Word-level Tokenization。</p>
+<div class="sourceCode" id="cb6" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1"></a>GPT2_TOKENIZER_REGEX <span class="op">=</span> <span class="vs">r"""'</span>(?:<span class="pp">[sdmt]</span><span class="cf">|</span><span class="vs">ll</span><span class="cf">|</span><span class="vs">ve</span><span class="cf">|</span><span class="vs">re</span>)<span class="cf">|</span><span class="vs"> </span><span class="op">?</span><span class="ch">\p{L}</span><span class="op">+</span><span class="cf">|</span><span class="vs"> </span><span class="op">?</span><span class="ch">\p{N}</span><span class="op">+</span><span class="cf">|</span><span class="vs"> </span><span class="op">?</span><span class="pp">[^</span><span class="dv">\s</span><span class="ch">\p{L}\p{N}</span><span class="pp">]</span><span class="op">+</span><span class="cf">|</span><span class="dv">\s</span><span class="op">+</span><span class="ex">(</span><span class="fu">?!</span><span class="dv">\S</span><span class="ex">)</span><span class="cf">|</span><span class="dv">\s</span><span class="op">+</span><span class="vs">"""</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>当然，这种方法也有比较明显的缺点：</p>
+<ol type="1">
+<li>Vocabulary Size 依然很大：对于所有可能的单词，Vocabulary Size会非常大，导致模型参数量增加。</li>
+<li>未登录词问题（Out-of-Vocabulary, OOV）：对于训练集中未出现的单词，模型无法处理，导致性能下降。 尽管我们可以通过一些方法（如使用特殊的<code>&lt;UNK&gt;</code> token）来缓解这个问题，但仍然无法完全解决。</li>
+<li>Vocabulary Size 的大小不是固定的，随着训练数据的增加，Vocabulary Size会不断增加，导致模型难以扩展。</li>
+<li>很多单词是非常少见的，导致模型难以学习到这些单词的表示。</li>
+</ol>
+</section>
+<section id="byte-based-tokenization" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="byte-based-tokenization"><span class="header-section-number">2.3</span> Byte-Based Tokenization</h2>
+<p>在学习Byte Pair Encoding (BPE)之前，我们先介绍一下Byte-Based Tokenization。 Byte-Based Tokenization是将文本拆分为字节单元（byte-level tokens）。 例如，句子 “Hello, world!” 会被拆分为以下tokens：</p>
+<div class="sourceCode" id="cb7" data-code-line-numbers=""><pre class="sourceCode numberSource {text} number-lines code-with-copy"><code class="sourceCode"><span id="cb7-1"><a href="#cb7-1"></a>['H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!']</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>每个字节就是一个token，同样地，我们可以通过一个简单的Python代码将字节转换为对应的整数ID：</p>
+<div class="sourceCode" id="cb8" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1"></a>text <span class="op">=</span> <span class="st">"Hello, world!"</span></span>
+<span id="cb8-2"><a href="#cb8-2"></a>tokens <span class="op">=</span> [char.encode(<span class="st">'utf-8'</span>) <span class="cf">for</span> char <span class="kw">in</span> text]</span>
+<span id="cb8-3"><a href="#cb8-3"></a>token_ids <span class="op">=</span> [byte[<span class="dv">0</span>] <span class="cf">for</span> byte <span class="kw">in</span> tokens]</span>
+<span id="cb8-4"><a href="#cb8-4"></a><span class="bu">print</span>(tokens)</span>
+<span id="cb8-5"><a href="#cb8-5"></a><span class="bu">print</span>(token_ids)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>这种方法的优点是：</p>
+<ol type="1">
+<li><em>Vocabulary Size</em> 固定且较小：由于字节的范围是0-255，Vocabulary Size固定为256，模型参数量较小。</li>
+<li><em>无OOV问题</em>：由于所有文本都可以表示为字节序列，不存在OOV的问题。</li>
+<li><em>适用于多语言文本</em>：字节级别的表示可以处理各种语言的文本。</li>
+<li><em>简单高效</em>：字节级别的表示简单且高效，适合大规模文本处理。</li>
+</ol>
+<p>不过，这种方法有个明显的缺点就是Compression Ratio较低。 由于字节级别的表示过于细粒度，导致<u>文本长度增加</u>，影响模型的训练效率和性能。因为Transformer模型的计算复杂度与输入长度的平方成正比，输入长度增加会显著增加计算资源的消耗。</p>
+</section>
+<section id="byte-pair-encoding-bpe" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="byte-pair-encoding-bpe"><span class="header-section-number">2.4</span> Byte Pair Encoding (BPE)</h2>
+<p>为了克服Character-level和Word-level Tokenization的缺点，同时提高Byte-Based Tokenization的Compression Ratio，我们引入了Byte Pair Encoding (BPE)算法 <span class="citation" data-cites="NeuralMachineTranslation2016sennrich">(<a href="#ref-NeuralMachineTranslation2016sennrich" role="doc-biblioref">Sennrich, Haddow, and Birch 2016</a>)</span> 。 BPE是一种基于<strong>频率</strong>的子词单元（subword unit）分词方法。 它的基本思想是<u>通过迭代地合并最频繁出现的字符对（byte pairs）来构建一个更紧凑的词汇表</u>。</p>
+<div class="columns quarto-layout-panel" data-layout-ncol="2">
+<div class="quarto-layout-row">
+<div class="column quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<p>BPE算法的步骤如下：</p>
+<ol type="1">
+<li><strong>初始化Vocabulary</strong>：将文本中的所有唯一字符作为初始的词汇表（vocabulary）。</li>
+<li><strong>统计频率</strong> <code>get_stats</code>：计算文本中所有相邻字符对的出现频率。</li>
+<li><strong>合并字符对并且更新Vocabulary</strong>：选择出现频率最高的字符对，将其合并为一个新的token，并更新文本中的所有出现该字符对的地方，并且将新token添加到词汇表中。</li>
+<li><strong>重复步骤2-4</strong>：重复上述步骤，直到达到预定的词汇表大小或满足其他停止条件。</li>
+</ol>
+</div>
+<div class="column quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-BPE-algorithm" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-BPE-algorithm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/BPE-algorithm.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-BPE-algorithm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: BPE算法的示意图，展示了字符对的合并过程。
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<p>下面是一个简单的BPE算法的Python实现示例：</p>
+<div class="sourceCode" id="cb9" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1"></a><span class="kw">def</span> train_bpe(string: <span class="bu">str</span>, num_merges: <span class="bu">int</span>):</span>
+<span id="cb9-2"><a href="#cb9-2"></a>    indices <span class="op">=</span> <span class="bu">list</span>(<span class="bu">map</span>(<span class="bu">int</span>, string.encode(<span class="st">"utf-8"</span>))) </span>
+<span id="cb9-3"><a href="#cb9-3"></a>    merges: <span class="bu">dict</span>[<span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>], <span class="bu">int</span>] <span class="op">=</span> {}  </span>
+<span id="cb9-4"><a href="#cb9-4"></a>    vocab: <span class="bu">dict</span>[<span class="bu">int</span>, <span class="bu">bytes</span>] <span class="op">=</span> {x: <span class="bu">bytes</span>([x]) <span class="cf">for</span> x <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">256</span>)}  </span>
+<span id="cb9-5"><a href="#cb9-5"></a></span>
+<span id="cb9-6"><a href="#cb9-6"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(num_merges):</span>
+<span id="cb9-7"><a href="#cb9-7"></a>        counts <span class="op">=</span> defaultdict(<span class="bu">int</span>)</span>
+<span id="cb9-8"><a href="#cb9-8"></a>        <span class="cf">for</span> index1, index2 <span class="kw">in</span> <span class="bu">zip</span>(indices, indices[<span class="dv">1</span>:]): </span>
+<span id="cb9-9"><a href="#cb9-9"></a>            counts[(index1, index2)] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb9-10"><a href="#cb9-10"></a>        </span>
+<span id="cb9-11"><a href="#cb9-11"></a>        pair <span class="op">=</span> <span class="bu">max</span>(counts, key<span class="op">=</span>counts.get)  <span class="co"># @inspect pair</span></span>
+<span id="cb9-12"><a href="#cb9-12"></a>        index1, index2 <span class="op">=</span> pair</span>
+<span id="cb9-13"><a href="#cb9-13"></a></span>
+<span id="cb9-14"><a href="#cb9-14"></a>        new_index <span class="op">=</span> <span class="dv">256</span> <span class="op">+</span> i</span>
+<span id="cb9-15"><a href="#cb9-15"></a>        merges[pair] <span class="op">=</span> new_index</span>
+<span id="cb9-16"><a href="#cb9-16"></a>        vocab[new_index] <span class="op">=</span> vocab[index1] <span class="op">+</span> vocab[index2]</span>
+<span id="cb9-17"><a href="#cb9-17"></a>        indices <span class="op">=</span> merge(indices, pair, new_index)</span>
+<span id="cb9-18"><a href="#cb9-18"></a></span>
+<span id="cb9-19"><a href="#cb9-19"></a>    <span class="cf">return</span> merges, vocab</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>以上是最简单的BPE算法的实现，显然有很多的不足，我们在Assignment 01的第一部分中，会优化这个实现：</p>
+<ul>
+<li>优化 <code>merge</code> 函数的效率。</li>
+<li>利用pre-tokenization来加速BPE的训练过程。</li>
+</ul>
+<p>等</p>
+<p>对于那些想深入理解BPE算法的同学，可以参考以下资源： <iframe width="100%" height="600" src="https://www.youtube.com/embed/zduSFxRajkE?si=M8MihCWa5cU7xJ88" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen=""></iframe></p>
+<p>关于BPE算法，还有很多可以优化的地方，比如：</p>
+<ul>
+<li>在寻找最频繁字符对时，可以使用更高效的数据结构（如优先队列）来加速查找过程。</li>
+<li>在合并字符并且更新文本时，可以使用更高效的字符串处理方法来减少时间复杂度。这些优化可以显著提高BPE算法的训练速度，特别是在处理大规模文本数据</li>
+</ul>
+<p>这些方法我们将在 <a href="https://yyzhang2025.github.io/posts/LearningNotes/CS336/Assignments/Ass01/ass01.html">Assignment 01</a>中进行更加详细的介绍。</p>
+</section>
+</section>
+<section id="summary" class="level1 page-columns page-full" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Summary</h1>
+<p>在本章节中，我们介绍了Tokenization的基本概念和常用方法。 我们重点介绍了Byte Pair Encoding (BPE)算法的原理和实现。 接下来我们来对比一下不同的tokenization方法的优缺点：</p>
+<div class="column-page" data-scrollable="true">
+<div id="tbl-tokenization-summary" class="hover quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<div aria-describedby="tbl-tokenization-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table-hover table">
+<colgroup>
+<col style="width: 26%">
+<col style="width: 22%">
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Tokenization Level</th>
+<th>Method</th>
+<th>Vocabulary Size</th>
+<th>Handles OOV</th>
+<th>Compression Ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Character-level</td>
+<td>每个字符都是一个token</td>
+<td>Very Large (~150K)</td>
+<td>No</td>
+<td>Low</td>
+</tr>
+<tr class="even">
+<td>Word-level</td>
+<td>每个单词都是一个token</td>
+<td>Very Large (Dynamic)</td>
+<td>No</td>
+<td>Medium</td>
+</tr>
+<tr class="odd">
+<td>Byte-level</td>
+<td>将文本视为字节序列，每个字节都是一个token</td>
+<td>Fixed (256)</td>
+<td>Yes</td>
+<td>Low</td>
+</tr>
+<tr class="even">
+<td>Byte Pair Encoding (BPE)</td>
+<td>将文本视为子词单元，通过迭代合并最频繁的字节对构建词汇表</td>
+<td>Medium (Configurable)</td>
+<td>Yes</td>
+<td>Medium</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-tbl" id="tbl-tokenization-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Summary of 4 Tokenization Algorithms
+</figcaption>
+</figure>
+</div>
+</div>
+
 
 
 </section>
 
-<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-NeuralMachineTranslation2016sennrich" class="csl-entry" role="listitem">
+Sennrich, Rico, Barry Haddow, and Alexandra Birch. 2016. <span>“Neural <span>Machine Translation</span> of <span>Rare Words</span> with <span>Subword Units</span>.”</span> arXiv. <a href="https://doi.org/10.48550/arXiv.1508.07909">https://doi.org/10.48550/arXiv.1508.07909</a>.
+</div>
+</div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     // Ensure there is a toggle, if there isn't float one in the top right
