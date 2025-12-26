@@ -57,7 +57,27 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../../../../../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -115,12 +135,41 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="https://fonts.cdnfonts.com/css/cmu-sans-serif" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../../../../../style/styles.css">
 <link rel="stylesheet" href="../../../../../style/callout.css">
 <meta property="og:title" content="Lecture 02: PyTorch Basics &amp; Resource Accounts">
 <meta property="og:description" content="Lecture02 介绍了PyTorch的基本概念和使用方法。可以将这节课当作一个review，复习一下之前学过的PyTorch知识点。同时，课程中介绍了一个 einops 的库，可以简化张量操作的代码编写。这节课也介绍了不同数据类型（如FP32, FP16, BF16等）在深度学习中的应用和优缺点。并且通过计算这些数据类型在内存中的占用，帮助我们理解为什么有些数据类型更适合在有限资源下进行训练, 并且在什么情况下需要应用混合精度训练（Mixed Precision Training），什么情况下需要用高精度的数据类型。在课程的最后，还介绍了不同的Optimizer（如SGD, Adam等）的基本原理和使用场景">
-<meta property="og:image" content="./assets/pinned-memory.png">
+<meta property="og:image" content="./assets/float-represent.png">
 </head>
 
 <body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
@@ -370,7 +419,48 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#einops-library" id="toc-einops-library" class="nav-link active" data-scroll-target="#einops-library"><span class="header-section-number">1</span> <code>Einops</code> Library</a></li>
+  <li><a href="#resource-accounting" id="toc-resource-accounting" class="nav-link active" data-scroll-target="#resource-accounting"><span class="header-section-number">1</span> Resource Accounting</a>
+  <ul>
+  <li><a href="#memory-accounting" id="toc-memory-accounting" class="nav-link" data-scroll-target="#memory-accounting"><span class="header-section-number">1.1</span> Memory Accounting</a>
+  <ul>
+  <li><a href="#common-data-types" id="toc-common-data-types" class="nav-link" data-scroll-target="#common-data-types"><span class="header-section-number">1.1.1</span> Common Data Types</a>
+  <ul class="collapse">
+  <li><a href="#float32" id="toc-float32" class="nav-link" data-scroll-target="#float32"><span class="header-section-number">1.1.1.1</span> Float32</a></li>
+  <li><a href="#bfloat16" id="toc-bfloat16" class="nav-link" data-scroll-target="#bfloat16"><span class="header-section-number">1.1.1.2</span> BFloat16</a></li>
+  <li><a href="#fp8" id="toc-fp8" class="nav-link" data-scroll-target="#fp8"><span class="header-section-number">1.1.1.3</span> FP8</a></li>
+  <li><a href="#other-data-types" id="toc-other-data-types" class="nav-link" data-scroll-target="#other-data-types"><span class="header-section-number">1.1.1.4</span> Other Data Types</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#compute-accounting" id="toc-compute-accounting" class="nav-link" data-scroll-target="#compute-accounting"><span class="header-section-number">1.2</span> Compute Accounting</a>
+  <ul>
+  <li><a href="#tensor-on-gpus" id="toc-tensor-on-gpus" class="nav-link" data-scroll-target="#tensor-on-gpus"><span class="header-section-number">1.2.1</span> Tensor on GPUs</a></li>
+  </ul></li>
+  <li><a href="#tensor-operations" id="toc-tensor-operations" class="nav-link" data-scroll-target="#tensor-operations"><span class="header-section-number">1.3</span> Tensor Operations</a>
+  <ul>
+  <li><a href="#matrix-multiplication" id="toc-matrix-multiplication" class="nav-link" data-scroll-target="#matrix-multiplication"><span class="header-section-number">1.3.1</span> Matrix Multiplication</a></li>
+  </ul></li>
+  <li><a href="#gradient-calculation" id="toc-gradient-calculation" class="nav-link" data-scroll-target="#gradient-calculation"><span class="header-section-number">1.4</span> Gradient Calculation</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">1.5</span> Summary</a>
+  <ul>
+  <li><a href="#einops-library" id="toc-einops-library" class="nav-link" data-scroll-target="#einops-library"><span class="header-section-number">1.5.1</span> <code>Einops</code> Library</a></li>
+  </ul></li>
+  <li><a href="#tensor-flops" id="toc-tensor-flops" class="nav-link" data-scroll-target="#tensor-flops"><span class="header-section-number">1.6</span> Tensor Flops</a></li>
+  </ul></li>
+  <li><a href="#model-training" id="toc-model-training" class="nav-link" data-scroll-target="#model-training"><span class="header-section-number">2</span> Model Training</a>
+  <ul>
+  <li><a href="#model-definition" id="toc-model-definition" class="nav-link" data-scroll-target="#model-definition"><span class="header-section-number">2.1</span> Model definition</a></li>
+  <li><a href="#parameter-initialization" id="toc-parameter-initialization" class="nav-link" data-scroll-target="#parameter-initialization"><span class="header-section-number">2.2</span> Parameter initialization</a></li>
+  <li><a href="#optimizer-selection" id="toc-optimizer-selection" class="nav-link" data-scroll-target="#optimizer-selection"><span class="header-section-number">2.3</span> Optimizer Selection</a></li>
+  <li><a href="#loss-function" id="toc-loss-function" class="nav-link" data-scroll-target="#loss-function"><span class="header-section-number">2.4</span> Loss Function</a></li>
+  <li><a href="#training-loop" id="toc-training-loop" class="nav-link" data-scroll-target="#training-loop"><span class="header-section-number">2.5</span> Training Loop</a>
+  <ul>
+  <li><a href="#randomness-control" id="toc-randomness-control" class="nav-link" data-scroll-target="#randomness-control"><span class="header-section-number">2.5.1</span> Randomness Control</a></li>
+  <li><a href="#data-loading" id="toc-data-loading" class="nav-link" data-scroll-target="#data-loading"><span class="header-section-number">2.5.2</span> Data Loading</a></li>
+  <li><a href="#checkpointing" id="toc-checkpointing" class="nav-link" data-scroll-target="#checkpointing"><span class="header-section-number">2.5.3</span> Checkpointing</a></li>
+  <li><a href="#mixed-precision-training" id="toc-mixed-precision-training" class="nav-link" data-scroll-target="#mixed-precision-training"><span class="header-section-number">2.5.4</span> Mixed Precision Training</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#summary-1" id="toc-summary-1" class="nav-link" data-scroll-target="#summary-1"><span class="header-section-number">3</span> Summary</a></li>
   </ul>
 </nav>
 </nav>
@@ -412,10 +502,339 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p>Lecture 02 主要介绍了 PyTorch 的基础知识和一些实用的工具库，比如 <code>einops</code>。课程内容涵盖了张量操作、数据类型、优化器等方面的内容。并且最重要的是，提出了一个 Resource Accounting， 即训练一个模型，我们需要多大的内存和计算资源。 通过 Resource Accounting，我们可以更好地理解模型训练的资源需求，从而优化模型设计和训练过程。</p>
+<p>课程视频如下所示：</p>
 <iframe width="100%" height="600" src="https://www.youtube.com/embed/msHyYioAyNE?si=AedKnJdN7bHvetp3" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="">
 </iframe>
-<section id="einops-library" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> <code>Einops</code> Library</h1>
+<section id="resource-accounting" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Resource Accounting</h1>
+<p>首先我们先思考两个问题：</p>
+<div class="callout-question">
+<p><tag style="color:red">Question 1: </tag> <br> 训练一个 70B 参数的模型，同时用 15T tokens 进行训练，在 1024 个 H100 GPU 上训练，需要多长时间？</p>
+</div>
+<div class="callout-question">
+<p><tag style="color:red">Question 2: </tag> <br> 利用8个H100 GPU 并且AdamW Optimizer，我们最多可以训练多大的模型？</p>
+</div>
+<p>要解决以上的几个问题，我们需要了解几个知识点：</p>
+<ul>
+<li>模型的参数量 (Number of Parameters)</li>
+<li>参数的数据类型 (Data Types)</li>
+<li>Optimizer 需要储存的额外状态 (Optimizer States)</li>
+<li>GPU 显存大小 (GPU Memory Size)</li>
+</ul>
+<p>通过了解这些知识点，我们可以计算出训练一个模型所需的内存和计算资源，从而回答上述问题。</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>需要注意的是，以上的计算只是一个估算，我们并没有考虑到所有的细节，比如激活值 (Activations)、梯度 (Gradients) 等等。但是通过这些估算，我们可以对模型训练的资源需求有一个大致的了解。</p>
+</div>
+</div>
+<section id="memory-accounting" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="memory-accounting"><span class="header-section-number">1.1</span> Memory Accounting</h2>
+<p>所有的数据（包括模型参数、激活值、梯度、优化器状态等）都是以 Tensor 的形式储存。我们有很多种方式创建一个 Tensor，比如：</p>
+<div class="sourceCode" id="cb1" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a>x <span class="op">=</span> torch.tensor([[<span class="fl">1.</span>, <span class="dv">2</span>, <span class="dv">3</span>], [<span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>]])</span>
+<span id="cb1-2"><a href="#cb1-2"></a>x<span class="op">=</span> torch.randn(<span class="dv">3</span>, <span class="dv">4</span>)</span>
+<span id="cb1-3"><a href="#cb1-3"></a>x <span class="op">=</span> torch.zeros(<span class="dv">2</span>, <span class="dv">5</span>)</span>
+<span id="cb1-4"><a href="#cb1-4"></a>x <span class="op">=</span> torch.empty(<span class="dv">10</span>, <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>每个 Tensor 都有一个数据类型 (Data Type)，默认的数据类型是 <code>float32</code> (也称为 <code>FP32</code>)。不同的数据类型会占用不同的内存空间。接下来我们来看看几种常见的数据类型及其内存占用</p>
+<section id="common-data-types" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" class="anchored" data-anchor-id="common-data-types"><span class="header-section-number">1.1.1</span> Common Data Types</h3>
+<p>在了解不同的Float Types之前，我们先来了解一下浮点数的表示方法。计算机中的浮点数通常采用 <a href="https://en.wikipedia.org/wiki/IEEE_754">IEEE 754 标准</a>进行表示。浮点数由三部分组成：符号位 (Sign Bit)、指数位 (Exponent Bits) 和尾数位 (Mantissa Bits), 也叫Fraction 。</p>
+<div id="fig-illustration-float-represent" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-illustration-float-represent-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/float-represent.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-illustration-float-represent-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: 浮点数的表示
+</figcaption>
+</figure>
+</div>
+<p>浮点数的值可以通过以下公式计算： <span id="eq-float-value"><span class="math display">\[
+number = (-1)^{Sign} \times Base^{(Exponent - Bias)} \times 1.Mantissa
+\tag{1}\]</span></span></p>
+<p>其中，Base 通常为2，Bias 是一个用于调整指数的偏移量，具体取决于指数位的长度, 通常为2的指数位长度减1的值 为127。</p>
+<p> = b_1·2^{-1} + b_2·2^{-2} + b_3·2^{-3} + … + b_{23}·2^{-23}</p>
+<p>对于 <a href="#fig-illustration-float-represent" class="quarto-xref">Figure&nbsp;1</a> 中的浮点数表示：</p>
+<ul>
+<li>符号位 (Sign) 为 0，表示正数</li>
+<li>指数位 (Exponent) 为 <code>01111100</code>，转换为十进制为 124，减去 Bias 127 得到 -3</li>
+<li>尾数位 (Mantissa) 为 <code>01000000000000000000000</code> ，转换为十进制为 0.25，因此 1.Mantissa = 1 + 0.25 = 1.25</li>
+</ul>
+<p>将这些值代入公式 <a href="#eq-float-value" class="quarto-xref">Equation&nbsp;1</a> 中，可以计算出浮点数的值为： <span class="math display">\[
+number = (-1)^0 \times 2^{-3} \times 1.25 = 0.15625
+\]</span></p>
+<p>比如 bias 10000000，转换为十进制为 128，减去 Bias 127 得到 1</p>
+<div id="fig-IEEE-754-Calculator" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-IEEE-754-Calculator-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/IEEE-754-Calculator.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-IEEE-754-Calculator-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: 通过这个<a href="https://www.h-schmidt.net/FloatConverter/IEEE754.html">在线计算器</a>，验证浮点数的表示方法。
+</figcaption>
+</figure>
+</div>
+<p>明白了Float Number的计算方法之后，我们来看看几种常见的数据类型及其内存占用。</p>
+<section id="float32" class="level4" data-number="1.1.1.1">
+<h4 data-number="1.1.1.1" class="anchored" data-anchor-id="float32"><span class="header-section-number">1.1.1.1</span> Float32</h4>
+<div id="fig-illustration-float32" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-illustration-float32-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/float32.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-illustration-float32-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Float32 使用32位 (4字节) 来表示一个浮点数。它由1位符号位、8位指数位和23位尾数位组成，可以表示大约7位十进制有效数字。
+</figcaption>
+</figure>
+</div>
+<p>Float32 也叫 single precision 是深度学习中最常用的数据类型，几乎所有的深度学习框架都默认使用 Float32 作为张量的数据类型。 Float32 可以表示的数值范围大约在 1.18e-38 到 3.4e+38 之间，足以满足大多数深度学习任务的需求。</p>
+<div class="sourceCode" id="cb2" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1"></a>x <span class="op">=</span> torch.tensor([<span class="fl">1.0</span>, <span class="fl">2.0</span>, <span class="fl">3.0</span>])</span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="bu">print</span>(x.dtype)  <span class="co"># 输出: torch.float32</span></span>
+<span id="cb2-3"><a href="#cb2-3"></a><span class="bu">print</span>(x.element_size())  <span class="co"># 输出: 4 (每个元素占用4字节)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="fig-illustration-float16" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-illustration-float16-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/float16.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-illustration-float16-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Float16 使用16位 (2字节) 来表示一个浮点数。它由1位符号位、5位指数位和10位尾数位组成，可以表示大约3位十进制有效数字。
+</figcaption>
+</figure>
+</div>
+<p>Float16 也叫 half precision，主要用于减少内存占用和加速计算。相比于 Float32，Float16 可以显著降低内存使用量，从而允许我们训练更大的模型或者使用更大的批量大小 (Batch Size)。</p>
+<p>Float16 可以表示的数值范围大约在 6.1e-5 到 6.5e+4 之间，相比于 Float32 有一定的限制，尤其是在表示非常小或者非常大的数值时可能会出现溢出（Overflow）或者下溢（Underflow）的问题。当这个问题出现时，我们可能会出现<code>NaN</code>的情况，由此导致训练失败。</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>当我们训练神经网络时，损失函数出现<code>NaN</code>的情况，通常是因为数值溢出或者下溢导致的。</p>
+</div>
+</div>
+<div class="sourceCode" id="cb3" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1"></a>In [<span class="dv">14</span>]: x <span class="op">=</span> torch.tensor([<span class="fl">1e-8</span>], dtype<span class="op">=</span>torch.float16)</span>
+<span id="cb3-2"><a href="#cb3-2"></a></span>
+<span id="cb3-3"><a href="#cb3-3"></a>In [<span class="dv">15</span>]: x</span>
+<span id="cb3-4"><a href="#cb3-4"></a>Out[<span class="dv">15</span>]: tensor([<span class="fl">0.</span>], dtype<span class="op">=</span>torch.float16)</span>
+<span id="cb3-5"><a href="#cb3-5"></a></span>
+<span id="cb3-6"><a href="#cb3-6"></a>In [<span class="dv">8</span>]: x <span class="op">=</span> torch.tensor([<span class="fl">1e+8</span>], dtype<span class="op">=</span>torch.float16)</span>
+<span id="cb3-7"><a href="#cb3-7"></a></span>
+<span id="cb3-8"><a href="#cb3-8"></a>In [<span class="dv">9</span>]: x</span>
+<span id="cb3-9"><a href="#cb3-9"></a>Out[<span class="dv">9</span>]: tensor([inf], dtype<span class="op">=</span>torch.float16)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="bfloat16" class="level4" data-number="1.1.1.2">
+<h4 data-number="1.1.1.2" class="anchored" data-anchor-id="bfloat16"><span class="header-section-number">1.1.1.2</span> BFloat16</h4>
+<div id="fig-illustration-bfloat16" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-illustration-bfloat16-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/bfloat16.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-illustration-bfloat16-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: BFloat16 使用16位 (2字节) 来表示一个浮点数。它由1位符号位、8位指数位和7位尾数位组成，可以表示大约3位十进制有效数字。
+</figcaption>
+</figure>
+</div>
+<p>Google 在2018年提出了 BFloat16 (Brain Float Point 16) 数据类型，主要用于深度学习加速。相比于 Float16，BFloat16 保留了与 Float32 相同的指数位长度，因此可以表示更大的数值范围，从而减少了溢出和下溢的风险。相对于Float32， BFloat16 的精度较低，但在许多深度学习任务中，BFloat16 的精度已经足够使用。</p>
+<div class="sourceCode" id="cb4" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1"></a>In [<span class="dv">11</span>]: x</span>
+<span id="cb4-2"><a href="#cb4-2"></a>Out[<span class="dv">11</span>]: tensor([<span class="fl">1.0014e+08</span>], dtype<span class="op">=</span>torch.bfloat16)</span>
+<span id="cb4-3"><a href="#cb4-3"></a></span>
+<span id="cb4-4"><a href="#cb4-4"></a>In [<span class="dv">12</span>]: x <span class="op">=</span> torch.tensor([<span class="fl">1e-8</span>], dtype<span class="op">=</span>torch.bfloat16)</span>
+<span id="cb4-5"><a href="#cb4-5"></a></span>
+<span id="cb4-6"><a href="#cb4-6"></a>In [<span class="dv">13</span>]: x</span>
+<span id="cb4-7"><a href="#cb4-7"></a>Out[<span class="dv">13</span>]: tensor([<span class="fl">1.0012e-08</span>], dtype<span class="op">=</span>torch.bfloat16)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1"></a>In [<span class="dv">16</span>]: torch.finfo(torch.float32)</span>
+<span id="cb5-2"><a href="#cb5-2"></a>Out[<span class="dv">16</span>]: finfo(resolution<span class="op">=</span><span class="fl">1e-06</span>, <span class="bu">min</span><span class="op">=-</span><span class="fl">3.40282e+38</span>, <span class="bu">max</span><span class="op">=</span><span class="fl">3.40282e+38</span>, eps<span class="op">=</span><span class="fl">1.19209e-07</span>, smallest_normal<span class="op">=</span><span class="fl">1.17549e-38</span>, tiny<span class="op">=</span><span class="fl">1.17549e-38</span>, dtype<span class="op">=</span>float32)</span>
+<span id="cb5-3"><a href="#cb5-3"></a></span>
+<span id="cb5-4"><a href="#cb5-4"></a>In [<span class="dv">17</span>]: torch.finfo(torch.float16)</span>
+<span id="cb5-5"><a href="#cb5-5"></a>Out[<span class="dv">17</span>]: finfo(resolution<span class="op">=</span><span class="fl">0.001</span>, <span class="bu">min</span><span class="op">=-</span><span class="dv">65504</span>, <span class="bu">max</span><span class="op">=</span><span class="dv">65504</span>, eps<span class="op">=</span><span class="fl">0.000976562</span>, smallest_normal<span class="op">=</span><span class="fl">6.10352e-05</span>, tiny<span class="op">=</span><span class="fl">6.10352e-05</span>, dtype<span class="op">=</span>float16)</span>
+<span id="cb5-6"><a href="#cb5-6"></a></span>
+<span id="cb5-7"><a href="#cb5-7"></a>In [<span class="dv">18</span>]: torch.finfo(torch.bfloat16)</span>
+<span id="cb5-8"><a href="#cb5-8"></a>Out[<span class="dv">18</span>]: finfo(resolution<span class="op">=</span><span class="fl">0.01</span>, <span class="bu">min</span><span class="op">=-</span><span class="fl">3.38953e+38</span>, <span class="bu">max</span><span class="op">=</span><span class="fl">3.38953e+38</span>, eps<span class="op">=</span><span class="fl">0.0078125</span>, smallest_normal<span class="op">=</span><span class="fl">1.17549e-38</span>, tiny<span class="op">=</span><span class="fl">1.17549e-38</span>, dtype<span class="op">=</span>bfloat16)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="fp8" class="level4" data-number="1.1.1.3">
+<h4 data-number="1.1.1.3" class="anchored" data-anchor-id="fp8"><span class="header-section-number">1.1.1.3</span> FP8</h4>
+<p>FP8 是一种8位浮点数表示方法，通常用于极端内存受限的场景（比如将模型部署到边缘设备）。FP8 有两种主要格式：E4M3 和 E5M2。</p>
+<div id="fig-illustration-fp8" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-illustration-fp8-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/fp8.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-illustration-fp8-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: FP8 使用8位 (1字节) 来表示一个浮点数。E4M3 由1位符号位、4位指数位和3位尾数位组成；E5M2 由1位符号位、5位指数位和2位尾数位组成。
+</figcaption>
+</figure>
+</div>
+<p>E4M3 (range [-448, 448]) and E5M2 ([-57344, 57344]).</p>
+</section>
+<section id="other-data-types" class="level4" data-number="1.1.1.4">
+<h4 data-number="1.1.1.4" class="anchored" data-anchor-id="other-data-types"><span class="header-section-number">1.1.1.4</span> Other Data Types</h4>
+<p>除了上述几种常见的数据类型之外，还有一些其他的数据类型，比如 <code>int8</code> 和 <code>int4</code>。这些数据类型通常用于量化 (Quantization) 技术，通过将浮点数转换为整数来减少内存占用和加速计算。</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Data Type</th>
+<th>Description</th>
+<th>Bits per Value</th>
+<th>Bytes per Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>float32</code></td>
+<td>Single Precision</td>
+<td>32</td>
+<td>4</td>
+</tr>
+<tr class="even">
+<td><code>float16</code></td>
+<td>Half Precision</td>
+<td>16</td>
+<td>2</td>
+</tr>
+<tr class="odd">
+<td><code>bfloat16</code></td>
+<td>Brain Float</td>
+<td>16</td>
+<td>2</td>
+</tr>
+<tr class="even">
+<td><code>int8</code></td>
+<td>8-bit Integer</td>
+<td>8</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td><code>int4</code></td>
+<td>4-bit Integer</td>
+<td>4</td>
+<td>0.5</td>
+</tr>
+</tbody>
+</table>
+<p>我们可以看到，不同的数据类型有不同的内存占用。选择合适的数据类型可以帮助我们在内存受限的情况下训练更大的模型或者使用更大的批量大小：</p>
+<ul>
+<li>用 <code>float32</code> 进行训练，适用于大多数任务，但内存占用较高。</li>
+<li>用 <code>float16</code> 进行训练，可以显著减少内存占用，但需要注意数值溢出和下溢的问题。</li>
+<li>用 <code>bfloat16</code> 进行训练，可以在减少内存占用的同时，保持较大的数值范围，适用于大多数深度学习任务。</li>
+<li>用 <code>int8</code> 或 <code>int4</code> 进行量化训练，可以极大地减少内存占用，但需要进行额外的量化和反量化操作，适用于部署阶段。</li>
+</ul>
+<p>因此在训练的过程中，我们通常采用一种Mixed Precision Training的方法，来平衡内存占用和数值精度的问题。</p>
+</section>
+</section>
+</section>
+<section id="compute-accounting" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="compute-accounting"><span class="header-section-number">1.2</span> Compute Accounting</h2>
+<p>在了解了内存占用之后，我们来看看计算资源的需求。计算资源主要取决于模型的参数量和训练数据的规模。</p>
+<section id="tensor-on-gpus" class="level3" data-number="1.2.1">
+<h3 data-number="1.2.1" class="anchored" data-anchor-id="tensor-on-gpus"><span class="header-section-number">1.2.1</span> Tensor on GPUs</h3>
+<p>当我们创建一个 Tensor 时，它默认是在 CPU 上创建的。如果我们想要在 GPU 上进行计算，需要将 Tensor 移动到 GPU 上：</p>
+<div class="sourceCode" id="cb6" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1"></a>x <span class="op">=</span> torch.tensor([<span class="fl">1.0</span>, <span class="fl">2.0</span>, <span class="fl">3.0</span>])</span>
+<span id="cb6-2"><a href="#cb6-2"></a>x.device  <span class="co"># 输出: cpu</span></span>
+<span id="cb6-3"><a href="#cb6-3"></a>x <span class="op">=</span> x.cuda()  <span class="co"># 将 Tensor 移动到 GPU 上</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a>x.device  <span class="co"># 输出: cuda:0</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="fig-cpu-to-gpu" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cpu-to-gpu-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/cpu-to-gpu.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cpu-to-gpu-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: 我们将Tensor从CPU的RAM上，移动到DRAM上。
+</figcaption>
+</figure>
+</div>
+<p>我们可以通过以下方式创建一个直接在 GPU 上的 Tensor：</p>
+<div class="sourceCode" id="cb7" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1"></a>x <span class="op">=</span> torch.tensor([<span class="fl">1.0</span>, <span class="fl">2.0</span>, <span class="fl">3.0</span>], device<span class="op">=</span><span class="st">'cuda'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>可以通过GPU的内存情况来查看当前 GPU 上的内存使用情况：</p>
+<div class="sourceCode" id="cb8" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1"></a><span class="im">import</span> torch</span>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="bu">print</span>(torch.cuda.memory_summary())</span>
+<span id="cb8-3"><a href="#cb8-3"></a>memory_allocated <span class="op">=</span> torch.cuda.memory_allocated() </span>
+<span id="cb8-4"><a href="#cb8-4"></a>x <span class="op">=</span> torch.tensor([<span class="fl">1.0</span>, <span class="fl">2.0</span>, <span class="fl">3.0</span>], device<span class="op">=</span><span class="st">'cuda'</span>)</span>
+<span id="cb8-5"><a href="#cb8-5"></a>memory_allocated_after <span class="op">=</span> torch.cuda.memory_allocated()</span>
+<span id="cb8-6"><a href="#cb8-6"></a><span class="bu">print</span>(<span class="ss">f"Memory allocated before: </span><span class="sc">{</span>memory_allocated<span class="sc">}</span><span class="ss">, after: </span><span class="sc">{</span>memory_allocated_after<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="tensor-operations" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="tensor-operations"><span class="header-section-number">1.3</span> Tensor Operations</h2>
+<p>PyTorch Tensor 是一个Pointer，指向一块连续的内存区域。我们可以通过strides来访问Tensor中的数据。</p>
+<div id="fig-" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig--caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/tensor-storage.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig--caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8
+</figcaption>
+</figure>
+</div>
+<p>Tensor 有很多操作，比如 reshape, permute, transpose 等等。这些操作通常不会改变数据的存储方式，而是通过修改 strides 来实现对数据的不同视图 (View)。这是十分高效的，因为我们不需要进行数据的复制 (Copy)，只需要修改 Tensor 的元数据 (Metadata)。不过需要小心的是，当我们修改 Tensor 的数据时，可能会影响到原始数据，因为它们共享同一块内存区域。</p>
+<p>有一些操作会导致数据变得不连续 (Non-Contiguous)，比如 transpose 和 permute。这些操作会改变数据的存储顺序，从而导致数据在内存中不再是连续存储的。这时，我们可以使用 <code>contiguous()</code> 方法来创建一个新的连续存储的 Tensor。</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>.transpose().contiguous()</code> 的操作我们在一 Attention 的计算中经常会用到。</p>
+</div>
+</div>
+<p>Element-wise 操作 (比如加法、乘法等) 通常要求输入的 Tensor 是连续存储的。如果输入的 Tensor 是不连续的，PyTorch 会自动调用 <code>contiguous()</code> 方法来创建一个新的连续存储的 Tensor，从而保证操作的正确性。，比如：</p>
+<div class="sourceCode" id="cb9" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1"></a>x <span class="op">=</span> torch.tensor([<span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">9</span>])</span>
+<span id="cb9-2"><a href="#cb9-2"></a>x.<span class="bu">pow</span>(<span class="dv">2</span>)</span>
+<span id="cb9-3"><a href="#cb9-3"></a>x.sqrt()</span>
+<span id="cb9-4"><a href="#cb9-4"></a>x.rsqrt()</span>
+<span id="cb9-5"><a href="#cb9-5"></a>x <span class="op">+</span> x </span>
+<span id="cb9-6"><a href="#cb9-6"></a>x <span class="op">*</span> <span class="dv">2</span></span>
+<span id="cb9-7"><a href="#cb9-7"></a>x.triu()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="matrix-multiplication" class="level3" data-number="1.3.1">
+<h3 data-number="1.3.1" class="anchored" data-anchor-id="matrix-multiplication"><span class="header-section-number">1.3.1</span> Matrix Multiplication</h3>
+<p>最重要的也是最常用的操作之一是矩阵乘法 (Matrix Multiplication)，在深度学习中，矩阵乘法被广泛应用于神经网络的前向传播和反向传播过程中。</p>
+<div class="sourceCode" id="cb10" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1"></a>A <span class="op">=</span> torch.randn(<span class="dv">3</span>, <span class="dv">4</span>)</span>
+<span id="cb10-2"><a href="#cb10-2"></a>B <span class="op">=</span> torch.randn(<span class="dv">4</span>, <span class="dv">5</span>)</span>
+<span id="cb10-3"><a href="#cb10-3"></a>C <span class="op">=</span> torch.matmul(A, B)  <span class="co"># C 的形状为 (3,5)</span></span>
+<span id="cb10-4"><a href="#cb10-4"></a>C <span class="op">=</span> A <span class="op">@</span> B  <span class="co"># 另一种矩阵乘法的写法</span></span>
+<span id="cb10-5"><a href="#cb10-5"></a>C <span class="op">=</span> A.mm(B)  <span class="co"># 另一种矩阵乘法的写法</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="gradient-calculation" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="gradient-calculation"><span class="header-section-number">1.4</span> Gradient Calculation</h2>
+<p>了解了矩阵乘法之后，我们来看看如何计算梯度 (Gradient)。在深度学习中，梯度是用来更新模型参数的关键。PyTorch 提供了自动微分 (Autograd) 功能，可以自动计算张量的梯度。</p>
+<p>假设我们有个简单的神经网络层：</p>
+<p><span class="math display">\[
+Y = 0.5 * (X  W - 5)^2
+\]</span></p>
+<p>在前置的传播过程中，我们计算输出 Y：</p>
+<div class="sourceCode" id="cb11" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1"></a>x <span class="op">=</span> torch.randn([<span class="fl">1.</span>, <span class="dv">2</span>, <span class="dv">3</span>])  <span class="co"># 输入张量 X</span></span>
+<span id="cb11-2"><a href="#cb11-2"></a>w <span class="op">=</span> torch.randn([<span class="fl">1.</span>, <span class="dv">2</span>, <span class="dv">3</span>], requires_grad<span class="op">=</span><span class="va">True</span>)  <span class="co"># 权重张</span></span>
+<span id="cb11-3"><a href="#cb11-3"></a>y <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> (x <span class="op">@</span> w <span class="op">-</span> <span class="dv">5</span>) <span class="op">**</span> <span class="dv">2</span>  <span class="co"># 前向传播计算输出 Y</span></span>
+<span id="cb11-4"><a href="#cb11-4"></a>pred_y <span class="op">=</span> x <span class="op">@</span> w</span>
+<span id="cb11-5"><a href="#cb11-5"></a>loss <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> (pred_y <span class="op">-</span> <span class="dv">5</span>) <span class="op">**</span> <span class="dv">2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>在反向传播过程中，我们计算梯度：</p>
+<div class="sourceCode" id="cb12" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1"></a>loss.backward()  <span class="co"># 反向传播计算梯度</span></span>
+<span id="cb12-2"><a href="#cb12-2"></a><span class="bu">print</span>(w.grad)  <span class="co"># 输出权重 w 的梯度</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="summary" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="summary"><span class="header-section-number">1.5</span> Summary</h2>
+<p>Forward Pass: 2 * Number of data points * Number of parameters Backward Pass: 4 * Number of data points * Number of parameters</p>
+<p>Total: 6 * Number of data points * Number of parameters</p>
+<section id="einops-library" class="level3" data-number="1.5.1">
+<h3 data-number="1.5.1" class="anchored" data-anchor-id="einops-library"><span class="header-section-number">1.5.1</span> <code>Einops</code> Library</h3>
+<p>在处理高维张量时，张量的重排 (Rearrangement) 和变形 (Reshaping) 是非常常见的操作。传统的方法通常需要多行代码，并且容易出错。<code>einops</code> 是一个强大的库，可以简化这些操作，使代码更加简洁和易读。</p>
 <div class="quarto-video"><video id="video_shortcode_videojs_video1" class="video-js vjs-default-skin vjs-fluid" controls="" preload="auto" data-setup="{}" title=""><source src="./assets/einops-video.mp4"></video></div>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -430,13 +849,99 @@ Tip
 <p>如果以上的内容比较难以理解的话，可以访问这个<a href="https://einops.rocks/1-einops-basics/">链接</a>。 里面有非常详细的<code>einops</code>教程，包含了很多例子和可视化的图示。</p>
 </div>
 </div>
+<p>在这里就不具体展开了。</p>
+</section>
+</section>
+<section id="tensor-flops" class="level2" data-number="1.6">
+<h2 data-number="1.6" class="anchored" data-anchor-id="tensor-flops"><span class="header-section-number">1.6</span> Tensor Flops</h2>
+<p>了解了内存占用和计算资源之后，我们来看看如何计算 Tensor 的 FLOPs (Floating Point Operations)。FLOPs 是衡量计算复杂度的一个重要指标，表示每秒钟可以执行多少次浮点运算。其中两个常见的指标是：</p>
+<ul>
+<li>FLOPs: 总共需要执行的浮点运算次数</li>
+<li>FLOP/s 也写作FLOPS： 每秒钟可以执行的浮点运算次数</li>
+</ul>
+<p>对于两个 矩阵 A (形状为 m x n) 和 B (形状为 n x p) 的矩阵乘法 C = A @ B，我们可以计算出 FLOPs 如下： <span class="math display">\[
+FLOPs = 2 * m * n * p
+\]</span></p>
+<p>其中，乘法操作需要 m * n * p 次， 加法操作也需要 m * n * p 次，因此总共需要 2 * m * n * p 次浮点运算。</p>
+<p>对于其他的张量操作，我们也可以类似地计算 FLOPs。了解 FLOPs 可以帮助我们评估模型的计算复杂度，从而优化模型设计和训练过程。比如：</p>
+<ul>
+<li>Element-wise 操作 (比如加法、乘法等) 的 FLOPs 通常与张量的元素数量成正比 <span class="math inline">\(\mathcal{O}(m \times n)\)</span></li>
+<li>Addition of two matrices of shape (m, n): FLOPs = m * n</li>
+</ul>
+<p>由此可见，矩阵乘法的计算复杂度远高于 Element-wise 操作，因此在设计模型时，我们通常会尽量减少矩阵乘法的次数，从而降低计算复杂度。</p>
+</section>
+</section>
+<section id="model-training" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Model Training</h1>
+<p>在了解了张量操作和梯度计算之后，我们来看看如何训练一个模型。模型训练通常包括以下几个步骤：</p>
+<ul>
+<li>Model Definition</li>
+<li>Parameter Initialization</li>
+<li>Optimizer Selection</li>
+<li>Loss Function</li>
+<li>Training Loop</li>
+</ul>
+<p>接下来我们就逐一介绍这些步骤。</p>
+<section id="model-definition" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="model-definition"><span class="header-section-number">2.1</span> Model definition</h2>
+<p>首先，我们需要定义一个模型。模型通常由多个层 (Layer) 组成，每个层都有自己的参数 (Parameters)。</p>
+</section>
+<section id="parameter-initialization" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="parameter-initialization"><span class="header-section-number">2.2</span> Parameter initialization</h2>
+<p>定义好模型之后，我们需要初始化模型的参数。参数的初始化方式会影响模型的训练效果和收敛速度。常见的初始化方法有随机初始化 (Random Initialization)、Xavier 初始化 (Xavier Initialization) 和 He 初始化 (He Initialization) 等等。</p>
+<p>许多加速器（比如 GPU 和 TPU）都对矩阵乘法进行了高度优化，利用并行计算和专用硬件单元来加速矩阵乘法的计算过程。因此，在深度学习中，尽量将计算任务转化为矩阵乘法，可以显著提升计算效率。</p>
+</section>
+<section id="optimizer-selection" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="optimizer-selection"><span class="header-section-number">2.3</span> Optimizer Selection</h2>
+<p>在训练模型时，我们需要选择一个优化器 (Optimizer) 来更新模型的参数。 常见的优化器有随机梯度下降 (SGD)、动量法 (Momentum)、Adam 和 AdamW 等等。不同的优化器有不同的更新规则和超参数 (Hyperparameters)，选择合适的优化器可以帮助我们更快地收敛到最优解。</p>
+</section>
+<section id="loss-function" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="loss-function"><span class="header-section-number">2.4</span> Loss Function</h2>
+<p>在训练模型时，我们需要定义一个损失函数 (Loss Function) 来衡量模型的预测结果与真实标签之间的差距。常见的损失函数有均方误差 (Mean Squared Error, MSE)、交叉熵损失 (Cross Entropy Loss) 等等。选择合适的损失函数可以帮助我们更好地优化</p>
+</section>
+<section id="training-loop" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="training-loop"><span class="header-section-number">2.5</span> Training Loop</h2>
+<p>当我们定义好模型、初始化参数、选择优化器和损失函数之后，我们就可以开始训练模型了。训练过程通常包括以下几个步骤：</p>
+<p>加载数据 (Data Loading): 从数据集中加载训练数据，通常使用批量 (Batch) 的方式进行加载。 前向传播 (Forward Pass): 将输入数据传递给模型，计算模型的输出。 计算损失 (Loss Calculation): 使用损失函数计算模型输出与真实标签之间的差距。 反向传播 (Backward Pass): 计算损失函数相对于模型参数的梯度。 参数更新 (Parameter Update): 使用优化器根据计算得到的梯度更新模型参数。</p>
+<p>重复以上步骤，直到模型收敛或者达到预定的训练轮数 (Epochs)。</p>
+<section id="randomness-control" class="level3" data-number="2.5.1">
+<h3 data-number="2.5.1" class="anchored" data-anchor-id="randomness-control"><span class="header-section-number">2.5.1</span> Randomness Control</h3>
+<p>在训练模型时，随机性 (Randomness) 是不可避免的。比如，参数的初始化、数据的打乱 (Shuffling) 和批量的选择 (Batch Selection)等操作都涉及到随机性。为了保证实验的可重复性 (Reproducibility)，我们通常需要控制随机数生成器 (Random Number Generator, RNG) 的种子 (Seed)。</p>
+<div class="sourceCode" id="cb13" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1"></a><span class="im">import</span> random</span>
+<span id="cb13-2"><a href="#cb13-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb13-3"><a href="#cb13-3"></a><span class="im">import</span> torch</span>
+<span id="cb13-4"><a href="#cb13-4"></a></span>
+<span id="cb13-5"><a href="#cb13-5"></a><span class="kw">def</span> seed_everything(seed):    </span>
+<span id="cb13-6"><a href="#cb13-6"></a>    random.seed(seed)</span>
+<span id="cb13-7"><a href="#cb13-7"></a>    np.random.seed(seed)</span>
+<span id="cb13-8"><a href="#cb13-8"></a>    torch.manual_seed(seed)</span>
+<span id="cb13-9"><a href="#cb13-9"></a>    <span class="cf">if</span> torch.cuda.is_available():</span>
+<span id="cb13-10"><a href="#cb13-10"></a>        torch.cuda.manual_seed_all(seed)</span>
+<span id="cb13-11"><a href="#cb13-11"></a>        torch.backends.cudnn.deterministic <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb13-12"><a href="#cb13-12"></a>        torch.backends.cudnn.benchmark <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb13-13"><a href="#cb13-13"></a>seed_everything(<span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="data-loading" class="level3" data-number="2.5.2">
+<h3 data-number="2.5.2" class="anchored" data-anchor-id="data-loading"><span class="header-section-number">2.5.2</span> Data Loading</h3>
+</section>
+<section id="checkpointing" class="level3" data-number="2.5.3">
+<h3 data-number="2.5.3" class="anchored" data-anchor-id="checkpointing"><span class="header-section-number">2.5.3</span> Checkpointing</h3>
+<p>在训练大型模型时，训练过程可能会非常耗时，并且容易受到各种意外情况的影响，比如断电、系统崩溃等。为了避免训练过程中的数据丢失，我们通常会使用检查点 (Checkpointing) 技术来保存模型的状态。</p>
+<p>Model Checkpointing 通常保存以下几个方面的信息：</p>
+<ul>
+<li>模型参数 (Model Parameters): 保存模型的权重和偏置等参数。</li>
+<li>优化器状态 (Optimizer State): 保存优化器的状态，比如动量 (Momentum ) 和学习率 (Learning Rate) 等信息。</li>
+<li>学习率调度器状态 (Learning Rate Scheduler State): 保存学习率调度器的状态。</li>
+<li>训练进度 (Training Progress): 保存当前的训练轮数 (Epochs) 和批量索引 (Batch Index) 等信息。</li>
+</ul>
+<p>在 GPU 上进行计算时，数据传输的速度通常是一个瓶颈。为了提高数据传输的效率，我们可以使用 Pinned Memory (也叫 Page-Locked Memory)。Pinned Memory 是一种特殊的内存区域，可以加速主机 (Host) 和设备 (Device) 之间的数据传输。</p>
 <div id="fig-pinned-memory" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-pinned-memory-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="./assets/pinned-memory.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pinned-memory-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: 如图所示，Pinned memory 可以作为设备(Device)到主机(Host)拷贝的中转区，直接在 pinned memory 中分配主机数组，就能避免 pageable 内存与 pinned 内存之间的额外拷贝开销，从而提升数据传输效率。
+Figure&nbsp;9: 如图所示，Pinned memory 可以作为设备(Device)到主机(Host)拷贝的中转区，直接在 pinned memory 中分配主机数组，就能避免 pageable 内存与 pinned 内存之间的额外拷贝开销，从而提升数据传输效率。
 </figcaption>
 </figure>
 </div>
@@ -447,28 +952,56 @@ Figure&nbsp;1: 如图所示，Pinned memory 可以作为设备(Device)到主机(
 <li>将 <code>num_workers</code> 设置为大于0: 通过多线程数据加载，提高数据预处理和加载的并行度，减少数据加载时间。</li>
 <li>使用 <code>Pinned Memory</code> 加速主机与设备之间的数据传输: 通过将数据存储在固定内存中，减少数据传输的延迟，提高</li>
 </ol>
-<div class="sourceCode" id="cb1" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a><span class="im">from</span> torch.utils.data <span class="im">import</span> DataLoader</span>
-<span id="cb1-2"><a href="#cb1-2"></a></span>
-<span id="cb1-3"><a href="#cb1-3"></a><span class="co"># some code</span></span>
-<span id="cb1-4"><a href="#cb1-4"></a></span>
-<span id="cb1-5"><a href="#cb1-5"></a>loader <span class="op">=</span> DataLoader(your_dataset, ..., pin_memory<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb1-6"><a href="#cb1-6"></a>data_iter <span class="op">=</span> <span class="bu">iter</span>(loader)</span>
-<span id="cb1-7"><a href="#cb1-7"></a></span>
-<span id="cb1-8"><a href="#cb1-8"></a>next_batch <span class="op">=</span> data_iter.<span class="bu">next</span>() <span class="co"># start loading the first batch</span></span>
-<span id="cb1-9"><a href="#cb1-9"></a>next_batch <span class="op">=</span> [ _.cuda(non_blocking<span class="op">=</span><span class="va">True</span>) <span class="cf">for</span> _ <span class="kw">in</span> next_batch ]  <span class="co"># with pin_memory=True and non_blocking=True, this will copy data to GPU non blockingly</span></span>
-<span id="cb1-10"><a href="#cb1-10"></a></span>
-<span id="cb1-11"><a href="#cb1-11"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(loader)):</span>
-<span id="cb1-12"><a href="#cb1-12"></a>    batch <span class="op">=</span> next_batch </span>
-<span id="cb1-13"><a href="#cb1-13"></a>    <span class="cf">if</span> i <span class="op">+</span> <span class="dv">2</span> <span class="op">!=</span> <span class="bu">len</span>(loader): </span>
-<span id="cb1-14"><a href="#cb1-14"></a>        <span class="co"># start copying data of next batch</span></span>
-<span id="cb1-15"><a href="#cb1-15"></a>        next_batch <span class="op">=</span> data_iter.<span class="bu">next</span>()</span>
-<span id="cb1-16"><a href="#cb1-16"></a>        next_batch <span class="op">=</span> [ _.cuda(<span class="cf">async</span><span class="op">=</span><span class="va">True</span>) <span class="cf">for</span> _ <span class="kw">in</span> next_batch]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb14" data-code-line-numbers=""><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1"></a><span class="im">from</span> torch.utils.data <span class="im">import</span> DataLoader</span>
+<span id="cb14-2"><a href="#cb14-2"></a></span>
+<span id="cb14-3"><a href="#cb14-3"></a><span class="co"># some code</span></span>
+<span id="cb14-4"><a href="#cb14-4"></a></span>
+<span id="cb14-5"><a href="#cb14-5"></a>loader <span class="op">=</span> DataLoader(your_dataset, ..., pin_memory<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb14-6"><a href="#cb14-6"></a>data_iter <span class="op">=</span> <span class="bu">iter</span>(loader)</span>
+<span id="cb14-7"><a href="#cb14-7"></a></span>
+<span id="cb14-8"><a href="#cb14-8"></a>next_batch <span class="op">=</span> data_iter.<span class="bu">next</span>() <span class="co"># start loading the first batch</span></span>
+<span id="cb14-9"><a href="#cb14-9"></a>next_batch <span class="op">=</span> [ _.cuda(non_blocking<span class="op">=</span><span class="va">True</span>) <span class="cf">for</span> _ <span class="kw">in</span> next_batch ]  <span class="co"># with pin_memory=True and non_blocking=True, this will copy data to GPU non blockingly</span></span>
+<span id="cb14-10"><a href="#cb14-10"></a></span>
+<span id="cb14-11"><a href="#cb14-11"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(loader)):</span>
+<span id="cb14-12"><a href="#cb14-12"></a>    batch <span class="op">=</span> next_batch </span>
+<span id="cb14-13"><a href="#cb14-13"></a>    <span class="cf">if</span> i <span class="op">+</span> <span class="dv">2</span> <span class="op">!=</span> <span class="bu">len</span>(loader): </span>
+<span id="cb14-14"><a href="#cb14-14"></a>        <span class="co"># start copying data of next batch</span></span>
+<span id="cb14-15"><a href="#cb14-15"></a>        next_batch <span class="op">=</span> data_iter.<span class="bu">next</span>()</span>
+<span id="cb14-16"><a href="#cb14-16"></a>        next_batch <span class="op">=</span> [ _.cuda(<span class="cf">async</span><span class="op">=</span><span class="va">True</span>) <span class="cf">for</span> _ <span class="kw">in</span> next_batch]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>这几个方法可以显著提升数据传输和加载的效率，尤其在处理大规模数据集时效果尤为明显。在我们完成Assignment 01时，会用到这些技巧来优化数据加载过程。</p>
+</section>
+<section id="mixed-precision-training" class="level3" data-number="2.5.4">
+<h3 data-number="2.5.4" class="anchored" data-anchor-id="mixed-precision-training"><span class="header-section-number">2.5.4</span> Mixed Precision Training</h3>
+<p>在之前的内容中，我们介绍了不同的数据类型及其内存占用。在实际的模型训练过程中，我们通常会采用混合精度训练 (Mixed Precision Training) 的方法，来平衡内存占用和数值精度的问题。</p>
+<p>那那些需要混合精度训练呢？通常在以下几种情况下，我们会考虑使用混合精度训练：</p>
+<ul>
+<li><code>bfloat16</code> 或者 <code>fp8</code> 作为前向的计算数据类型（activations）</li>
+<li><code>float32</code> 作为梯度计算的数据类型, 并且是用 <code>float32</code> 来更新参数</li>
+<li>优化器状态 (Optimizer States) 使用 <code>float32</code> 来存储</li>
+</ul>
+<p><span class="citation" data-cites="MixedPrecisionTraining2018micikevicius">Micikevicius et al. (<a href="#ref-MixedPrecisionTraining2018micikevicius" role="doc-biblioref">2018</a>)</span> 提出了一种混合精度训练的方法，称为 Loss Scaling。Loss Scaling 的基本思想是通过放大损失函数的值，来避免在使用低精度数据类型时出现数值下溢 (Underflow) 的问题。</p>
+<p>Loss Scaling 的具体步骤如下：</p>
+<ol type="1">
+<li>在前向传播过程中，计算损失函数的值，并将其乘以一个放大因子 (Scaling Factor)。</li>
+<li>在反向传播过程中，计算梯度，并将其除以放大因子。</li>
+<li>使用优化器更新模型参数。 不过，当我们用 <code>bfloat16</code> 进行前向计算时，我们可以不需要使用 Loss Scaling，因为 <code>bfloat16</code> 已经有足够的数值范围来避免下溢的问题。</li>
+</ol>
+</section>
+</section>
+</section>
+<section id="summary-1" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Summary</h1>
+<p>在本节课中，我们介绍了 PyTorch 的基础知识和一些实用的工具库，比如 <code>einops</code>。课程内容涵盖了张量操作、数据类型、优化器等方面的内容。通过 Resource Accounting，我们可以更好地理解模型训练的资源需求，从而优化模型设计和训练过程。希望大家能够通过本节课的学习，更好地掌握 PyTorch 的使用方法，并且能够应用到实际的深度学习任务中去。</p>
+
 
 
 </section>
 
-<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-MixedPrecisionTraining2018micikevicius" class="csl-entry" role="listitem">
+Micikevicius, Paulius, Sharan Narang, Jonah Alben, Gregory Diamos, Erich Elsen, David Garcia, Boris Ginsburg, et al. 2018. <span>“Mixed <span>Precision Training</span>.”</span> arXiv. <a href="https://doi.org/10.48550/arXiv.1710.03740">https://doi.org/10.48550/arXiv.1710.03740</a>.
+</div>
+</div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     // Ensure there is a toggle, if there isn't float one in the top right
