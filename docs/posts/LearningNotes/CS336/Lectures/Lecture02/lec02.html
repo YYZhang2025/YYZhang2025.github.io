@@ -884,7 +884,20 @@ FLOPs = 2 * m * n * p
 <p>接下来我们就逐一介绍这些步骤。</p>
 <section id="model-definition" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="model-definition"><span class="header-section-number">2.1</span> Model definition</h2>
-<p>首先，我们需要定义一个模型。模型通常由多个层 (Layer) 组成，每个层都有自己的参数 (Parameters)。</p>
+<p>首先，我们需要定义一个模型。模型通常由多个层 (Layer) 组成，每个层都有自己的参数 (Parameters)。现代的LLM模型通常是基于 Transformer <span class="citation" data-cites="AttentionAllYou2023vaswani">(<a href="#ref-AttentionAllYou2023vaswani" role="doc-biblioref">Vaswani et al. 2023</a>)</span> 架构构建的。 具体的内容，会在Lecture 03中详细介绍，在这里就先不展开了。</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>对于Transformer比较陌生的同学，可以参考我这一篇笔记 <a href="https://yyzhang2025.github.io/posts/PapersWithCode/01-transformer/Transformer.html">100-Paper with Code: 01 Transformer</a></p>
+</div>
+</div>
 </section>
 <section id="parameter-initialization" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="parameter-initialization"><span class="header-section-number">2.2</span> Parameter initialization</h2>
@@ -1000,6 +1013,9 @@ Figure&nbsp;9: 如图所示，Pinned memory 可以作为设备(Device)到主机(
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-MixedPrecisionTraining2018micikevicius" class="csl-entry" role="listitem">
 Micikevicius, Paulius, Sharan Narang, Jonah Alben, Gregory Diamos, Erich Elsen, David Garcia, Boris Ginsburg, et al. 2018. <span>“Mixed <span>Precision Training</span>.”</span> arXiv. <a href="https://doi.org/10.48550/arXiv.1710.03740">https://doi.org/10.48550/arXiv.1710.03740</a>.
+</div>
+<div id="ref-AttentionAllYou2023vaswani" class="csl-entry" role="listitem">
+Vaswani, Ashish, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, and Illia Polosukhin. 2023. <span>“Attention <span>Is All You Need</span>.”</span> arXiv. <a href="https://doi.org/10.48550/arXiv.1706.03762">https://doi.org/10.48550/arXiv.1706.03762</a>.
 </div>
 </div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
