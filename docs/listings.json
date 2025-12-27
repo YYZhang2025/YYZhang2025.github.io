@@ -1,17 +1,28 @@
 [
   {
-    "listing": "/posts/LearningNotes/CS336/index.html",
+    "listing": "/posts/LearningNotes/DLFaC/index.html",
     "items": [
-      "/posts/LearningNotes/CS336/Lectures/Lecture01/lec01.html",
-      "/posts/LearningNotes/CS336/Lectures/Lecture02/lec02.html",
-      "/posts/LearningNotes/CS336/Lectures/Lecture03/lec03.html",
-      "/posts/LearningNotes/CS336/Assignments/Ass01/ass01.html"
+      "/posts/LearningNotes/DLFaC/Chapter01/Chapter01.html"
     ]
   },
   {
-    "listing": "/posts/LearningNotes/LLM-Series/index.html",
+    "listing": "/posts/Projects/projects_index.html",
     "items": [
-      "/posts/LearningNotes/LLM-Series/Qwen/Qwen.html"
+      "/posts/Projects/Qwen3-VL/Qwen3-VL.html",
+      "/posts/Projects/PaliGemma/pali-gemma.html"
+    ]
+  },
+  {
+    "listing": "/posts/Blogs/blogs_index.html",
+    "items": [
+      "/posts/Blogs/KL-Divergence/post.html",
+      "/posts/Blogs/Learnings-in-DeepLearning/post.html",
+      "/posts/Blogs/Position-Embedding/post.html",
+      "/posts/Blogs/Diffusion-Models/Diffusion-Model.html",
+      "/posts/Blogs/LLM-Alignment/post.html",
+      "/posts/Blogs/LLM-Inference/post.html",
+      "/posts/Blogs/LLM-Architecture/LLM-Architecture.html",
+      "/posts/Blogs/Speed-up-training/post.html"
     ]
   },
   {
@@ -29,29 +40,18 @@
     ]
   },
   {
-    "listing": "/posts/Blogs/blogs_index.html",
+    "listing": "/posts/LearningNotes/LLM-Series/index.html",
     "items": [
-      "/posts/Blogs/KL-Divergence/post.html",
-      "/posts/Blogs/Learnings-in-DeepLearning/post.html",
-      "/posts/Blogs/Position-Embedding/post.html",
-      "/posts/Blogs/Diffusion-Models/Diffusion-Model.html",
-      "/posts/Blogs/LLM-Alignment/post.html",
-      "/posts/Blogs/LLM-Inference/post.html",
-      "/posts/Blogs/LLM-Architecture/LLM-Architecture.html",
-      "/posts/Blogs/Speed-up-training/post.html"
+      "/posts/LearningNotes/LLM-Series/Qwen/Qwen.html"
     ]
   },
   {
-    "listing": "/posts/Projects/projects_index.html",
+    "listing": "/posts/LearningNotes/CS336/index.html",
     "items": [
-      "/posts/Projects/Qwen3-VL/Qwen3-VL.html",
-      "/posts/Projects/PaliGemma/pali-gemma.html"
-    ]
-  },
-  {
-    "listing": "/posts/LearningNotes/DLFaC/index.html",
-    "items": [
-      "/posts/LearningNotes/DLFaC/Chapter01/Chapter01.html"
+      "/posts/LearningNotes/CS336/Lectures/Lecture01/lec01.html",
+      "/posts/LearningNotes/CS336/Lectures/Lecture02/lec02.html",
+      "/posts/LearningNotes/CS336/Lectures/Lecture03/lec03.html",
+      "/posts/LearningNotes/CS336/Assignments/Ass01/ass01.html"
     ]
   }
 ]

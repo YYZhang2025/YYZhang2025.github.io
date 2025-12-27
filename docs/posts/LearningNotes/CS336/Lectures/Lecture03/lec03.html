@@ -22,7 +22,27 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../../../../../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -44,9 +64,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="../../../../../site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../../../site_libs/bootstrap/bootstrap-250da2873d24a44421c68a14153694c9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../../../site_libs/bootstrap/bootstrap-dark-691cf8fecc09a563af4b8b275f310845.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../../../../../site_libs/bootstrap/bootstrap-250da2873d24a44421c68a14153694c9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-859f99caab0bec132077bcc433b53446.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-dark-970c7fc97ae78f6c1e7458e7c69915e7.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../../../../site_libs/bootstrap/bootstrap-859f99caab0bec132077bcc433b53446.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <link href="../../../../../site_libs/quarto-contrib/line-highlight-1.0.0/line-highlight.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
@@ -78,11 +98,41 @@ ul.task-list li input[type="checkbox"] {
 <link href="https://fonts.cdnfonts.com/css/cmu-sans-serif" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../../../../../style/styles.css">
 <link rel="stylesheet" href="../../../../../style/callout.css">
 <meta property="og:title" content="Lecture 03: LM Model Architecture &amp; Hyperparameters">
 <meta property="og:description" content="Lecture03 介绍了现代大语言模型的核心架构与超参数设计。课程对比了原始 Transformer 与主流 LLaMA-like 架构，总结了 pre-norm、RMSNorm、SwiGLU、RoPE 等关键设计的经验共识，并结合大量近期模型实践，讲解了 MLP 宽度比例、注意力头配置、模型深宽比与词表规模等超参数选择原则。同时还介绍了 z-loss、QK-Norm、MQA/GQA 等用于提升训练稳定性和推理效率的关键技巧。">
+<meta property="og:image" content="./assets/lec03-overview.png">
 </head>
 
 <body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
@@ -328,7 +378,33 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
-    
+    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#transformer-架构回顾" id="toc-transformer-架构回顾" class="nav-link active" data-scroll-target="#transformer-架构回顾"><span class="header-section-number">1</span> Transformer 架构回顾</a></li>
+  <li><a href="#现代大语言模型架构改进" id="toc-现代大语言模型架构改进" class="nav-link" data-scroll-target="#现代大语言模型架构改进"><span class="header-section-number">2</span> 现代大语言模型架构改进</a>
+  <ul>
+  <li><a href="#normalization" id="toc-normalization" class="nav-link" data-scroll-target="#normalization"><span class="header-section-number">2.1</span> Normalization</a>
+  <ul>
+  <li><a href="#position-of-normalization" id="toc-position-of-normalization" class="nav-link" data-scroll-target="#position-of-normalization"><span class="header-section-number">2.1.1</span> Position of Normalization</a>
+  <ul class="collapse">
+  <li><a href="#post-norm" id="toc-post-norm" class="nav-link" data-scroll-target="#post-norm"><span class="header-section-number">2.1.1.1</span> Post-Norm</a></li>
+  <li><a href="#pre-norm" id="toc-pre-norm" class="nav-link" data-scroll-target="#pre-norm"><span class="header-section-number">2.1.1.2</span> Pre-Norm</a></li>
+  <li><a href="#other-positions" id="toc-other-positions" class="nav-link" data-scroll-target="#other-positions"><span class="header-section-number">2.1.1.3</span> Other Positions</a></li>
+  </ul></li>
+  <li><a href="#normalization-types" id="toc-normalization-types" class="nav-link" data-scroll-target="#normalization-types"><span class="header-section-number">2.1.2</span> Normalization Types</a></li>
+  </ul></li>
+  <li><a href="#activations" id="toc-activations" class="nav-link" data-scroll-target="#activations"><span class="header-section-number">2.2</span> Activations</a></li>
+  <li><a href="#serial-parallel-mlp" id="toc-serial-parallel-mlp" class="nav-link" data-scroll-target="#serial-parallel-mlp"><span class="header-section-number">2.3</span> Serial &amp; Parallel MLP</a></li>
+  <li><a href="#position-encoding" id="toc-position-encoding" class="nav-link" data-scroll-target="#position-encoding"><span class="header-section-number">2.4</span> Position Encoding</a></li>
+  </ul></li>
+  <li><a href="#hyper-parameters" id="toc-hyper-parameters" class="nav-link" data-scroll-target="#hyper-parameters"><span class="header-section-number">3</span> Hyper-Parameters</a></li>
+  <li><a href="#stability-tricks" id="toc-stability-tricks" class="nav-link" data-scroll-target="#stability-tricks"><span class="header-section-number">4</span> Stability Tricks</a></li>
+  <li><a href="#attentions" id="toc-attentions" class="nav-link" data-scroll-target="#attentions"><span class="header-section-number">5</span> Attentions</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">6</span> Summary</a></li>
+  </ul>
+</nav>
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
@@ -368,10 +444,182 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<p>Lecture 03 介绍了现代大模型的核心架构与不同的超参数设计。这节课是理解大模型的基础，内容比较多，建议多看几遍。 本节课的目标是了解下图中的内容:</p>
+<div id="fig-lecture03-overview" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lecture03-overview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/lec03-overview.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lecture03-overview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: 现代的大语言模型架构。
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>课题的前置条件是理解 Transformer<span class="citation" data-cites="AttentionAllYou2023vaswani">(<a href="#ref-AttentionAllYou2023vaswani" role="doc-biblioref">Vaswani et al. 2023</a>)</span> 模型。 对于那些不理解的同学，可以先学习一下我的这篇文章 <a href="https://yyzhang2025.github.io/posts/PapersWithCode/01-transformer/Transformer.html">100 Paper with Code: Transformer</a>。 在这篇文章中，我详细介绍了 Transformer 的架构与原理，并且配有代码实现，方便大家理解。</p>
+</div>
+</div>
+<section id="transformer-架构回顾" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Transformer 架构回顾</h1>
+<p>我们先回顾一下 Transformer 的基本架构。 Transformer 由 Vaswani 等人在 2017 年提出<span class="citation" data-cites="AttentionAllYou2023vaswani">(<a href="#ref-AttentionAllYou2023vaswani" role="doc-biblioref">Vaswani et al. 2023</a>)</span>，其核心思想是使用自注意力机制来捕捉序列数据中的长距离依赖关系。 Transformer 由 Encoder 和 Decoder 两部分组成，但在大语言模型中，我们通常只使用 Decoder 部分。</p>
+<p>Decoder 由多个相同的层堆叠而成，每一层包括以下几个主要组件:</p>
+<ul>
+<li>位置编码 (Positional Encoding): 用于引入序列中单词的位置信息，因为自注意力机制本身不具备顺序信息。</li>
+<li>多头自注意力机制 (Multi-Head Self-Attention): 允许模型在不同的表示子空间中关注输入序列的不同部分。</li>
+<li>前馈神经网络 (Feed-Forward Neural Network): 通常由两个线性变换和一个非线性激活函数组成，用于对每个位置的表示进行进一步处理。</li>
+<li>残差连接 (Residual Connections)： 有助于缓解深层网络中的梯度消失问题。</li>
+<li>层归一化 (Layer Normalization)： 用于稳定训练过程，提高模型的收敛速度。</li>
+</ul>
+<p>接下来，我们看看现代大语言模型在 Transformer 基础上做了哪些改进。</p>
+</section>
+<section id="现代大语言模型架构改进" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> 现代大语言模型架构改进</h1>
+<section id="normalization" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="normalization"><span class="header-section-number">2.1</span> Normalization</h2>
+<div class="callout-question">
+<p>为什么需要 Normalization？</p>
+<p>Normalization 技术在深度学习中起到了稳定训练过程和加速收敛的作用。 它通过调整神经网络层的输入分布，减少了内部协变量偏移 (Internal Covariate Shift)，从而使得模型在训练过程中更加稳定。此外，Normalization 还可以帮助缓解梯度消失和梯度爆炸问题，提高模型的泛化能力。</p>
+</div>
+<section id="position-of-normalization" class="level3" data-number="2.1.1">
+<h3 data-number="2.1.1" class="anchored" data-anchor-id="position-of-normalization"><span class="header-section-number">2.1.1</span> Position of Normalization</h3>
+<section id="post-norm" class="level4" data-number="2.1.1.1">
+<h4 data-number="2.1.1.1" class="anchored" data-anchor-id="post-norm"><span class="header-section-number">2.1.1.1</span> Post-Norm</h4>
+<p>在Transformer中，Normalization放置在Sublayer之后，也就是所谓的 Post-Norm 结构。用数学公式表示为:</p>
+<p><span id="eq-post-norm"><span class="math display">\[
+\text{Post-Norm: } \quad \text{Norm}(x + \text{Sublayer}(x))
+\tag{1}\]</span></span></p>
+<p>然而，<span class="citation" data-cites="LayerNormalization2016ba">(<a href="#ref-LayerNormalization2016ba" role="doc-biblioref">Ba, Kiros, and Hinton 2016</a>)</span> 指出，Post-Norm存在以下的问题:</p>
+<ul>
+<li>梯度不稳定，特别是在初始化阶段： 论文使用平均场理论分析指出，在 Post-Norm 结构 下（即 LayerNorm 放在残差连接之后），靠近输出层的参数在初始化时梯度期望值很大。 这会导致训练初期梯度爆炸，从而影响模型的稳定性和收敛速度。</li>
+<li>依赖复杂的 warm-up 超参数调优： 由于 Post-Norm 结构在训练初期容易出现梯度不稳定的问题，因此需要使用复杂的学习率 warm-up 策略来缓解这一问题。 这增加了模型训练的复杂性和调优难度。</li>
+</ul>
+<blockquote class="blockquote">
+<p>Specifically, we prove with mean field theory that at initialization, for the original-designed Post-LN Transformer, which places the layer normalization between the residual blocks, <u>the expected gradients of the parameters near the output layer are large. Therefore, using a large learning rate on those gradients makes the training unstable.</u> The warm-up stage is practically helpful for avoiding this problem. <cite> On Layer Normalization in the Transformer Architecture P.1 </cite></p>
+</blockquote>
+</section>
+<section id="pre-norm" class="level4" data-number="2.1.1.2">
+<h4 data-number="2.1.1.2" class="anchored" data-anchor-id="pre-norm"><span class="header-section-number">2.1.1.2</span> Pre-Norm</h4>
+<p>为了缓解 Post-Norm 的问题，<span class="citation" data-cites="LayerNormalization2016ba">(<a href="#ref-LayerNormalization2016ba" role="doc-biblioref">Ba, Kiros, and Hinton 2016</a>)</span> 提出了 Pre-Norm 结构，即将 Normalization 放置在 Sublayer 之前。 用数学公式表示为:</p>
+<p><span id="eq-pre-norm"><span class="math display">\[
+\text{Pre-Norm: } \quad x + \text{Sublayer}(\text{Norm}(x))
+\tag{2}\]</span></span></p>
+<p>下图展示了 Post-Norm 与 Pre-Norm 结构的对比:</p>
+<div id="fig-post-norm-pre-norm" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-post-norm-pre-norm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/post-norm-pre-norm.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-post-norm-pre-norm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Post Norm 与 Pre-Norm 结构对比。
+</figcaption>
+</figure>
+</div>
+<p>Pre-Norm 有以下优点:</p>
+<ul>
+<li>提高训练稳定性： Pre-Norm 结构通过在每个子层之前进行归一化，减少了梯度爆炸和梯度消失的风险，从而提高了训练的稳定性。</li>
+<li>简化超参数调优： 由于 Pre-Norm 结构在训练过程中更加稳定，因此不再需要复杂的学习率 warm-up 策略，简化了模型的训练过程和超参数调优。</li>
+</ul>
+<blockquote class="blockquote">
+<p>We show in our experiments that Pre-LN Transformers without the warm-up stage can reach comparable results with baselines while requiring significantly less training time and hyper-parameter tuning on a wide range of applications. <cite> On Layer Normalization in the Transformer Architecture P.1 </cite></p>
+</blockquote>
+<p>接下来我们来看一下为什么Pre-Norm能有这么多的好处：</p>
+<ul>
+<li>Gradient Attenuation</li>
+</ul>
+<div id="fig-pre-post-norm-gradient-attenuation" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pre-post-norm-gradient-attenuation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/pre-post-norm-gradient-attenuation.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pre-post-norm-gradient-attenuation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: 上图展示了 Pre-Norm 与 Post-Norm Transformer 在梯度行为上的差异。可以看到，在初始化阶段，<u>Post-Norm 会导致靠近输出层的梯度期望值显著增大，而底层梯度被明显削弱</u>，呈现出严重的梯度失衡（gradient attenuation across layers），从而使训练过程极不稳定，必须依赖学习率 warm-up 进行缓解。相比之下，P<u>re-Norm 在初始化时各层梯度规模保持一致且稳定，避免了梯度衰减与爆炸问题</u>。
+</figcaption>
+</figure>
+</div>
+<ul>
+<li>Gradient Spike / Noise</li>
+</ul>
+<p>实验表明 <span class="citation" data-cites="TransformersTearsImproving2019nguyen">(<a href="#ref-TransformersTearsImproving2019nguyen" role="doc-biblioref">Nguyen and Salazar 2019</a>)</span></p>
+<div id="fig-pre-post-norm-graidnet-spike" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pre-post-norm-graidnet-spike-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="./assets/pre-post-norm-graidnet-spike.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-pre-post-norm-graidnet-spike-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4
+</figcaption>
+</figure>
+</div>
+<blockquote class="blockquote">
+<p>Post-norm produces noisy gradients with many sharp spikes, even towards the end of training. On the other hand, Pre-norm has fewer noisy gradients with smaller sizes, even without warmup. <cite> Transformers without Tears: Improving the Normalization of Self-Attention P.6 </cite></p>
+</blockquote>
+</section>
+<section id="other-positions" class="level4" data-number="2.1.1.3">
+<h4 data-number="2.1.1.3" class="anchored" data-anchor-id="other-positions"><span class="header-section-number">2.1.1.3</span> Other Positions</h4>
+<p>除了 Pre-Norm 和 Post-Norm 之外，还有一些其他的 Normalization 位置设计，例如:</p>
+<ul>
+<li>Sandwich Norm: 将 Normalization 放置在每个子层的输入和输出之间。</li>
+<li>Double Norm: 在每个子层的输入和输出都进行归一化。</li>
+</ul>
+</section>
+</section>
+<section id="normalization-types" class="level3" data-number="2.1.2">
+<h3 data-number="2.1.2" class="anchored" data-anchor-id="normalization-types"><span class="header-section-number">2.1.2</span> Normalization Types</h3>
+<p>除了 Normalization 的位置设计之外，Normalization 的形式也是一个重要的设计选择。 常见的 Normalization 形式包括:</p>
+<ul>
+<li>LayerNorm<span class="citation" data-cites="LayerNormalization2016ba">(<a href="#ref-LayerNormalization2016ba" role="doc-biblioref">Ba, Kiros, and Hinton 2016</a>)</span>: 对每个样本的特征维度进行归一化，适用于序列数据。</li>
+<li>RMSNorm<span class="citation" data-cites="RootMeanSquareLayer2020zhang">(<a href="#ref-RootMeanSquareLayer2020zhang" role="doc-biblioref"><strong>RootMeanSquareLayer2020zhang?</strong></a>)</span>: 只使用均方根（Root Mean Square）来进行归一化，省略了均值的计算，减少了计算开销。 RMSNorm 在某些情况下可以提供与 LayerNorm 相似的性能，但计算更高效。</li>
+</ul>
+<p>原始的Transformer中使用的是LayerNorm， 但是现代大语言模型中，RMSNorm被广泛采用， 例如在 LLaMA<span class="citation" data-cites="Llama2023touvron">(<a href="#ref-Llama2023touvron" role="doc-biblioref"><strong>Llama2023touvron?</strong></a>)</span>、GPT-3<span class="citation" data-cites="LanguageModelsAre2020brown">(<a href="#ref-LanguageModelsAre2020brown" role="doc-biblioref"><strong>LanguageModelsAre2020brown?</strong></a>)</span>、PaLM<span class="citation" data-cites="ScalingLanguageModels2022chowdhery">(<a href="#ref-ScalingLanguageModels2022chowdhery" role="doc-biblioref"><strong>ScalingLanguageModels2022chowdhery?</strong></a>)</span> 等模型中都使用了 RMSNorm。</p>
+</section>
+</section>
+<section id="activations" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="activations"><span class="header-section-number">2.2</span> Activations</h2>
+</section>
+<section id="serial-parallel-mlp" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="serial-parallel-mlp"><span class="header-section-number">2.3</span> Serial &amp; Parallel MLP</h2>
+</section>
+<section id="position-encoding" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="position-encoding"><span class="header-section-number">2.4</span> Position Encoding</h2>
+</section>
+</section>
+<section id="hyper-parameters" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Hyper-Parameters</h1>
+</section>
+<section id="stability-tricks" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Stability Tricks</h1>
+</section>
+<section id="attentions" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Attentions</h1>
+</section>
+<section id="summary" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Summary</h1>
+<p>这节课的信息量还是比较大的，建议大家多看几遍，主要的就是全面的介绍了现代大语言模型的架构设计与超参数选择原则。 理解这些内容对于后续学习大模型的训练与优化非常重要。</p>
 
 
 
-<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-LayerNormalization2016ba" class="csl-entry" role="listitem">
+Ba, Jimmy Lei, Jamie Ryan Kiros, and Geoffrey E. Hinton. 2016. <span>“Layer <span>Normalization</span>.”</span> arXiv. <a href="https://doi.org/10.48550/arXiv.1607.06450">https://doi.org/10.48550/arXiv.1607.06450</a>.
+</div>
+<div id="ref-TransformersTearsImproving2019nguyen" class="csl-entry" role="listitem">
+Nguyen, Toan Q., and Julian Salazar. 2019. <span>“Transformers Without <span>Tears</span>: <span>Improving</span> the <span>Normalization</span> of <span>Self-Attention</span>,”</span> November. <a href="https://doi.org/10.5281/zenodo.3525484">https://doi.org/10.5281/zenodo.3525484</a>.
+</div>
+<div id="ref-AttentionAllYou2023vaswani" class="csl-entry" role="listitem">
+Vaswani, Ashish, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, and Illia Polosukhin. 2023. <span>“Attention <span>Is All You Need</span>.”</span> arXiv. <a href="https://doi.org/10.48550/arXiv.1706.03762">https://doi.org/10.48550/arXiv.1706.03762</a>.
+</div>
+</div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     // Ensure there is a toggle, if there isn't float one in the top right
